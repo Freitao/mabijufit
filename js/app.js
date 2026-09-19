@@ -61,7 +61,10 @@ function $(id) {
 
 function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -79,10 +82,13 @@ function formatCurrency(value) {
     const number =
         Number(value || 0);
 
-    return number.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+    return number.toLocaleString(
+        "pt-BR",
+        {
+            style: "currency",
+            currency: "BRL"
+        }
+    );
 }
 
 
@@ -95,12 +101,14 @@ function todayISO() {
         date.getFullYear();
 
     const month =
-        String(date.getMonth() + 1)
-            .padStart(2, "0");
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
 
     const day =
-        String(date.getDate())
-            .padStart(2, "0");
+        String(
+            date.getDate()
+        ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 }
@@ -148,16 +156,21 @@ function setLoading(
                 button.textContent;
         }
 
-        button.disabled = true;
-        button.textContent = text;
+        button.disabled =
+            true;
+
+        button.textContent =
+            text;
 
     } else {
 
-        button.disabled = false;
+        button.disabled =
+            false;
 
         if (
             button.dataset.originalText
         ) {
+
             button.textContent =
                 button.dataset.originalText;
 
@@ -208,7 +221,9 @@ function getAuthErrorMessage(error) {
 }
 
 
-function getProductMainImage(productId) {
+function getProductMainImage(
+    productId
+) {
 
     const images =
         productImagesCache[
@@ -252,7 +267,10 @@ function productImageHtml(
     }
 
     return `
-        <div class="${className} product-image-placeholder">
+        <div
+            class="${className} product-image-placeholder"
+            aria-hidden="true"
+        >
             <span>📷</span>
         </div>
     `;
@@ -278,10 +296,14 @@ function getProductTotalStock(
     return getProductVariants(
         productId
     ).reduce(
-        (sum, variant) =>
+        (
+            sum,
+            variant
+        ) =>
             sum +
             Number(
-                variant.stock_quantity || 0
+                variant.stock_quantity ||
+                0
             ),
         0
     );
@@ -353,7 +375,10 @@ function getStockStatus(
     minimum =
         Number(minimum || 0);
 
-    if (stock === 0) {
+    if (
+        stock === 0
+    ) {
+
         return {
             className: "zero",
             label: "Sem estoque"
@@ -364,6 +389,7 @@ function getStockStatus(
         minimum > 0 &&
         stock <= minimum
     ) {
+
         return {
             className: "low",
             label: "Estoque baixo"
@@ -388,12 +414,7 @@ function revokeProductPhotoPreviewUrls() {
 
             try {
                 URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error(
-                    "Erro ao liberar preview da imagem:",
-                    error
-                );
-            }
+            } catch (error) {}
         }
     );
 
@@ -434,7 +455,9 @@ function renderProductPhotoPreview() {
 
     revokeProductPhotoPreviewUrls();
 
-    if (!productPhotosDraft.length) {
+    if (
+        !productPhotosDraft.length
+    ) {
 
         container.innerHTML = "";
 
@@ -445,16 +468,23 @@ function renderProductPhotoPreview() {
         document.createDocumentFragment();
 
     productPhotosDraft.forEach(
-        (file, index) => {
+        (
+            file,
+            index
+        ) => {
 
             const item =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
             item.className =
                 "product-photo-preview-item";
 
             const image =
-                document.createElement("img");
+                document.createElement(
+                    "img"
+                );
 
             image.alt =
                 `Pré-visualização da foto ${index + 1}`;
@@ -463,21 +493,29 @@ function renderProductPhotoPreview() {
                 "lazy";
 
             const url =
-                URL.createObjectURL(file);
+                URL.createObjectURL(
+                    file
+                );
 
-            productPhotoPreviewUrls.push(url);
+            productPhotoPreviewUrls.push(
+                url
+            );
 
             image.src =
                 url;
 
             const info =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
             info.className =
                 "product-photo-preview-info";
 
             const name =
-                document.createElement("span");
+                document.createElement(
+                    "span"
+                );
 
             name.className =
                 "product-photo-preview-name";
@@ -487,7 +525,9 @@ function renderProductPhotoPreview() {
                 `Foto ${index + 1}`;
 
             const order =
-                document.createElement("small");
+                document.createElement(
+                    "small"
+                );
 
             order.textContent =
                 index === 0
@@ -532,14 +572,18 @@ function handleProductPhotoSelection(
         files.filter(
             file =>
                 !file.type ||
-                !file.type.startsWith("image/")
+                !file.type.startsWith(
+                    "image/"
+                )
         );
 
     const validFiles =
         files.filter(
             file =>
                 file.type &&
-                file.type.startsWith("image/")
+                file.type.startsWith(
+                    "image/"
+                )
         );
 
     productPhotosDraft =
@@ -547,7 +591,9 @@ function handleProductPhotoSelection(
 
     renderProductPhotoPreview();
 
-    if (invalidFiles.length) {
+    if (
+        invalidFiles.length
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -588,9 +634,12 @@ async function loadImageForOptimization(
                 );
 
             return {
-                source: bitmap,
-                width: bitmap.width,
-                height: bitmap.height,
+                source:
+                    bitmap,
+                width:
+                    bitmap.width,
+                height:
+                    bitmap.height,
                 close: () => {
 
                     try {
@@ -609,19 +658,27 @@ async function loadImageForOptimization(
     }
 
     const objectUrl =
-        URL.createObjectURL(file);
+        URL.createObjectURL(
+            file
+        );
 
     try {
 
         const image =
             await new Promise(
-                (resolve, reject) => {
+                (
+                    resolve,
+                    reject
+                ) => {
 
                     const img =
                         new Image();
 
                     img.onload =
-                        () => resolve(img);
+                        () =>
+                            resolve(
+                                img
+                            );
 
                     img.onerror =
                         () =>
@@ -637,10 +694,14 @@ async function loadImageForOptimization(
             );
 
         return {
-            source: image,
-            width: image.naturalWidth,
-            height: image.naturalHeight,
-            close: () => {}
+            source:
+                image,
+            width:
+                image.naturalWidth,
+            height:
+                image.naturalHeight,
+            close:
+                () => {}
         };
 
     } finally {
@@ -658,7 +719,10 @@ function canvasToBlob(
 ) {
 
     return new Promise(
-        (resolve, reject) => {
+        (
+            resolve,
+            reject
+        ) => {
 
             canvas.toBlob(
                 blob => {
@@ -689,6 +753,7 @@ async function optimizeProductImage(
 ) {
 
     if (!file) {
+
         throw new Error(
             "Arquivo de imagem inválido."
         );
@@ -696,8 +761,11 @@ async function optimizeProductImage(
 
     if (
         !file.type ||
-        !file.type.startsWith("image/")
+        !file.type.startsWith(
+            "image/"
+        )
     ) {
+
         throw new Error(
             "O arquivo selecionado não é uma imagem válida."
         );
@@ -724,6 +792,7 @@ async function optimizeProductImage(
             !originalWidth ||
             !originalHeight
         ) {
+
             throw new Error(
                 "Não foi possível identificar as dimensões da imagem."
             );
@@ -776,6 +845,7 @@ async function optimizeProductImage(
                 );
 
             const dimensions = {
+
                 width:
                     Math.max(
                         1,
@@ -784,6 +854,7 @@ async function optimizeProductImage(
                             scale
                         )
                     ),
+
                 height:
                     Math.max(
                         1,
@@ -899,7 +970,9 @@ async function optimizeProductImage(
 
     } finally {
 
-        if (image?.close) {
+        if (
+            image?.close
+        ) {
             image.close();
         }
     }
@@ -977,11 +1050,15 @@ async function loadProductImages(
     const uniqueProductIds =
         [
             ...new Set(
-                productIds.filter(Boolean)
+                productIds.filter(
+                    Boolean
+                )
             )
         ];
 
-    if (!uniqueProductIds.length) {
+    if (
+        !uniqueProductIds.length
+    ) {
         return;
     }
 
@@ -990,7 +1067,9 @@ async function loadProductImages(
         error
     } =
         await supabaseClient
-            .from("product_images")
+            .from(
+                "product_images"
+            )
             .select(`
                 id,
                 product_id,
@@ -1021,7 +1100,9 @@ async function loadProductImages(
         return;
     }
 
-    (data || []).forEach(
+    (
+        data || []
+    ).forEach(
         image => {
 
             if (
@@ -1029,6 +1110,7 @@ async function loadProductImages(
                     image.product_id
                 ]
             ) {
+
                 productImagesCache[
                     image.product_id
                 ] = [];
@@ -1036,7 +1118,9 @@ async function loadProductImages(
 
             productImagesCache[
                 image.product_id
-            ].push(image);
+            ].push(
+                image
+            );
         }
     );
 }
@@ -1051,6 +1135,7 @@ async function uploadProductImages(
         !currentUser ||
         !productId
     ) {
+
         return {
             uploaded: [],
             failed: []
@@ -1060,6 +1145,7 @@ async function uploadProductImages(
     if (
         !productPhotosDraft.length
     ) {
+
         return {
             uploaded: [],
             failed: []
@@ -1070,12 +1156,14 @@ async function uploadProductImages(
     const failed = [];
 
     const existingImages =
-        options.existingImages || [];
+        options.existingImages ||
+        [];
 
     const hasExistingPrimary =
         existingImages.some(
             image =>
-                image.is_primary === true
+                image.is_primary ===
+                true
         );
 
     const existingMaxOrder =
@@ -1087,7 +1175,8 @@ async function uploadProductImages(
                 Math.max(
                     max,
                     Number(
-                        image.display_order || 0
+                        image.display_order ||
+                        0
                     )
                 ),
             -1
@@ -1122,6 +1211,7 @@ async function uploadProductImages(
                 optimizedFile.size >
                 PRODUCT_IMAGE_MAX_SIZE
             ) {
+
                 throw new Error(
                     "A imagem otimizada ainda ultrapassou o limite de 8 MB."
                 );
@@ -1141,7 +1231,8 @@ async function uploadProductImages(
             );
 
             const {
-                error: uploadError
+                error:
+                    uploadError
             } =
                 await supabaseClient
                     .storage
@@ -1152,7 +1243,8 @@ async function uploadProductImages(
                         path,
                         optimizedFile,
                         {
-                            upsert: false,
+                            upsert:
+                                false,
                             contentType:
                                 "image/jpeg",
                             cacheControl:
@@ -1160,7 +1252,9 @@ async function uploadProductImages(
                         }
                     );
 
-            if (uploadError) {
+            if (
+                uploadError
+            ) {
                 throw uploadError;
             }
 
@@ -1194,7 +1288,9 @@ async function uploadProductImages(
                             path
                         ]);
 
-                } catch (cleanupError) {
+                } catch (
+                    cleanupError
+                ) {
 
                     console.error(
                         "Erro ao limpar arquivo:",
@@ -1254,7 +1350,9 @@ async function uploadProductImages(
                             path
                         ]);
 
-                } catch (cleanupError) {
+                } catch (
+                    cleanupError
+                ) {
 
                     console.error(
                         "Erro ao limpar imagem:",
@@ -1272,7 +1370,9 @@ async function uploadProductImages(
                 isPrimary
             });
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
                 `Erro ao processar a foto ${index + 1}:`,
@@ -1297,15 +1397,25 @@ async function uploadProductImages(
 
 
 // =========================================================
-// TELAS
+// NAVEGAÇÃO
 // =========================================================
 
 const sectionMap = {
-    home: "homeScreen",
-    products: "productsScreen",
-    stock: "stockScreen",
-    sales: "salesScreen",
-    finance: "financeScreen"
+
+    home:
+        "homeScreen",
+
+    products:
+        "productsScreen",
+
+    stock:
+        "stockScreen",
+
+    sales:
+        "salesScreen",
+
+    finance:
+        "financeScreen"
 };
 
 
@@ -1318,7 +1428,9 @@ function showSection(
             sectionName
         ]
     ) {
-        sectionName = "home";
+
+        sectionName =
+            "home";
     }
 
     currentSection =
@@ -1327,7 +1439,12 @@ function showSection(
     Object.entries(
         sectionMap
     ).forEach(
-        ([name, elementId]) => {
+        (
+            [
+                name,
+                elementId
+            ]
+        ) => {
 
             const section =
                 $(elementId);
@@ -1337,7 +1454,8 @@ function showSection(
             }
 
             section.hidden =
-                name !== sectionName;
+                name !==
+                sectionName;
         }
     );
 
@@ -1365,6 +1483,7 @@ function showSection(
         sectionName ===
         "home"
     ) {
+
         loadDashboard();
     }
 
@@ -1372,6 +1491,7 @@ function showSection(
         sectionName ===
         "products"
     ) {
+
         loadProductsPage();
     }
 
@@ -1379,6 +1499,7 @@ function showSection(
         sectionName ===
         "stock"
     ) {
+
         loadStock();
     }
 
@@ -1386,6 +1507,7 @@ function showSection(
         sectionName ===
         "sales"
     ) {
+
         loadSales();
         loadVariants();
     }
@@ -1394,13 +1516,152 @@ function showSection(
         sectionName ===
         "finance"
     ) {
+
         loadFinance();
     }
 }
 
 
 // =========================================================
-// LOGIN / LOGOUT
+// MODAIS — CONTROLE CENTRAL
+// =========================================================
+
+function initializeModals() {
+
+    document
+        .querySelectorAll(
+            ".modal"
+        )
+        .forEach(
+            modal => {
+
+                /*
+                 * Nenhum modal pode nascer aberto.
+                 *
+                 * A abertura somente acontece através
+                 * de openModal().
+                 */
+
+                modal.hidden =
+                    true;
+
+                modal.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+            }
+        );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+}
+
+
+function openModal(
+    id
+) {
+
+    const modal =
+        $(id);
+
+    if (!modal) {
+
+        console.warn(
+            `Modal não encontrado: ${id}`
+        );
+
+        return false;
+    }
+
+    /*
+     * Fecha somente outros modais.
+     * Isso evita que dois formulários fiquem
+     * visíveis ao mesmo tempo.
+     */
+
+    document
+        .querySelectorAll(
+            ".modal"
+        )
+        .forEach(
+            otherModal => {
+
+                if (
+                    otherModal !==
+                    modal
+                ) {
+
+                    otherModal.hidden =
+                        true;
+
+                    otherModal.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+                }
+            }
+        );
+
+    modal.hidden =
+        false;
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+    return true;
+}
+
+
+function closeModal(
+    id
+) {
+
+    const modal =
+        $(id);
+
+    if (!modal) {
+        return;
+    }
+
+    modal.hidden =
+        true;
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    const visibleModal =
+        document.querySelector(
+            ".modal:not([hidden])"
+        );
+
+    if (!visibleModal) {
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+    }
+
+    if (
+        id ===
+        "saleModal"
+    ) {
+
+        closeSaleProductPicker();
+    }
+}
+
+
+// =========================================================
+// LOGIN
 // =========================================================
 
 async function handleLogin(
@@ -1468,7 +1729,9 @@ async function handleLogin(
             throw error;
         }
 
-        if (!data?.session) {
+        if (
+            !data?.session
+        ) {
 
             showMessage(
                 "loginMessage",
@@ -1485,7 +1748,9 @@ async function handleLogin(
             data.user
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro no login:",
@@ -1517,7 +1782,9 @@ async function handleLogout() {
             .auth
             .signOut();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao sair:",
@@ -1525,11 +1792,37 @@ async function handleLogout() {
         );
     }
 
-    currentUser = null;
-    appInitialized = false;
-    currentSection = "home";
+    currentUser =
+        null;
+
+    appInitialized =
+        false;
+
+    currentSection =
+        "home";
 
     clearProductPhotosDraft();
+
+    document
+        .querySelectorAll(
+            ".modal"
+        )
+        .forEach(
+            modal => {
+
+                modal.hidden =
+                    true;
+
+                modal.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+            }
+        );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
 
     const appScreen =
         $("appScreen");
@@ -1538,11 +1831,13 @@ async function handleLogout() {
         $("loginScreen");
 
     if (appScreen) {
-        appScreen.hidden = true;
+        appScreen.hidden =
+            true;
     }
 
     if (loginScreen) {
-        loginScreen.hidden = false;
+        loginScreen.hidden =
+            false;
     }
 }
 
@@ -1565,11 +1860,13 @@ async function showApplication(
         !appScreen.hidden;
 
     if (loginScreen) {
-        loginScreen.hidden = true;
+        loginScreen.hidden =
+            true;
     }
 
     if (appScreen) {
-        appScreen.hidden = false;
+        appScreen.hidden =
+            false;
     }
 
     const userName =
@@ -1587,24 +1884,27 @@ async function showApplication(
             "Usuário";
     }
 
-    if (!appInitialized) {
+    if (
+        !appInitialized
+    ) {
 
-        appInitialized = true;
+        appInitialized =
+            true;
 
         await loadInitialData();
 
-        showSection("home");
+        showSection(
+            "home"
+        );
 
         return;
     }
 
-    /*
-     * Não força mais Home quando o aplicativo
-     * recebe novamente o evento SIGNED_IN.
-     */
     if (!wasVisible) {
+
         showSection(
-            currentSection || "home"
+            currentSection ||
+            "home"
         );
     }
 }
@@ -1625,7 +1925,9 @@ async function loadCategories() {
         error
     } =
         await supabaseClient
-            .from("categories")
+            .from(
+                "categories"
+            )
             .select("*")
             .eq(
                 "user_id",
@@ -1660,7 +1962,9 @@ function renderCategories() {
         return;
     }
 
-    if (!categoriesCache.length) {
+    if (
+        !categoriesCache.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -1745,7 +2049,8 @@ function populateCategorySelect() {
     categoriesCache
         .filter(
             category =>
-                category.is_active !== false
+                category.is_active !==
+                false
         )
         .forEach(
             category => {
@@ -1776,6 +2081,7 @@ function populateCategorySelect() {
                 current
         )
     ) {
+
         select.value =
             current;
     }
@@ -1805,7 +2111,8 @@ function openCategoryModal(
         category?.description || "";
 
     $("categoryActive").checked =
-        category?.is_active !== false;
+        category?.is_active !==
+        false;
 
     showMessage(
         "categoryFormMessage",
@@ -1872,8 +2179,12 @@ async function saveCategory(
 
             query =
                 await supabaseClient
-                    .from("categories")
-                    .update(payload)
+                    .from(
+                        "categories"
+                    )
+                    .update(
+                        payload
+                    )
                     .eq(
                         "id",
                         id
@@ -1887,7 +2198,9 @@ async function saveCategory(
 
             query =
                 await supabaseClient
-                    .from("categories")
+                    .from(
+                        "categories"
+                    )
                     .insert({
                         ...payload,
                         user_id:
@@ -1905,7 +2218,9 @@ async function saveCategory(
 
         await loadCategories();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao salvar categoria:",
@@ -1941,7 +2256,9 @@ async function deleteCategory(
         error
     } =
         await supabaseClient
-            .from("categories")
+            .from(
+                "categories"
+            )
             .delete()
             .eq(
                 "id",
@@ -1985,7 +2302,9 @@ async function loadColors() {
         error
     } =
         await supabaseClient
-            .from("colors")
+            .from(
+                "colors"
+            )
             .select("*")
             .eq(
                 "user_id",
@@ -2020,7 +2339,9 @@ function renderColors() {
         return;
     }
 
-    if (!colorsCache.length) {
+    if (
+        !colorsCache.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -2050,7 +2371,9 @@ function renderColors() {
 
                             <span
                                 class="color-card-swatch"
-                                style="background:${escapeHtml(hex)}"
+                                style="background:${escapeHtml(
+                                    hex
+                                )}"
                             ></span>
 
                             <div class="color-card-text">
@@ -2151,7 +2474,8 @@ function openColorModal(
         "#E8A0B8";
 
     $("colorActive").checked =
-        color?.is_active !== false;
+        color?.is_active !==
+        false;
 
     syncColorPreview();
 
@@ -2234,8 +2558,12 @@ async function saveColor(
 
             query =
                 await supabaseClient
-                    .from("colors")
-                    .update(payload)
+                    .from(
+                        "colors"
+                    )
+                    .update(
+                        payload
+                    )
                     .eq(
                         "id",
                         id
@@ -2249,7 +2577,9 @@ async function saveColor(
 
             query =
                 await supabaseClient
-                    .from("colors")
+                    .from(
+                        "colors"
+                    )
                     .insert({
                         ...payload,
                         user_id:
@@ -2267,7 +2597,9 @@ async function saveColor(
 
         await loadColors();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao salvar cor:",
@@ -2303,7 +2635,9 @@ async function deleteColor(
         error
     } =
         await supabaseClient
-            .from("colors")
+            .from(
+                "colors"
+            )
             .delete()
             .eq(
                 "id",
@@ -2347,7 +2681,9 @@ async function loadSizes() {
         error
     } =
         await supabaseClient
-            .from("sizes")
+            .from(
+                "sizes"
+            )
             .select("*")
             .eq(
                 "user_id",
@@ -2385,7 +2721,9 @@ function renderSizes() {
         return;
     }
 
-    if (!sizesCache.length) {
+    if (
+        !sizesCache.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -2425,7 +2763,8 @@ function renderSizes() {
                             <small class="size-card-order">
                                 Ordem:
                                 ${Number(
-                                    size.display_order || 0
+                                    size.display_order ||
+                                    0
                                 )}
                             </small>
 
@@ -2480,10 +2819,12 @@ function openSizeModal(
         size?.name || "";
 
     $("sizeDisplayOrder").value =
-        size?.display_order ?? 0;
+        size?.display_order ??
+        0;
 
     $("sizeActive").checked =
-        size?.is_active !== false;
+        size?.is_active !==
+        false;
 
     showMessage(
         "sizeFormMessage",
@@ -2519,7 +2860,8 @@ async function saveSize(
     const displayOrder =
         Number(
             $("sizeDisplayOrder")
-                .value || 0
+                .value ||
+            0
         );
 
     const isActive =
@@ -2552,8 +2894,12 @@ async function saveSize(
 
             query =
                 await supabaseClient
-                    .from("sizes")
-                    .update(payload)
+                    .from(
+                        "sizes"
+                    )
+                    .update(
+                        payload
+                    )
                     .eq(
                         "id",
                         id
@@ -2567,7 +2913,9 @@ async function saveSize(
 
             query =
                 await supabaseClient
-                    .from("sizes")
+                    .from(
+                        "sizes"
+                    )
                     .insert({
                         ...payload,
                         user_id:
@@ -2585,7 +2933,9 @@ async function saveSize(
 
         await loadSizes();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao salvar tamanho:",
@@ -2621,7 +2971,9 @@ async function deleteSize(
         error
     } =
         await supabaseClient
-            .from("sizes")
+            .from(
+                "sizes"
+            )
             .delete()
             .eq(
                 "id",
@@ -2651,7 +3003,7 @@ async function deleteSize(
 
 
 // =========================================================
-// VARIAÇÕES DO PRODUTO
+// VARIAÇÕES
 // =========================================================
 
 function renderProductVariationOptions() {
@@ -2676,7 +3028,8 @@ function renderProductVariationOptions() {
         colorsCache
             .filter(
                 color =>
-                    color.is_active !== false
+                    color.is_active !==
+                    false
             )
             .forEach(
                 color => {
@@ -2714,6 +3067,7 @@ function renderProductVariationOptions() {
                     currentColor
             )
         ) {
+
             colorSelect.value =
                 currentColor;
         }
@@ -2733,7 +3087,8 @@ function renderProductVariationOptions() {
         sizesCache
             .filter(
                 size =>
-                    size.is_active !== false
+                    size.is_active !==
+                    false
             )
             .forEach(
                 size => {
@@ -2767,6 +3122,7 @@ function renderProductVariationOptions() {
                     currentSize
             )
         ) {
+
             sizeSelect.value =
                 currentSize;
         }
@@ -2783,7 +3139,9 @@ function renderProductVariationsList() {
         return;
     }
 
-    if (!productVariationsDraft.length) {
+    if (
+        !productVariationsDraft.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state compact">
@@ -2818,7 +3176,9 @@ function renderProductVariationsList() {
 
                             <span
                                 class="variation-color-dot"
-                                style="background:${escapeHtml(hex)}"
+                                style="background:${escapeHtml(
+                                    hex
+                                )}"
                             ></span>
 
                             <strong>
@@ -2849,7 +3209,8 @@ function renderProductVariationsList() {
                                     step="1"
                                     inputmode="numeric"
                                     value="${Number(
-                                        variation.quantity || 0
+                                        variation.quantity ||
+                                        0
                                     )}"
                                     data-variation-quantity="${index}"
                                 >
@@ -2901,7 +3262,8 @@ function addProductVariation() {
 
     const quantity =
         Number(
-            quantityInput.value || 0
+            quantityInput.value ||
+            0
         );
 
     if (!colorId) {
@@ -2954,7 +3316,9 @@ function addProductVariation() {
                     sizeId
         );
 
-    if (alreadyExists) {
+    if (
+        alreadyExists
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -2979,7 +3343,8 @@ function addProductVariation() {
         );
 
     productVariationsDraft.push({
-        variantId: null,
+        variantId:
+            null,
         colorId,
         colorName:
             color?.name ||
@@ -3086,13 +3451,15 @@ function generateBatchVariations() {
     const activeColors =
         colorsCache.filter(
             color =>
-                color.is_active !== false
+                color.is_active !==
+                false
         );
 
     const activeSizes =
         sizesCache.filter(
             size =>
-                size.is_active !== false
+                size.is_active !==
+                false
         );
 
     if (
@@ -3115,13 +3482,16 @@ function generateBatchVariations() {
         );
 
     if (
-        quantityValue === null
+        quantityValue ===
+        null
     ) {
         return;
     }
 
     const quantity =
-        Number(quantityValue);
+        Number(
+            quantityValue
+        );
 
     if (
         !Number.isInteger(
@@ -3165,14 +3535,16 @@ function generateBatchVariations() {
                         colorId:
                             color.id,
                         colorName:
-                            color.name || "",
+                            color.name ||
+                            "",
                         colorHex:
                             color.hex_code ||
                             "#cccccc",
                         sizeId:
                             size.id,
                         sizeName:
-                            size.name || "",
+                            size.name ||
+                            "",
                         quantity
                     });
 
@@ -3209,7 +3581,9 @@ async function loadProducts() {
         error
     } =
         await supabaseClient
-            .from("products")
+            .from(
+                "products"
+            )
             .select(`
                 *,
                 categories (
@@ -3251,11 +3625,6 @@ function renderProductCard(
     product
 ) {
 
-    const variants =
-        getProductVariants(
-            product.id
-        );
-
     const colors =
         getProductColorNames(
             product.id
@@ -3273,7 +3642,8 @@ function renderProductCard(
 
     const minimum =
         Number(
-            product.minimum_stock || 0
+            product.minimum_stock ||
+            0
         );
 
     const status =
@@ -3299,7 +3669,9 @@ function renderProductCard(
             data-edit-product="${product.id}"
             tabindex="0"
             role="button"
-            aria-label="Editar ${escapeHtml(product.name)}"
+            aria-label="Abrir opções de ${escapeHtml(
+                product.name
+            )}"
         >
 
             <div class="product-card-image-wrapper">
@@ -3379,6 +3751,26 @@ function renderProductCard(
 
                 </div>
 
+                <div class="product-card-actions">
+
+                    <button
+                        type="button"
+                        class="product-card-sell-button"
+                        data-quick-sell-product="${product.id}"
+                    >
+                        Vender
+                    </button>
+
+                    <button
+                        type="button"
+                        class="product-card-edit-button"
+                        data-edit-product-button="${product.id}"
+                    >
+                        Editar
+                    </button>
+
+                </div>
+
             </div>
 
         </article>
@@ -3428,6 +3820,7 @@ function resetProductForm() {
         );
 
     if (title) {
+
         title.textContent =
             "Novo produto";
     }
@@ -3476,19 +3869,24 @@ async function loadProductForEdit(
         product.description || "";
 
     $("productCostPrice").value =
-        product.cost_price ?? 0;
+        product.cost_price ??
+        0;
 
     $("productSalePrice").value =
-        product.sale_price ?? 0;
+        product.sale_price ??
+        0;
 
     $("productMinimumStock").value =
-        product.minimum_stock ?? 0;
+        product.minimum_stock ??
+        0;
 
     $("productActive").checked =
-        product.is_active !== false;
+        product.is_active !==
+        false;
 
     const {
-        data: variants,
+        data:
+            variants,
         error
     } =
         await supabaseClient
@@ -3528,7 +3926,9 @@ async function loadProductForEdit(
     }
 
     productVariationsDraft =
-        (variants || []).map(
+        (
+            variants || []
+        ).map(
             variant => ({
                 variantId:
                     variant.id,
@@ -3568,6 +3968,7 @@ async function loadProductForEdit(
         );
 
     if (title) {
+
         title.textContent =
             "Editar produto";
     }
@@ -3611,7 +4012,9 @@ function renderExistingProductPhotos(
         );
     }
 
-    if (!images.length) {
+    if (
+        !images.length
+    ) {
 
         container.innerHTML =
             "";
@@ -3663,6 +4066,15 @@ function renderExistingProductPhotos(
 function openProductModal(
     product = null
 ) {
+
+    /*
+     * IMPORTANTE:
+     * sem produto = novo produto.
+     * com produto = edição.
+     *
+     * Nenhuma outra rotina chama esta função
+     * durante a inicialização.
+     */
 
     if (product) {
 
@@ -3734,19 +4146,22 @@ async function saveProduct(
     const costPrice =
         Number(
             $("productCostPrice")
-                .value || 0
+                .value ||
+            0
         );
 
     const salePrice =
         Number(
             $("productSalePrice")
-                .value || 0
+                .value ||
+            0
         );
 
     const minimumStock =
         Number(
             $("productMinimumStock")
-                .value || 0
+                .value ||
+            0
         );
 
     const isActive =
@@ -3806,19 +4221,27 @@ async function saveProduct(
     try {
 
         const payload = {
+
             category_id:
                 categoryId,
+
             name,
+
             sku:
                 sku || null,
+
             description:
                 description || null,
+
             cost_price:
                 costPrice,
+
             sale_price:
                 salePrice,
+
             minimum_stock:
                 minimumStock,
+
             is_active:
                 isActive
         };
@@ -3832,7 +4255,9 @@ async function saveProduct(
                 error
             } =
                 await supabaseClient
-                    .from("products")
+                    .from(
+                        "products"
+                    )
                     .insert({
                         ...payload,
                         user_id:
@@ -3860,19 +4285,25 @@ async function saveProduct(
                         variation => ({
                             user_id:
                                 currentUser.id,
+
                             product_id:
                                 product.id,
+
                             color_id:
                                 variation.colorId,
+
                             size_id:
                                 variation.sizeId,
+
                             stock_quantity:
                                 Number(
                                     variation.quantity ||
                                     0
                                 ),
+
                             minimum_stock:
                                 minimumStock,
+
                             is_active:
                                 true
                         })
@@ -3890,7 +4321,10 @@ async function saveProduct(
                             variants
                         );
 
-                if (variantsError) {
+                if (
+                    variantsError
+                ) {
+
                     throw new Error(
                         "Não foi possível criar as variações do produto. O produto será desfeito."
                     );
@@ -3907,8 +4341,12 @@ async function saveProduct(
                 error
             } =
                 await supabaseClient
-                    .from("products")
-                    .update(payload)
+                    .from(
+                        "products"
+                    )
+                    .update(
+                        payload
+                    )
                     .eq(
                         "id",
                         id
@@ -3950,13 +4388,16 @@ async function saveProduct(
                             .update({
                                 color_id:
                                     variation.colorId,
+
                                 size_id:
                                     variation.sizeId,
+
                                 stock_quantity:
                                     Number(
                                         variation.quantity ||
                                         0
                                     ),
+
                                 minimum_stock:
                                     minimumStock
                             })
@@ -3976,6 +4417,7 @@ async function saveProduct(
                     if (
                         variantUpdateError
                     ) {
+
                         throw variantUpdateError;
                     }
 
@@ -3992,19 +4434,25 @@ async function saveProduct(
                             .insert({
                                 user_id:
                                     currentUser.id,
+
                                 product_id:
                                     id,
+
                                 color_id:
                                     variation.colorId,
+
                                 size_id:
                                     variation.sizeId,
+
                                 stock_quantity:
                                     Number(
                                         variation.quantity ||
                                         0
                                     ),
+
                                 minimum_stock:
                                     minimumStock,
+
                                 is_active:
                                     true
                             });
@@ -4012,17 +4460,18 @@ async function saveProduct(
                     if (
                         newVariantError
                     ) {
+
                         throw newVariantError;
                     }
                 }
             }
 
             /*
-             * Variações antigas não presentes no draft
-             * não são excluídas automaticamente.
+             * Variações antigas que não estão no draft
+             * não são apagadas automaticamente.
              *
-             * Isso preserva possíveis vínculos históricos
-             * com vendas e movimentações.
+             * Isso preserva histórico e possíveis vínculos
+             * com vendas/movimentações.
              */
 
             productAndVariantsCreated =
@@ -4086,7 +4535,9 @@ async function saveProduct(
             );
         }
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao salvar produto:",
@@ -4103,7 +4554,9 @@ async function saveProduct(
                     cleanupError
             } =
                 await supabaseClient
-                    .from("products")
+                    .from(
+                        "products"
+                    )
                     .delete()
                     .eq(
                         "id",
@@ -4114,7 +4567,9 @@ async function saveProduct(
                         currentUser.id
                     );
 
-            if (cleanupError) {
+            if (
+                cleanupError
+            ) {
 
                 console.error(
                     "Erro ao desfazer produto:",
@@ -4138,6 +4593,40 @@ async function saveProduct(
     }
 }
 
+
+// =========================================================
+// VENDA RÁPIDA A PARTIR DO PRODUTO
+// =========================================================
+
+async function openQuickSale(
+    productId
+) {
+
+    const product =
+        productsCache.find(
+            item =>
+                item.id ===
+                productId
+        );
+
+    if (!product) {
+
+        alert(
+            "Produto não encontrado."
+        );
+
+        return;
+    }
+
+    await openNewSaleModal({
+        productId
+    });
+}
+
+
+// =========================================================
+// EXCLUSÃO DE PRODUTO
+// =========================================================
 
 async function deleteProduct(
     productId
@@ -4175,7 +4664,9 @@ async function deleteProduct(
                 imagesError
         } =
             await supabaseClient
-                .from("product_images")
+                .from(
+                    "product_images"
+                )
                 .select(
                     "storage_path"
                 )
@@ -4188,7 +4679,9 @@ async function deleteProduct(
                     productId
                 );
 
-        if (imagesError) {
+        if (
+            imagesError
+        ) {
             throw imagesError;
         }
 
@@ -4196,7 +4689,9 @@ async function deleteProduct(
             error
         } =
             await supabaseClient
-                .from("products")
+                .from(
+                    "products"
+                )
                 .delete()
                 .eq(
                     "id",
@@ -4212,14 +4707,20 @@ async function deleteProduct(
         }
 
         const paths =
-            (images || [])
+            (
+                images || []
+            )
                 .map(
                     image =>
                         image.storage_path
                 )
-                .filter(Boolean);
+                .filter(
+                    Boolean
+                );
 
-        if (paths.length) {
+        if (
+            paths.length
+        ) {
 
             const {
                 error:
@@ -4230,9 +4731,13 @@ async function deleteProduct(
                     .from(
                         "product-images"
                     )
-                    .remove(paths);
+                    .remove(
+                        paths
+                    );
 
-            if (storageError) {
+            if (
+                storageError
+            ) {
 
                 console.error(
                     "Produto excluído, mas houve erro ao limpar fotos do Storage:",
@@ -4248,7 +4753,9 @@ async function deleteProduct(
 
         await loadDashboard();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao excluir produto:",
@@ -4278,7 +4785,9 @@ async function loadVariants() {
         error
     } =
         await supabaseClient
-            .from("product_variants")
+            .from(
+                "product_variants"
+            )
             .select(`
                 *,
                 products (
@@ -4327,7 +4836,9 @@ async function loadVariants() {
                         variant =>
                             variant.products?.id
                     )
-                    .filter(Boolean)
+                    .filter(
+                        Boolean
+                    )
             )
         ];
 
@@ -4345,6 +4856,7 @@ async function loadVariants() {
     if (
         allProductIds.length
     ) {
+
         await loadProductImages(
             allProductIds
         );
@@ -4359,7 +4871,8 @@ async function loadStock() {
     const activeVariants =
         variantsCache.filter(
             variant =>
-                variant.is_active !== false
+                variant.is_active !==
+                false
         );
 
     const total =
@@ -4411,18 +4924,30 @@ async function loadStock() {
                 ) === 0
         ).length;
 
-    if ($("stockTotal")) {
-        $("stockTotal").textContent =
+    if (
+        $("stockTotal")
+    ) {
+
+        $("stockTotal")
+            .textContent =
             total;
     }
 
-    if ($("stockLow")) {
-        $("stockLow").textContent =
+    if (
+        $("stockLow")
+    ) {
+
+        $("stockLow")
+            .textContent =
             low;
     }
 
-    if ($("stockZero")) {
-        $("stockZero").textContent =
+    if (
+        $("stockZero")
+    ) {
+
+        $("stockZero")
+            .textContent =
             zero;
     }
 
@@ -4538,7 +5063,8 @@ function renderStock() {
     renderStockCollection(
         variantsCache.filter(
             variant =>
-                variant.is_active !== false
+                variant.is_active !==
+                false
         )
     );
 }
@@ -4631,7 +5157,9 @@ function ensureSaleModalUI() {
                     autocomplete="off"
                 >
 
-                <div id="saleProductPickerList"></div>
+                <div
+                    id="saleProductPickerList"
+                ></div>
 
                 <div
                     id="saleVariantPicker"
@@ -4646,17 +5174,26 @@ function ensureSaleModalUI() {
                     Produtos da venda
                 </strong>
 
-                <div id="saleItemsList"></div>
+                <div
+                    id="saleItemsList"
+                ></div>
 
             </div>
 
             <div class="sale-summary">
 
                 <div>
-                    <span>Subtotal</span>
-                    <strong id="saleSubtotalValue">
+
+                    <span>
+                        Subtotal
+                    </span>
+
+                    <strong
+                        id="saleSubtotalValue"
+                    >
                         R$ 0,00
                     </strong>
+
                 </div>
 
                 <div>
@@ -4678,9 +5215,13 @@ function ensureSaleModalUI() {
 
                 <div>
 
-                    <span>Total</span>
+                    <span>
+                        Total
+                    </span>
 
-                    <strong id="saleTotalValue">
+                    <strong
+                        id="saleTotalValue"
+                    >
                         R$ 0,00
                     </strong>
 
@@ -4694,7 +5235,9 @@ function ensureSaleModalUI() {
                     Forma de pagamento
                 </label>
 
-                <select id="salePaymentMethod">
+                <select
+                    id="salePaymentMethod"
+                >
 
                     <option value="">
                         Selecione
@@ -4747,7 +5290,9 @@ function ensureSaleModalUI() {
                 class="form-message"
             ></div>
 
-            <div class="sale-management-footer">
+            <div
+                class="sale-management-footer"
+            >
 
                 <button
                     type="button"
@@ -4770,14 +5315,14 @@ function ensureSaleModalUI() {
         </div>
     `;
 
-    const modalContent =
-        modal.querySelector(
-            ".modal-content"
-        );
-
     const modalBody =
         modal.querySelector(
             ".modal-body"
+        );
+
+    const modalContent =
+        modal.querySelector(
+            ".modal-content"
         );
 
     if (modalBody) {
@@ -4786,7 +5331,9 @@ function ensureSaleModalUI() {
             wrapper
         );
 
-    } else if (modalContent) {
+    } else if (
+        modalContent
+    ) {
 
         modalContent.appendChild(
             wrapper
@@ -4847,21 +5394,24 @@ function resetSaleDraft() {
         $("saleDiscountInput");
 
     if (discount) {
-        discount.value = "0";
+        discount.value =
+            "0";
     }
 
     const payment =
         $("salePaymentMethod");
 
     if (payment) {
-        payment.value = "";
+        payment.value =
+            "";
     }
 
     const notes =
         $("saleNotesInput");
 
     if (notes) {
-        notes.value = "";
+        notes.value =
+            "";
     }
 
     showMessage(
@@ -4876,7 +5426,9 @@ function resetSaleDraft() {
 }
 
 
-async function openNewSaleModal() {
+async function openNewSaleModal(
+    options = {}
+) {
 
     ensureSaleModalUI();
 
@@ -4886,6 +5438,61 @@ async function openNewSaleModal() {
         loadProducts(),
         loadVariants()
     ]);
+
+    if (
+        options.productId
+    ) {
+
+        const product =
+            productsCache.find(
+                item =>
+                    item.id ===
+                    options.productId
+            );
+
+        if (
+            product &&
+            product.is_active !==
+                false
+        ) {
+
+            saleProductPickerOpen =
+                true;
+
+            const picker =
+                $("saleProductPicker");
+
+            if (picker) {
+                picker.hidden =
+                    false;
+            }
+
+            const search =
+                $("saleProductSearchInput");
+
+            if (search) {
+                search.value =
+                    "";
+            }
+
+            renderSaleProductPicker();
+
+            saleVariantSelectionProductId =
+                product.id;
+
+            const list =
+                $("saleProductPickerList");
+
+            if (list) {
+                list.hidden =
+                    true;
+            }
+
+            renderSaleVariantPicker(
+                product.id
+            );
+        }
+    }
 
     openModal(
         "saleModal"
@@ -4905,6 +5512,7 @@ function toggleSaleProductPicker() {
         $("saleProductPicker");
 
     if (picker) {
+
         picker.hidden =
             !saleProductPickerOpen;
     }
@@ -4917,7 +5525,10 @@ function toggleSaleProductPicker() {
             $("saleProductSearchInput");
 
         if (search) {
-            search.value = "";
+
+            search.value =
+                "";
+
             search.focus();
         }
 
@@ -4954,7 +5565,8 @@ function closeSaleProductPicker() {
         $("saleProductPicker");
 
     if (picker) {
-        picker.hidden = true;
+        picker.hidden =
+            true;
     }
 
     const variantPicker =
@@ -4998,7 +5610,8 @@ function renderSaleProductPicker() {
             product => {
 
                 if (
-                    product.is_active === false
+                    product.is_active ===
+                    false
                 ) {
                     return false;
                 }
@@ -5011,7 +5624,8 @@ function renderSaleProductPicker() {
                 const available =
                     variants.some(
                         variant =>
-                            variant.is_active !== false &&
+                            variant.is_active !==
+                                false &&
                             Number(
                                 variant.stock_quantity ||
                                 0
@@ -5023,13 +5637,17 @@ function renderSaleProductPicker() {
                         product.name,
                         product.sku
                     ]
-                        .filter(Boolean)
+                        .filter(
+                            Boolean
+                        )
                         .join(" ")
                         .toLowerCase();
 
                 return (
                     available &&
-                    text.includes(search)
+                    text.includes(
+                        search
+                    )
                 );
             }
         );
@@ -5058,7 +5676,8 @@ function renderSaleProductPicker() {
                             product.id
                         ).filter(
                             variant =>
-                                variant.is_active !== false &&
+                                variant.is_active !==
+                                    false &&
                                 Number(
                                     variant.stock_quantity ||
                                     0
@@ -5159,14 +5778,17 @@ function renderSaleVariantPicker(
             productId
         ).filter(
             variant =>
-                variant.is_active !== false &&
+                variant.is_active !==
+                    false &&
                 Number(
                     variant.stock_quantity ||
                     0
                 ) > 0
         );
 
-    if (!variants.length) {
+    if (
+        !variants.length
+    ) {
 
         container.hidden =
             false;
@@ -5215,15 +5837,19 @@ function renderSaleVariantPicker(
                 >
 
                     <span>
+
                         ${escapeHtml(
                             variant.colors?.name ||
                             "Sem cor"
                         )}
+
                         /
+
                         ${escapeHtml(
                             variant.sizes?.name ||
                             "Sem tamanho"
                         )}
+
                     </span>
 
                     <span>
@@ -5281,7 +5907,9 @@ function addSaleVariant(
             0
         );
 
-    if (stock <= 0) {
+    if (
+        stock <= 0
+    ) {
 
         showMessage(
             "saleFormMessage",
@@ -5313,11 +5941,13 @@ function addSaleVariant(
             return;
         }
 
-        existing.quantity += 1;
+        existing.quantity +=
+            1;
 
     } else {
 
         saleDraft.push({
+
             variantId:
                 variant.id,
 
@@ -5343,7 +5973,8 @@ function addSaleVariant(
                 variant.sizes?.name ||
                 "Sem tamanho",
 
-            quantity: 1,
+            quantity:
+                1,
 
             stock,
 
@@ -5383,7 +6014,9 @@ function renderSaleItems() {
         return;
     }
 
-    if (!saleDraft.length) {
+    if (
+        !saleDraft.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state compact">
@@ -5524,8 +6157,11 @@ function updateSaleItemQuantity(
         return;
     }
 
-    if (quantity < 1) {
-        quantity = 1;
+    if (
+        quantity < 1
+    ) {
+        quantity =
+            1;
     }
 
     if (
@@ -5656,7 +6292,9 @@ async function loadSales() {
         error
     } =
         await supabaseClient
-            .from("sales")
+            .from(
+                "sales"
+            )
             .select("*")
             .eq(
                 "user_id",
@@ -5665,7 +6303,8 @@ async function loadSales() {
             .order(
                 "sale_date",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             );
 
@@ -5719,7 +6358,9 @@ function updateSalesMetrics() {
             0
         );
 
-    if ($("salesToday")) {
+    if (
+        $("salesToday")
+    ) {
 
         $("salesToday")
             .textContent =
@@ -5806,7 +6447,9 @@ function renderSales() {
         return;
     }
 
-    if (!salesCache.length) {
+    if (
+        !salesCache.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -5834,7 +6477,9 @@ async function registerSale() {
         return;
     }
 
-    if (!saleDraft.length) {
+    if (
+        !saleDraft.length
+    ) {
 
         showMessage(
             "saleFormMessage",
@@ -5883,19 +6528,25 @@ async function registerSale() {
         "Registrando..."
     );
 
-    let saleId = null;
+    let saleId =
+        null;
 
-    const updatedVariants = [];
+    const updatedVariants =
+        [];
 
-    let saleItemsInserted = false;
-    let inventoryMovementsInserted = false;
-    let financeInserted = false;
+    let saleItemsInserted =
+        false;
+
+    let inventoryMovementsInserted =
+        false;
+
+    let financeInserted =
+        false;
 
     try {
 
         /*
-         * Revalida o estoque diretamente no banco
-         * imediatamente antes da gravação.
+         * Revalida estoque antes de registrar.
          */
 
         for (
@@ -5968,30 +6619,41 @@ async function registerSale() {
             null;
 
         const {
-            data: sale,
+            data:
+                sale,
             error:
                 saleError
         } =
             await supabaseClient
-                .from("sales")
+                .from(
+                    "sales"
+                )
                 .insert({
                     user_id:
                         currentUser.id,
+
                     sale_number:
                         saleNumber,
+
                     sale_date:
                         new Date()
                             .toISOString(),
+
                     subtotal:
                         summary.subtotal,
+
                     discount:
                         summary.discount,
+
                     total:
                         summary.total,
+
                     payment_method:
                         paymentMethod,
+
                     status:
                         "completed",
+
                     notes
                 })
                 .select()
@@ -6046,19 +6708,24 @@ async function registerSale() {
                 saleItemsError
         } =
             await supabaseClient
-                .from("sale_items")
+                .from(
+                    "sale_items"
+                )
                 .insert(
                     saleItems
                 );
 
-        if (saleItemsError) {
+        if (
+            saleItemsError
+        ) {
             throw saleItemsError;
         }
 
         saleItemsInserted =
             true;
 
-        const movements = [];
+        const movements =
+            [];
 
         for (
             const item
@@ -6074,12 +6741,6 @@ async function registerSale() {
             const newStock =
                 previousStock -
                 item.quantity;
-
-            /*
-             * O filtro pelo estoque anterior evita
-             * sobrescrever uma alteração feita por
-             * outra operação entre a leitura e a baixa.
-             */
 
             const {
                 data:
@@ -6123,7 +6784,9 @@ async function registerSale() {
             updatedVariants.push({
                 id:
                     item.variantId,
+
                 previousStock,
+
                 newStock
             });
 
@@ -6163,7 +6826,9 @@ async function registerSale() {
                     movements
                 );
 
-        if (movementError) {
+        if (
+            movementError
+        ) {
             throw movementError;
         }
 
@@ -6206,7 +6871,9 @@ async function registerSale() {
                     notes
                 });
 
-        if (financeError) {
+        if (
+            financeError
+        ) {
             throw financeError;
         }
 
@@ -6228,16 +6895,14 @@ async function registerSale() {
 
         await loadDashboard();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao registrar venda:",
             error
         );
-
-        /*
-         * Rollback financeiro.
-         */
 
         if (
             financeInserted &&
@@ -6259,10 +6924,6 @@ async function registerSale() {
                 );
         }
 
-        /*
-         * Rollback das movimentações.
-         */
-
         if (
             inventoryMovementsInserted &&
             saleId
@@ -6282,10 +6943,6 @@ async function registerSale() {
                     saleId
                 );
         }
-
-        /*
-         * Rollback do estoque.
-         */
 
         for (
             const variant
@@ -6314,10 +6971,6 @@ async function registerSale() {
                 );
         }
 
-        /*
-         * Rollback dos itens da venda.
-         */
-
         if (
             saleItemsInserted &&
             saleId
@@ -6338,14 +6991,12 @@ async function registerSale() {
                 );
         }
 
-        /*
-         * Rollback da venda.
-         */
-
         if (saleId) {
 
             await supabaseClient
-                .from("sales")
+                .from(
+                    "sales"
+                )
                 .delete()
                 .eq(
                     "id",
@@ -6380,7 +7031,9 @@ async function getNextSaleNumber() {
         error
     } =
         await supabaseClient
-            .from("sales")
+            .from(
+                "sales"
+            )
             .select(
                 "sale_number"
             )
@@ -6391,7 +7044,8 @@ async function getNextSaleNumber() {
             .order(
                 "sale_number",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             )
             .limit(1);
@@ -6402,7 +7056,8 @@ async function getNextSaleNumber() {
 
     const last =
         Number(
-            data?.[0]?.sale_number ||
+            data?.[0]
+                ?.sale_number ||
             0
         );
 
@@ -6436,7 +7091,8 @@ async function loadFinance() {
             .order(
                 "transaction_date",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             );
 
@@ -6504,7 +7160,9 @@ function updateFinanceMetrics() {
         income -
         expenses;
 
-    if ($("financeIncome")) {
+    if (
+        $("financeIncome")
+    ) {
 
         $("financeIncome")
             .textContent =
@@ -6513,7 +7171,9 @@ function updateFinanceMetrics() {
             );
     }
 
-    if ($("financeExpenses")) {
+    if (
+        $("financeExpenses")
+    ) {
 
         $("financeExpenses")
             .textContent =
@@ -6522,7 +7182,9 @@ function updateFinanceMetrics() {
             );
     }
 
-    if ($("financeBalance")) {
+    if (
+        $("financeBalance")
+    ) {
 
         $("financeBalance")
             .textContent =
@@ -6542,7 +7204,9 @@ function renderFinance() {
         return;
     }
 
-    if (!financeCache.length) {
+    if (
+        !financeCache.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -6585,11 +7249,13 @@ function renderFinance() {
 
                         </div>
 
-                        <strong class="${
-                            income
-                                ? "income"
-                                : "expense"
-                        }">
+                        <strong
+                            class="${
+                                income
+                                    ? "income"
+                                    : "expense"
+                            }"
+                        >
 
                             ${income ? "+" : "-"}
                             ${formatCurrency(
@@ -6617,8 +7283,14 @@ function openTransactionModal() {
 
     form.reset();
 
-    $("transactionDate").value =
-        todayISO();
+    if (
+        $("transactionDate")
+    ) {
+
+        $("transactionDate")
+            .value =
+            todayISO();
+    }
 
     showMessage(
         "transactionFormMessage",
@@ -6695,7 +7367,9 @@ async function saveTransaction(
         return;
     }
 
-    if (amount <= 0) {
+    if (
+        amount <= 0
+    ) {
 
         showMessage(
             "transactionFormMessage",
@@ -6752,7 +7426,9 @@ async function saveTransaction(
         await loadFinance();
         await loadDashboard();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao salvar lançamento:",
@@ -6872,7 +7548,9 @@ async function loadDashboard() {
             }
         ).length;
 
-    if ($("metricSales")) {
+    if (
+        $("metricSales")
+    ) {
 
         $("metricSales")
             .textContent =
@@ -6881,77 +7559,33 @@ async function loadDashboard() {
             );
     }
 
-    if ($("metricOrders")) {
+    if (
+        $("metricOrders")
+    ) {
 
         $("metricOrders")
             .textContent =
             todaySales.length;
     }
 
-    if ($("metricLowStock")) {
+    if (
+        $("metricLowStock")
+    ) {
 
         $("metricLowStock")
             .textContent =
             lowStock;
     }
 
-    if ($("metricExpenses")) {
+    if (
+        $("metricExpenses")
+    ) {
 
         $("metricExpenses")
             .textContent =
             formatCurrency(
                 todayExpenses
             );
-    }
-}
-
-
-// =========================================================
-// MODAIS
-// =========================================================
-
-function openModal(
-    id
-) {
-
-    const modal =
-        $(id);
-
-    if (!modal) {
-        return;
-    }
-
-    modal.hidden =
-        false;
-
-    document.body.classList.add(
-        "modal-open"
-    );
-}
-
-
-function closeModal(
-    id
-) {
-
-    const modal =
-        $(id);
-
-    if (!modal) {
-        return;
-    }
-
-    modal.hidden =
-        true;
-
-    document.body.classList.remove(
-        "modal-open"
-    );
-
-    if (
-        id === "saleModal"
-    ) {
-        closeSaleProductPicker();
     }
 }
 
@@ -7003,7 +7637,10 @@ function bindEvents() {
                             button.dataset
                                 .section;
 
-                        if (section) {
+                        if (
+                            section
+                        ) {
+
                             showSection(
                                 section
                             );
@@ -7015,47 +7652,84 @@ function bindEvents() {
 
 
     // =================================================
-    // NOVOS
+    // BOTÕES NOVOS
     // =================================================
 
     $("newProductButton")
         ?.addEventListener(
             "click",
-            () =>
-                openProductModal()
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openProductModal();
+            }
         );
 
-    $("newCategoryButton")
-        ?.addEventListener(
-            "click",
-            () =>
-                openCategoryModal()
-        );
-
-    $("newColorButton")
-        ?.addEventListener(
-            "click",
-            () =>
-                openColorModal()
-        );
-
-    $("newSizeButton")
-        ?.addEventListener(
-            "click",
-            () =>
-                openSizeModal()
-        );
 
     $("newSaleButton")
         ?.addEventListener(
             "click",
-            openNewSaleModal
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openNewSaleModal();
+            }
         );
+
 
     $("newTransactionButton")
         ?.addEventListener(
             "click",
-            openTransactionModal
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openTransactionModal();
+            }
+        );
+
+
+    $("newCategoryButton")
+        ?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openCategoryModal();
+            }
+        );
+
+
+    $("newColorButton")
+        ?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openColorModal();
+            }
+        );
+
+
+    $("newSizeButton")
+        ?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openSizeModal();
+            }
         );
 
 
@@ -7121,15 +7795,18 @@ function bindEvents() {
             event => {
 
                 let value =
-                    event.target
-                        .value
+                    event.target.value
                         .trim();
 
                 if (
-                    !value.startsWith("#")
+                    !value.startsWith(
+                        "#"
+                    )
                 ) {
+
                     value =
-                        "#" + value;
+                        "#" +
+                        value;
                 }
 
                 if (
@@ -7162,39 +7839,9 @@ function bindEvents() {
             generateBatchVariations
         );
 
-    $("productVariationColor")
-        ?.addEventListener(
-            "change",
-            () =>
-                showMessage(
-                    "productFormMessage",
-                    ""
-                )
-        );
-
-    $("productVariationSize")
-        ?.addEventListener(
-            "change",
-            () =>
-                showMessage(
-                    "productFormMessage",
-                    ""
-                )
-        );
-
-    $("productVariationQuantity")
-        ?.addEventListener(
-            "input",
-            () =>
-                showMessage(
-                    "productFormMessage",
-                    ""
-                )
-        );
-
 
     // =================================================
-    // CLIQUES DE VARIAÇÕES
+    // EVENTOS DE VARIAÇÃO
     // =================================================
 
     document.addEventListener(
@@ -7247,7 +7894,7 @@ function bindEvents() {
 
 
     // =================================================
-    // FECHAR MODAIS
+    // FECHAMENTO DE MODAIS
     // =================================================
 
     document.addEventListener(
@@ -7262,6 +7909,9 @@ function bindEvents() {
             if (
                 closeButton
             ) {
+
+                event.preventDefault();
+                event.stopPropagation();
 
                 closeModal(
                     closeButton
@@ -7317,7 +7967,10 @@ function bindEvents() {
                                 .editCategory
                     );
 
-                if (category) {
+                if (
+                    category
+                ) {
+
                     openCategoryModal(
                         category
                     );
@@ -7349,7 +8002,9 @@ function bindEvents() {
                     "[data-edit-color]"
                 );
 
-            if (editColor) {
+            if (
+                editColor
+            ) {
 
                 const color =
                     colorsCache.find(
@@ -7360,7 +8015,10 @@ function bindEvents() {
                                 .editColor
                     );
 
-                if (color) {
+                if (
+                    color
+                ) {
+
                     openColorModal(
                         color
                     );
@@ -7392,7 +8050,9 @@ function bindEvents() {
                     "[data-edit-size]"
                 );
 
-            if (editSize) {
+            if (
+                editSize
+            ) {
 
                 const size =
                     sizesCache.find(
@@ -7403,7 +8063,10 @@ function bindEvents() {
                                 .editSize
                     );
 
-                if (size) {
+                if (
+                    size
+                ) {
+
                     openSizeModal(
                         size
                     );
@@ -7432,7 +8095,71 @@ function bindEvents() {
 
 
             // =================================================
-            // PRODUTOS
+            // VENDA RÁPIDA
+            // =================================================
+
+            const quickSellButton =
+                event.target.closest(
+                    "[data-quick-sell-product]"
+                );
+
+            if (
+                quickSellButton
+            ) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openQuickSale(
+                    quickSellButton
+                        .dataset
+                        .quickSellProduct
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // EDIÇÃO PELO BOTÃO
+            // =================================================
+
+            const editProductButton =
+                event.target.closest(
+                    "[data-edit-product-button]"
+                );
+
+            if (
+                editProductButton
+            ) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const product =
+                    productsCache.find(
+                        item =>
+                            item.id ===
+                            editProductButton
+                                .dataset
+                                .editProductButton
+                    );
+
+                if (
+                    product
+                ) {
+
+                    openProductModal(
+                        product
+                    );
+                }
+
+                return;
+            }
+
+
+            // =================================================
+            // CARD DE PRODUTO
             // =================================================
 
             const productCard =
@@ -7453,7 +8180,10 @@ function bindEvents() {
                                 .editProduct
                     );
 
-                if (product) {
+                if (
+                    product
+                ) {
+
                     openProductModal(
                         product
                     );
@@ -7537,7 +8267,10 @@ function bindEvents() {
                 const variantPicker =
                     $("saleVariantPicker");
 
-                if (variantPicker) {
+                if (
+                    variantPicker
+                ) {
+
                     variantPicker.hidden =
                         true;
                 }
@@ -7550,7 +8283,9 @@ function bindEvents() {
                     "[data-sale-decrease]"
                 );
 
-            if (decrease) {
+            if (
+                decrease
+            ) {
 
                 const index =
                     Number(
@@ -7561,11 +8296,14 @@ function bindEvents() {
                 const item =
                     saleDraft[index];
 
-                if (item) {
+                if (
+                    item
+                ) {
 
                     updateSaleItemQuantity(
                         index,
-                        item.quantity - 1
+                        item.quantity -
+                        1
                     );
                 }
 
@@ -7577,7 +8315,9 @@ function bindEvents() {
                     "[data-sale-increase]"
                 );
 
-            if (increase) {
+            if (
+                increase
+            ) {
 
                 const index =
                     Number(
@@ -7588,11 +8328,14 @@ function bindEvents() {
                 const item =
                     saleDraft[index];
 
-                if (item) {
+                if (
+                    item
+                ) {
 
                     updateSaleItemQuantity(
                         index,
-                        item.quantity + 1
+                        item.quantity +
+                        1
                     );
                 }
 
@@ -7604,7 +8347,9 @@ function bindEvents() {
                     "[data-sale-remove]"
                 );
 
-            if (removeSale) {
+            if (
+                removeSale
+            ) {
 
                 removeSaleItem(
                     Number(
@@ -7620,7 +8365,7 @@ function bindEvents() {
 
 
     // =================================================
-    // QUANTIDADE DOS ITENS DA VENDA
+    // QUANTIDADE DA VENDA
     // =================================================
 
     document.addEventListener(
@@ -7648,7 +8393,7 @@ function bindEvents() {
 
 
     // =================================================
-    // TECLADO — CARD DE PRODUTO
+    // TECLADO NOS CARDS
     // =================================================
 
     document.addEventListener(
@@ -7681,7 +8426,10 @@ function bindEvents() {
                                 .editProduct
                     );
 
-                if (product) {
+                if (
+                    product
+                ) {
+
                     openProductModal(
                         product
                     );
@@ -7753,8 +8501,12 @@ function filterProducts(
                         .toLowerCase();
 
                 return (
-                    name.includes(search) ||
-                    sku.includes(search)
+                    name.includes(
+                        search
+                    ) ||
+                    sku.includes(
+                        search
+                    )
                 );
             }
         );
@@ -7776,7 +8528,9 @@ function renderProductCollection(
         return;
     }
 
-    if (!products.length) {
+    if (
+        !products.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -7811,16 +8565,17 @@ function filterStock(
         variantsCache.filter(
             variant => {
 
-                const text = [
-
-                    variant.products?.name,
-                    variant.colors?.name,
-                    variant.sizes?.name
-
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
+                const text =
+                    [
+                        variant.products?.name,
+                        variant.colors?.name,
+                        variant.sizes?.name
+                    ]
+                        .filter(
+                            Boolean
+                        )
+                        .join(" ")
+                        .toLowerCase();
 
                 return text.includes(
                     search
@@ -7845,7 +8600,9 @@ function renderStockCollection(
         return;
     }
 
-    if (!variants.length) {
+    if (
+        !variants.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -7895,7 +8652,9 @@ function filterSales(
         return;
     }
 
-    if (!filtered.length) {
+    if (
+        !filtered.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -7928,15 +8687,16 @@ function filterFinance(
         financeCache.filter(
             transaction => {
 
-                const text = [
-
-                    transaction.description,
-                    transaction.category
-
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
+                const text =
+                    [
+                        transaction.description,
+                        transaction.category
+                    ]
+                        .filter(
+                            Boolean
+                        )
+                        .join(" ")
+                        .toLowerCase();
 
                 return text.includes(
                     search
@@ -7951,7 +8711,9 @@ function filterFinance(
         return;
     }
 
-    if (!filtered.length) {
+    if (
+        !filtered.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -7992,11 +8754,13 @@ function filterFinance(
 
                         </div>
 
-                        <strong class="${
-                            income
-                                ? "income"
-                                : "expense"
-                        }">
+                        <strong
+                            class="${
+                                income
+                                    ? "income"
+                                    : "expense"
+                            }"
+                        >
 
                             ${income ? "+" : "-"}
                             ${formatCurrency(
@@ -8018,18 +8782,6 @@ function filterFinance(
 // =========================================================
 
 async function loadProductsPage() {
-
-    /*
-     * Produtos precisam de:
-     * - produtos
-     * - categorias
-     * - cores
-     * - tamanhos
-     * - variações
-     * - fotos
-     *
-     * Tudo é carregado em lote.
-     */
 
     await Promise.all([
         loadCategories(),
@@ -8060,7 +8812,7 @@ async function loadInitialData() {
 
 
 // =========================================================
-// INICIALIZAÇÃO
+// SESSÃO
 // =========================================================
 
 async function checkSession() {
@@ -8106,7 +8858,9 @@ async function checkSession() {
             }
         }
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Erro ao verificar sessão:",
@@ -8133,7 +8887,7 @@ async function checkSession() {
 
 
 // =========================================================
-// START
+// INICIALIZAÇÃO
 // =========================================================
 
 document.addEventListener(
@@ -8161,7 +8915,26 @@ document.addEventListener(
             return;
         }
 
+        /*
+         * PRIMEIRO:
+         * todos os modais começam fechados.
+         *
+         * Isso corrige o problema em que o productModal
+         * aparecia indevidamente ao navegar para Financeiro.
+         */
+
+        initializeModals();
+
+        /*
+         * SEGUNDO:
+         * somente agora registramos os listeners.
+         */
+
         bindEvents();
+
+        /*
+         * Listener de autenticação.
+         */
 
         supabaseClient.auth
             .onAuthStateChange(
@@ -8202,6 +8975,27 @@ document.addEventListener(
 
                         clearProductPhotosDraft();
 
+                        document
+                            .querySelectorAll(
+                                ".modal"
+                            )
+                            .forEach(
+                                modal => {
+
+                                    modal.hidden =
+                                        true;
+
+                                    modal.setAttribute(
+                                        "aria-hidden",
+                                        "true"
+                                    );
+                                }
+                            );
+
+                        document.body.classList.remove(
+                            "modal-open"
+                        );
+
                         if (
                             $("appScreen")
                         ) {
@@ -8222,6 +9016,10 @@ document.addEventListener(
                     }
                 }
             );
+
+        /*
+         * Finalmente verifica a sessão existente.
+         */
 
         await checkSession();
     }
