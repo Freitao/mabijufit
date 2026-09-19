@@ -7,6 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// =========================================================
+// INICIALIZAÇÃO
+// =========================================================
+
 async function initializeApp() {
 
     console.log("MabijuFit inicializada.");
@@ -14,7 +18,9 @@ async function initializeApp() {
     registerServiceWorker();
 
     setupLoginForm();
+
     setupLogout();
+
     await checkExistingSession();
 }
 
@@ -54,9 +60,6 @@ async function handleLogin(event) {
     const button =
         document.getElementById("loginButton");
 
-    const message =
-        document.getElementById("loginMessage");
-
 
     if (!email || !password) {
 
@@ -77,11 +80,13 @@ async function handleLogin(event) {
 
     try {
 
-        const { data, error } =
-            await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
 
         if (error) {
@@ -105,11 +110,7 @@ async function handleLogin(event) {
         );
 
 
-        showLoginMessage(
-    "Login realizado com sucesso."
-);
-
-showAppScreen(data.user);
+        showAppScreen(data.user);
 
     } catch (error) {
 
@@ -132,7 +133,7 @@ showAppScreen(data.user);
 
 
 // =========================================================
-// SESSÃO EXISTENTE
+// VERIFICAR SESSÃO EXISTENTE
 // =========================================================
 
 async function checkExistingSession() {
@@ -158,15 +159,16 @@ async function checkExistingSession() {
 
         if (data.session) {
 
-    console.log(
-        "Usuário já autenticado:",
-        data.session.user
-    );
+            console.log(
+                "Usuário já autenticado:",
+                data.session.user
+            );
 
-    showAppScreen(
-        data.session.user
-    );
-}
+            showAppScreen(
+                data.session.user
+            );
+
+        }
 
     } catch (error) {
 
@@ -179,7 +181,53 @@ async function checkExistingSession() {
 
 
 // =========================================================
-// MENSAGENS
+// NAVEGAÇÃO ENTRE LOGIN E APLICAÇÃO
+// =========================================================
+
+function showAppScreen(user) {
+
+    const loginScreen =
+        document.getElementById("loginScreen");
+
+    const appScreen =
+        document.getElementById("appScreen");
+
+    const userName =
+        document.getElementById("userName");
+
+
+    // Esconde completamente o login
+    if (loginScreen) {
+
+        loginScreen.hidden = true;
+
+        loginScreen.style.display = "none";
+    }
+
+
+    // Mostra o aplicativo
+    if (appScreen) {
+
+        appScreen.hidden = false;
+
+        appScreen.style.display = "block";
+    }
+
+
+    // Nome do usuário
+    if (userName) {
+
+        const fullName =
+            user?.user_metadata?.full_name;
+
+        userName.textContent =
+            fullName || "MabijuFit";
+    }
+}
+
+
+// =========================================================
+// MENSAGENS DE LOGIN
 // =========================================================
 
 function showLoginMessage(message) {
@@ -201,52 +249,21 @@ function getLoginErrorMessage(error) {
         error &&
         error.message === "Invalid login credentials"
     ) {
+
         return "E-mail ou senha incorretos.";
     }
+
 
     if (
         error &&
         error.message
     ) {
+
         return error.message;
     }
 
+
     return "Não foi possível realizar o login.";
-}
-// =========================================================
-// NAVEGAÇÃO ENTRE LOGIN E APLICAÇÃO
-// =========================================================
-
-function showAppScreen(user) {
-
-    const loginScreen =
-        document.getElementById("loginScreen");
-
-    const appScreen =
-        document.getElementById("appScreen");
-
-    const userName =
-        document.getElementById("userName");
-
-
-    if (loginScreen) {
-        loginScreen.hidden = true;
-    }
-
-
-    if (appScreen) {
-        appScreen.hidden = false;
-    }
-
-
-    if (userName) {
-
-        const name =
-            user?.user_metadata?.full_name;
-
-        userName.textContent =
-            name || "MabijuFit";
-    }
 }
 
 
@@ -266,27 +283,75 @@ function setupLogout() {
 
     button.addEventListener(
         "click",
-        async () => {
-
-            const { error } =
-                await supabaseClient.auth.signOut();
-
-
-            if (error) {
-
-                console.error(
-                    "Erro ao sair:",
-                    error
-                );
-
-                return;
-            }
-
-
-            window.location.reload();
-        }
+        handleLogout
     );
 }
+
+
+async function handleLogout() {
+
+    try {
+
+        const {
+            error
+        } = await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            console.error(
+                "Erro ao sair:",
+                error
+            );
+
+            return;
+        }
+
+
+        // Volta para a tela de login
+        const loginScreen =
+            document.getElementById("loginScreen");
+
+        const appScreen =
+            document.getElementById("appScreen");
+
+
+        if (appScreen) {
+
+            appScreen.hidden = true;
+
+            appScreen.style.display = "none";
+        }
+
+
+        if (loginScreen) {
+
+            loginScreen.hidden = false;
+
+            loginScreen.style.display = "flex";
+        }
+
+
+        const form =
+            document.getElementById("loginForm");
+
+        if (form) {
+            form.reset();
+        }
+
+
+        showLoginMessage("");
+
+
+    } catch (error) {
+
+        console.error(
+            "Erro inesperado ao sair:",
+            error
+        );
+    }
+}
+
 
 // =========================================================
 // SERVICE WORKER
