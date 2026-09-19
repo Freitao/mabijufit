@@ -21,6 +21,8 @@ async function initializeApp() {
 
     setupLogout();
 
+    setupNavigation();
+
     await checkExistingSession();
 }
 
@@ -181,7 +183,7 @@ async function checkExistingSession() {
 
 
 // =========================================================
-// NAVEGAÇÃO ENTRE LOGIN E APLICAÇÃO
+// MOSTRAR APLICAÇÃO
 // =========================================================
 
 function showAppScreen(user) {
@@ -196,7 +198,6 @@ function showAppScreen(user) {
         document.getElementById("userName");
 
 
-    // Esconde completamente o login
     if (loginScreen) {
 
         loginScreen.hidden = true;
@@ -205,7 +206,6 @@ function showAppScreen(user) {
     }
 
 
-    // Mostra o aplicativo
     if (appScreen) {
 
         appScreen.hidden = false;
@@ -214,7 +214,6 @@ function showAppScreen(user) {
     }
 
 
-    // Nome do usuário
     if (userName) {
 
         const fullName =
@@ -223,6 +222,125 @@ function showAppScreen(user) {
         userName.textContent =
             fullName || "MabijuFit";
     }
+
+
+    showSection("home");
+}
+
+
+// =========================================================
+// NAVEGAÇÃO
+// =========================================================
+
+function setupNavigation() {
+
+    const navigationButtons =
+        document.querySelectorAll(
+            "[data-section]"
+        );
+
+
+    navigationButtons.forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const section =
+                        button.dataset.section;
+
+                    showSection(section);
+                }
+            );
+
+        }
+    );
+}
+
+
+function showSection(sectionName) {
+
+    const sections = {
+
+        home:
+            document.getElementById(
+                "homeScreen"
+            ),
+
+        products:
+            document.getElementById(
+                "productsScreen"
+            ),
+
+        stock:
+            document.getElementById(
+                "stockScreen"
+            ),
+
+        sales:
+            document.getElementById(
+                "salesScreen"
+            ),
+
+        finance:
+            document.getElementById(
+                "financeScreen"
+            )
+    };
+
+
+    // Esconde todas as telas
+
+    Object.values(sections).forEach(
+        (section) => {
+
+            if (!section) {
+                return;
+            }
+
+            section.hidden = true;
+
+            section.style.display = "none";
+        }
+    );
+
+
+    // Mostra a tela escolhida
+
+    const selectedSection =
+        sections[sectionName];
+
+
+    if (selectedSection) {
+
+        selectedSection.hidden = false;
+
+        selectedSection.style.display = "block";
+    }
+
+
+    // Atualiza o menu inferior
+
+    const navigationButtons =
+        document.querySelectorAll(
+            ".nav-item"
+        );
+
+
+    navigationButtons.forEach(
+        (button) => {
+
+            const isActive =
+                button.dataset.section === sectionName;
+
+            button.classList.toggle(
+                "active",
+                isActive
+            );
+
+        }
+    );
 }
 
 
@@ -308,7 +426,6 @@ async function handleLogout() {
         }
 
 
-        // Volta para a tela de login
         const loginScreen =
             document.getElementById("loginScreen");
 
@@ -334,6 +451,7 @@ async function handleLogout() {
 
         const form =
             document.getElementById("loginForm");
+
 
         if (form) {
             form.reset();
