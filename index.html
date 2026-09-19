@@ -60,7 +60,7 @@
 
     <link
         rel="stylesheet"
-        href="css/style.css?v=2"
+        href="css/style.css?v=3"
     >
 
 </head>
@@ -70,15 +70,25 @@
 
     <div id="app">
 
-        <main class="login-page">
+
+        <!-- =================================================
+             TELA DE LOGIN
+             ================================================= -->
+
+        <main
+            id="loginScreen"
+            class="login-page"
+        >
 
             <section class="login-card">
 
                 <div class="login-logo">
+
                     <img
                         src="assets/icons/icon-192.png"
                         alt="MabijuFit"
                     >
+
                 </div>
 
 
@@ -170,8 +180,399 @@
 
         </main>
 
+
+
+        <!-- =================================================
+             APLICAÇÃO
+             ================================================= -->
+
+        <main
+            id="appScreen"
+            class="app-screen"
+            hidden
+        >
+
+
+            <!-- HEADER -->
+
+            <header class="dashboard-header">
+
+                <div>
+
+                    <span class="dashboard-greeting">
+                        Olá,
+                    </span>
+
+                    <h1 id="userName">
+                        MabijuFit
+                    </h1>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="icon-button"
+                    aria-label="Sair"
+                >
+                    Sair
+                </button>
+
+            </header>
+
+
+
+            <!-- CONTEÚDO -->
+
+            <section class="dashboard-content">
+
+
+                <div class="dashboard-title">
+
+                    <span>
+                        Visão geral
+                    </span>
+
+                    <h2>
+                        Resumo da loja
+                    </h2>
+
+                </div>
+
+
+
+                <!-- CARDS -->
+
+                <div class="metrics-grid">
+
+
+                    <article class="metric-card">
+
+                        <span class="metric-label">
+                            Vendas
+                        </span>
+
+                        <strong
+                            id="metricSales"
+                            class="metric-value"
+                        >
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+
+                    <article class="metric-card">
+
+                        <span class="metric-label">
+                            Pedidos
+                        </span>
+
+                        <strong
+                            id="metricOrders"
+                            class="metric-value"
+                        >
+                            0
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+
+                    <article class="metric-card">
+
+                        <span class="metric-label">
+                            Estoque baixo
+                        </span>
+
+                        <strong
+                            id="metricLowStock"
+                            class="metric-value"
+                        >
+                            0
+                        </strong>
+
+                        <small>
+                            Produtos
+                        </small>
+
+                    </article>
+
+
+
+                    <article class="metric-card">
+
+                        <span class="metric-label">
+                            Despesas
+                        </span>
+
+                        <strong
+                            id="metricExpenses"
+                            class="metric-value"
+                        >
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+                </div>
+
+
+
+                <!-- ACESSOS RÁPIDOS -->
+
+                <section class="dashboard-section">
+
+                    <div class="section-heading">
+
+                        <h2>
+                            Acessos rápidos
+                        </h2>
+
+                    </div>
+
+
+                    <div class="quick-actions">
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="products"
+                        >
+
+                            <span class="quick-action-icon">
+                                P
+                            </span>
+
+                            <span>
+                                Produtos
+                            </span>
+
+                        </button>
+
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="stock"
+                        >
+
+                            <span class="quick-action-icon">
+                                E
+                            </span>
+
+                            <span>
+                                Estoque
+                            </span>
+
+                        </button>
+
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="sales"
+                        >
+
+                            <span class="quick-action-icon">
+                                V
+                            </span>
+
+                            <span>
+                                Vendas
+                            </span>
+
+                        </button>
+
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="finance"
+                        >
+
+                            <span class="quick-action-icon">
+                                F
+                            </span>
+
+                            <span>
+                                Financeiro
+                            </span>
+
+                        </button>
+
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- ATIVIDADE -->
+
+                <section class="dashboard-section">
+
+                    <div class="section-heading">
+
+                        <h2>
+                            Atividade recente
+                        </h2>
+
+                    </div>
+
+
+                    <div
+                        id="recentActivity"
+                        class="empty-state"
+                    >
+
+                        <div class="empty-state-icon">
+                            M
+                        </div>
+
+                        <strong>
+                            Nenhuma atividade ainda
+                        </strong>
+
+                        <p>
+                            As vendas e movimentações
+                            aparecerão aqui.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+            </section>
+
+
+
+            <!-- NAVEGAÇÃO INFERIOR -->
+
+            <nav class="bottom-navigation">
+
+
+                <button
+                    type="button"
+                    class="nav-item active"
+                    data-section="home"
+                >
+
+                    <span class="nav-icon">
+                        I
+                    </span>
+
+                    <span>
+                        Início
+                    </span>
+
+                </button>
+
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="products"
+                >
+
+                    <span class="nav-icon">
+                        P
+                    </span>
+
+                    <span>
+                        Produtos
+                    </span>
+
+                </button>
+
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="stock"
+                >
+
+                    <span class="nav-icon">
+                        E
+                    </span>
+
+                    <span>
+                        Estoque
+                    </span>
+
+                </button>
+
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="sales"
+                >
+
+                    <span class="nav-icon">
+                        V
+                    </span>
+
+                    <span>
+                        Vendas
+                    </span>
+
+                </button>
+
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="finance"
+                >
+
+                    <span class="nav-icon">
+                        F
+                    </span>
+
+                    <span>
+                        Financeiro
+                    </span>
+
+                </button>
+
+
+            </nav>
+
+
+        </main>
+
     </div>
 
+
+
+    <!-- =====================================================
+         SCRIPTS
+         ===================================================== -->
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
