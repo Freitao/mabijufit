@@ -327,3 +327,229 @@ body {
         transition: none !important;
     }
 }
+
+/* =========================================================
+   LOGIN — MABIJUFIT
+   ========================================================= */
+
+.login-page {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        30px 20px
+        calc(30px + env(safe-area-inset-bottom));
+
+    background:
+        radial-gradient(
+            circle at top,
+            var(--pink-100) 0%,
+            var(--background) 48%,
+            var(--white) 100%
+        );
+}
+
+
+.login-card {
+    width: 100%;
+    max-width: 430px;
+
+    padding: 36px 26px 28px;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    border: 1px solid var(--border);
+    border-radius: 28px;
+
+    box-shadow:
+        0 20px 60px rgba(150, 90, 115, 0.14);
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.login-logo {
+    width: 112px;
+    height: 112px;
+
+    margin: 0 auto 22px;
+
+    border-radius: 50%;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 12px 30px rgba(201, 111, 148, 0.22);
+}
+
+.login-logo img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+}
+
+
+/* =========================================================
+   CABEÇALHO
+   ========================================================= */
+
+.login-header {
+    text-align: center;
+
+    margin-bottom: 30px;
+}
+
+.login-header h1 {
+    margin-bottom: 6px;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 2rem;
+    font-weight: 600;
+
+    letter-spacing: -0.5px;
+
+    color: var(--black);
+}
+
+.login-header p {
+    color: var(--gray-600);
+
+    font-size: 0.92rem;
+}
+
+
+/* =========================================================
+   FORMULÁRIO
+   ========================================================= */
+
+.login-form {
+    width: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    color: var(--black);
+
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    min-height: 52px;
+
+    padding: 0 16px;
+
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    background: var(--white);
+
+    color: var(--black);
+
+    font-size: 1rem;
+
+    outline: none;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.form-group input::placeholder {
+    color: var(--gray-400);
+}
+
+.form-group input:focus {
+    border-color: var(--pink-400);
+
+    box-shadow:
+        0 0 0 4px rgba(223, 145, 177, 0.12);
+}
+
+
+/* =========================================================
+   BOTÃO DE LOGIN
+   ========================================================= */
+
+.login-form .primary-button {
+    width: 100%;
+
+    margin-top: 8px;
+}
+
+
+/* =========================================================
+   MENSAGEM
+   ========================================================= */
+
+.login-message {
+    min-height: 22px;
+
+    margin-top: 14px;
+
+    text-align: center;
+
+    color: var(--gray-600);
+
+    font-size: 0.86rem;
+}
+
+
+/* =========================================================
+   RODAPÉ
+   ========================================================= */
+
+.login-footer {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 3px;
+
+    margin-top: 28px;
+
+    color: var(--gray-400);
+
+    font-size: 0.75rem;
+}
+
+
+/* =========================================================
+   DESKTOP
+   ========================================================= */
+
+@media (min-width: 768px) {
+
+    .login-page {
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+
+    .login-card {
+        padding: 44px 38px 32px;
+    }
+}
