@@ -1,5 +1,5 @@
 // =========================================================
-// MABIJUFIT — APLICAÇÃO PRINCIPAL.
+// MABIJUFIT — APLICAÇÃO PRINCIPAL
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,80 +8,211 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 async function initializeApp() {
+
     console.log("MabijuFit inicializada.");
 
-    setupStartButton();
     registerServiceWorker();
 
-    await testSupabaseConnection();
+    setupLoginForm();
+
+    await checkExistingSession();
 }
 
 
 // =========================================================
-// TESTE SUPABASE
+// LOGIN
 // =========================================================
 
-async function testSupabaseConnection() {
+function setupLoginForm() {
 
-    if (!window.supabase) {
-        console.error(
-            "Biblioteca Supabase não carregada."
-        );
+    const form =
+        document.getElementById("loginForm");
 
+    if (!form) {
         return;
     }
 
-    if (!supabaseClient) {
-        console.error(
-            "Cliente Supabase não inicializado."
-        );
-
-        return;
-    }
-
-    const { data, error } =
-        await supabaseClient
-            .from("categories")
-            .select("id")
-            .limit(1);
-
-    if (error) {
-
-        console.error(
-            "Erro ao conectar ao Supabase:",
-            error
-        );
-
-        return;
-    }
-
-    console.log(
-        "Supabase conectado com sucesso.",
-        data
+    form.addEventListener(
+        "submit",
+        handleLogin
     );
 }
 
 
-// =========================================================
-// BOTÃO INICIAL
-// =========================================================
+async function handleLogin(event) {
 
-function setupStartButton() {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const email =
+        form.email.value.trim();
+
+    const password =
+        form.password.value;
 
     const button =
-        document.getElementById("startButton");
+        document.getElementById("loginButton");
 
-    if (!button) {
+    const message =
+        document.getElementById("loginMessage");
+
+
+    if (!email || !password) {
+
+        showLoginMessage(
+            "Preencha e-mail e senha."
+        );
+
         return;
     }
 
-    button.addEventListener("click", () => {
 
-        alert(
-            "Supabase conectado. A MabijuFit está pronta para começar."
+    button.disabled = true;
+
+    button.textContent = "Entrando...";
+
+    showLoginMessage("");
+
+
+    try {
+
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+
+        if (error) {
+
+            console.error(
+                "Erro no login:",
+                error
+            );
+
+            showLoginMessage(
+                getLoginErrorMessage(error)
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "Login realizado:",
+            data.user
         );
 
-    });
+
+        showLoginMessage(
+            "Login realizado com sucesso."
+        );
+
+
+        /*
+         * O dashboard será criado na próxima etapa.
+         * Por enquanto apenas confirmamos a autenticação.
+         */
+
+    } catch (error) {
+
+        console.error(
+            "Erro inesperado no login:",
+            error
+        );
+
+        showLoginMessage(
+            "Não foi possível realizar o login."
+        );
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent = "Entrar";
+    }
+}
+
+
+// =========================================================
+// SESSÃO EXISTENTE
+// =========================================================
+
+async function checkExistingSession() {
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.getSession();
+
+
+        if (error) {
+
+            console.error(
+                "Erro ao verificar sessão:",
+                error
+            );
+
+            return;
+        }
+
+
+        if (data.session) {
+
+            console.log(
+                "Usuário já autenticado:",
+                data.session.user
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao verificar sessão:",
+            error
+        );
+    }
+}
+
+
+// =========================================================
+// MENSAGENS
+// =========================================================
+
+function showLoginMessage(message) {
+
+    const element =
+        document.getElementById("loginMessage");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+}
+
+
+function getLoginErrorMessage(error) {
+
+    if (
+        error &&
+        error.message === "Invalid login credentials"
+    ) {
+        return "E-mail ou senha incorretos.";
+    }
+
+    if (
+        error &&
+        error.message
+    ) {
+        return error.message;
+    }
+
+    return "Não foi possível realizar o login.";
 }
 
 
@@ -99,6 +230,7 @@ function registerServiceWorker() {
 
         return;
     }
+
 
     window.addEventListener("load", () => {
 
