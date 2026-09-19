@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -12,40 +11,15 @@
 
     <meta
         name="theme-color"
-        content="#f3c6d8"
+        content="#d982a1"
     >
 
     <meta
         name="description"
-        content="Sistema de gestão da MabijuFit"
+        content="MabijuFit — Gestão inteligente para sua loja"
     >
 
-    <meta
-        name="mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-status-bar-style"
-        content="default"
-    >
-
-    <meta
-        name="apple-mobile-web-app-title"
-        content="MabijuFit"
-    >
-
-    <title>MabijuFit</title>
-
-
-    <!-- =====================================================
-         PWA
-         ===================================================== -->
+    <title>MabijuFit — Gestão</title>
 
     <link
         rel="manifest"
@@ -59,446 +33,146 @@
     >
 
     <link
-        rel="apple-touch-icon"
-        href="assets/icons/icon-192.png"
-    >
-
-
-    <!-- =====================================================
-         CSS
-         ===================================================== -->
-
-    <link
         rel="stylesheet"
-        href="css/style.css?v=5"
+        href="css/style.css"
     >
-
 </head>
 
 
 <body>
 
-<div id="app">
-
-
     <!-- =====================================================
-         LOGIN
+         APP ROOT
          ===================================================== -->
 
-    <main
-        id="loginScreen"
-        class="login-page"
-    >
-
-        <section class="login-card">
-
-            <div class="login-logo">
-
-                <img
-                    src="assets/icons/icon-192.png"
-                    alt="MabijuFit"
-                >
-
-            </div>
-
-
-            <div class="login-header">
-
-                <h1>
-                    MabijuFit
-                </h1>
-
-                <p>
-                    Gestão da sua loja
-                </p>
-
-            </div>
-
-
-            <form
-                id="loginForm"
-                class="login-form"
-            >
-
-                <div class="form-group">
-
-                    <label for="email">
-                        E-mail
-                    </label>
-
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="seu@email.com"
-                        autocomplete="email"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="password">
-                        Senha
-                    </label>
-
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Digite sua senha"
-                        autocomplete="current-password"
-                        required
-                    >
-
-                </div>
-
-
-                <button
-                    type="submit"
-                    id="loginButton"
-                    class="primary-button"
-                >
-                    Entrar
-                </button>
-
-
-                <p
-                    id="loginMessage"
-                    class="login-message"
-                    aria-live="polite"
-                ></p>
-
-            </form>
-
-
-            <div class="login-footer">
-
-                <span>
-                    MabijuFit
-                </span>
-
-                <span>
-                    Gestão inteligente
-                </span>
-
-            </div>
-
-        </section>
-
-    </main>
-
-
-
-    <!-- =====================================================
-         APLICAÇÃO
-         ===================================================== -->
-
-    <main
-        id="appScreen"
-        class="app-screen"
-        hidden
-    >
+    <div id="app">
 
 
         <!-- =================================================
-             HEADER
+             LOGIN
              ================================================= -->
 
-        <header class="dashboard-header">
-
-            <div>
-
-                <span class="dashboard-greeting">
-                    Olá,
-                </span>
-
-                <h1 id="userName">
-                    MabijuFit
-                </h1>
-
-            </div>
-
-
-            <button
-                type="button"
-                id="logoutButton"
-                class="icon-button"
-                aria-label="Sair"
-            >
-                Sair
-            </button>
-
-        </header>
-
-
-
-        <!-- =================================================
-             INÍCIO
-             ================================================= -->
-
-        <section
-            id="homeScreen"
-            class="module-screen"
+        <main
+            id="loginScreen"
+            class="login-page"
         >
 
-            <section class="dashboard-content">
+            <section class="login-card">
+
+                <div class="login-logo">
+                    <img
+                        src="assets/icons/icon-192.png"
+                        alt="MabijuFit"
+                    >
+                </div>
 
 
-                <div class="dashboard-title">
+                <div class="login-header">
 
-                    <span>
-                        VISÃO GERAL
-                    </span>
+                    <h1>MabijuFit</h1>
 
-                    <h2>
-                        Resumo da loja
-                    </h2>
+                    <p>Gestão da sua loja</p>
 
                 </div>
 
 
-                <!-- MÉTRICAS -->
+                <form
+                    id="loginForm"
+                    class="login-form"
+                >
 
-                <div class="metrics-grid">
+                    <div class="form-group">
 
+                        <label for="email">
+                            E-mail
+                        </label>
 
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Vendas
-                        </span>
-
-                        <strong
-                            id="metricSales"
-                            class="metric-value"
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            autocomplete="email"
+                            placeholder="seu@email.com"
+                            required
                         >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Pedidos
-                        </span>
-
-                        <strong
-                            id="metricOrders"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Estoque baixo
-                        </span>
-
-                        <strong
-                            id="metricLowStock"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Produtos
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Despesas
-                        </span>
-
-                        <strong
-                            id="metricExpenses"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-                </div>
-
-
-
-                <!-- ACESSOS RÁPIDOS -->
-
-                <section class="dashboard-section">
-
-                    <div class="section-heading">
-
-                        <h2>
-                            Acessos rápidos
-                        </h2>
 
                     </div>
 
 
-                    <div class="quick-actions">
+                    <div class="form-group">
 
+                        <label for="password">
+                            Senha
+                        </label>
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="products"
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            autocomplete="current-password"
+                            placeholder="Sua senha"
+                            required
                         >
-
-                            <span class="quick-action-icon">
-                                P
-                            </span>
-
-                            <span>
-                                Produtos
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="stock"
-                        >
-
-                            <span class="quick-action-icon">
-                                E
-                            </span>
-
-                            <span>
-                                Estoque
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="sales"
-                        >
-
-                            <span class="quick-action-icon">
-                                V
-                            </span>
-
-                            <span>
-                                Vendas
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="finance"
-                        >
-
-                            <span class="quick-action-icon">
-                                F
-                            </span>
-
-                            <span>
-                                Financeiro
-                            </span>
-
-                        </button>
-
 
                     </div>
 
-                </section>
 
-
-
-                <!-- ATIVIDADE RECENTE -->
-
-                <section class="dashboard-section">
-
-                    <div class="section-heading">
-
-                        <h2>
-                            Atividade recente
-                        </h2>
-
-                    </div>
+                    <button
+                        type="submit"
+                        id="loginButton"
+                        class="primary-button"
+                    >
+                        Entrar
+                    </button>
 
 
                     <div
-                        id="recentActivity"
-                        class="empty-state"
-                    >
+                        id="loginMessage"
+                        class="login-message"
+                    ></div>
 
-                        <div class="empty-state-icon">
-                            M
-                        </div>
+                </form>
 
-                        <strong>
-                            Nenhuma atividade ainda
-                        </strong>
 
-                        <p>
-                            As vendas e movimentações
-                            aparecerão aqui.
-                        </p>
+                <div class="login-footer">
 
-                    </div>
+                    <span>MabijuFit</span>
 
-                </section>
+                    <span>Gestão inteligente</span>
+
+                </div>
 
             </section>
 
-        </section>
+        </main>
 
 
 
         <!-- =================================================
-             PRODUTOS
+             APLICAÇÃO
              ================================================= -->
 
-        <section
-            id="productsScreen"
-            class="module-screen"
+        <main
+            id="appScreen"
+            class="app-screen"
             hidden
         >
 
-            <header class="module-header">
+
+            <!-- =============================================
+                 HEADER
+                 ============================================= -->
+
+            <header class="dashboard-header">
 
                 <div>
 
-                    <span class="module-eyebrow">
-                        CATÁLOGO
+                    <span class="dashboard-greeting">
+                        Olá,
                     </span>
 
-                    <h1>
-                        Produtos
+                    <h1 id="userName">
+                        MabijuFit
                     </h1>
 
                 </div>
@@ -506,68 +180,1277 @@
 
                 <button
                     type="button"
-                    id="newProductButton"
-                    class="module-add-button"
+                    id="logoutButton"
+                    class="icon-button"
                 >
-                    + Novo
+                    Sair
                 </button>
 
             </header>
 
 
-            <div class="module-content">
+
+            <!-- =============================================
+                 HOME
+                 ============================================= -->
+
+            <section
+                id="homeScreen"
+                class="module-screen"
+            >
+
+                <div class="dashboard-content">
 
 
-                <!-- BUSCA -->
+                    <div class="dashboard-title">
 
-                <div class="search-box">
+                        <span>
+                            VISÃO GERAL
+                        </span>
 
-                    <input
-                        type="search"
-                        id="productSearch"
-                        placeholder="Buscar produto..."
-                        autocomplete="off"
+                        <h2>
+                            Resumo da loja
+                        </h2>
+
+                    </div>
+
+
+                    <!-- MÉTRICAS -->
+
+                    <div class="metrics-grid">
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Vendas
+                            </span>
+
+                            <strong
+                                id="metricSales"
+                                class="metric-value"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Pedidos
+                            </span>
+
+                            <strong
+                                id="metricOrders"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Estoque baixo
+                            </span>
+
+                            <strong
+                                id="metricLowStock"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Produtos
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Despesas
+                            </span>
+
+                            <strong
+                                id="metricExpenses"
+                                class="metric-value"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
+
+                    </div>
+
+
+
+                    <!-- ACESSOS RÁPIDOS -->
+
+                    <section class="dashboard-section">
+
+                        <div class="section-heading">
+
+                            <h2>
+                                Acessos rápidos
+                            </h2>
+
+                        </div>
+
+
+                        <div class="quick-actions">
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="products"
+                            >
+
+                                <span class="quick-action-icon">
+                                    P
+                                </span>
+
+                                <span>
+                                    Produtos
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="stock"
+                            >
+
+                                <span class="quick-action-icon">
+                                    E
+                                </span>
+
+                                <span>
+                                    Estoque
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="sales"
+                            >
+
+                                <span class="quick-action-icon">
+                                    V
+                                </span>
+
+                                <span>
+                                    Vendas
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="finance"
+                            >
+
+                                <span class="quick-action-icon">
+                                    F
+                                </span>
+
+                                <span>
+                                    Financeiro
+                                </span>
+
+                            </button>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ATIVIDADE RECENTE -->
+
+                    <section class="dashboard-section">
+
+                        <div class="section-heading">
+
+                            <h2>
+                                Atividade recente
+                            </h2>
+
+                        </div>
+
+
+                        <div
+                            id="recentActivity"
+                            class="empty-state"
+                        >
+
+                            <div class="empty-state-icon">
+                                M
+                            </div>
+
+                            <strong>
+                                Nenhuma atividade ainda
+                            </strong>
+
+                            <p>
+                                As vendas e movimentações aparecerão aqui.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 PRODUTOS
+                 ============================================= -->
+
+            <section
+                id="productsScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="module-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            CATÁLOGO
+                        </span>
+
+                        <h1>
+                            Produtos
+                        </h1>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="newProductButton"
+                        class="module-add-button"
                     >
+                        + Novo
+                    </button>
 
                 </div>
 
 
+                <div class="module-content">
 
-                <!-- LISTA DE PRODUTOS -->
 
-                <div
-                    id="productsList"
-                    class="products-list"
-                >
+                    <div class="search-box">
 
-                    <div class="empty-state">
+                        <input
+                            type="search"
+                            id="productSearch"
+                            placeholder="Buscar produto..."
+                            autocomplete="off"
+                        >
 
-                        <div class="empty-state-icon">
-                            P
+                    </div>
+
+
+                    <div
+                        id="productsList"
+                        class="products-list"
+                    ></div>
+
+
+
+                    <!-- CATEGORIAS -->
+
+                    <section class="categories-section">
+
+                        <div class="module-header">
+
+                            <div>
+
+                                <span class="module-eyebrow">
+                                    ORGANIZAÇÃO
+                                </span>
+
+                                <h1>
+                                    Categorias
+                                </h1>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                id="newCategoryButton"
+                                class="module-add-button secondary-add-button"
+                            >
+                                + Categoria
+                            </button>
+
                         </div>
 
-                        <strong>
-                            Nenhum produto cadastrado
-                        </strong>
 
-                        <p>
-                            Cadastre seu primeiro produto
-                            para começar a controlar o estoque.
-                        </p>
+                        <div
+                            id="categoriesList"
+                            class="categories-list"
+                        ></div>
+
+                    </section>
+
+
+
+                    <!-- CORES -->
+
+                    <section class="categories-section">
+
+                        <div class="module-header">
+
+                            <div>
+
+                                <span class="module-eyebrow">
+                                    VARIAÇÕES
+                                </span>
+
+                                <h1>
+                                    Cores
+                                </h1>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                id="newColorButton"
+                                class="module-add-button secondary-add-button"
+                            >
+                                + Cor
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="colorsList"
+                            class="categories-list"
+                        ></div>
+
+                    </section>
+
+
+
+                    <!-- TAMANHOS -->
+
+                    <section class="categories-section">
+
+                        <div class="module-header">
+
+                            <div>
+
+                                <span class="module-eyebrow">
+                                    VARIAÇÕES
+                                </span>
+
+                                <h1>
+                                    Tamanhos
+                                </h1>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                id="newSizeButton"
+                                class="module-add-button secondary-add-button"
+                            >
+                                + Tamanho
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="sizesList"
+                            class="categories-list"
+                        ></div>
+
+                    </section>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 ESTOQUE
+                 ============================================= -->
+
+            <section
+                id="stockScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="module-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            CONTROLE
+                        </span>
+
+                        <h1>
+                            Estoque
+                        </h1>
 
                     </div>
 
                 </div>
 
 
+                <div class="module-content">
 
-                <!-- =================================================
-                     CATEGORIAS
-                     ================================================= -->
 
-                <section class="categories-section">
+                    <div class="metrics-grid">
 
-                    <div class="section-heading">
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Total
+                            </span>
+
+                            <strong
+                                id="stockTotal"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Unidades
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Baixo
+                            </span>
+
+                            <strong
+                                id="stockLow"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Variações
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Zerado
+                            </span>
+
+                            <strong
+                                id="stockZero"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Variações
+                            </small>
+
+                        </article>
+
+                    </div>
+
+
+                    <div class="search-box">
+
+                        <input
+                            type="search"
+                            id="stockSearch"
+                            placeholder="Buscar no estoque..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <div
+                        id="stockList"
+                        class="stock-list"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 VENDAS
+                 ============================================= -->
+
+            <section
+                id="salesScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="module-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            COMERCIAL
+                        </span>
+
+                        <h1>
+                            Vendas
+                        </h1>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="newSaleButton"
+                        class="module-add-button"
+                    >
+                        + Venda
+                    </button>
+
+                </div>
+
+
+                <div class="module-content">
+
+
+                    <div class="metrics-grid">
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Hoje
+                            </span>
+
+                            <strong
+                                id="salesToday"
+                                class="metric-value"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Vendas
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Pedidos
+                            </span>
+
+                            <strong
+                                id="salesOrdersToday"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
+
+                    </div>
+
+
+                    <div class="search-box">
+
+                        <input
+                            type="search"
+                            id="salesSearch"
+                            placeholder="Buscar venda..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <div
+                        id="salesList"
+                        class="sales-list"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 FINANCEIRO
+                 ============================================= -->
+
+            <section
+                id="financeScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="module-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            FINANCEIRO
+                        </span>
+
+                        <h1>
+                            Financeiro
+                        </h1>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="newTransactionButton"
+                        class="module-add-button"
+                    >
+                        + Lançamento
+                    </button>
+
+                </div>
+
+
+                <div class="module-content">
+
+
+                    <div class="metrics-grid">
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Receitas
+                            </span>
+
+                            <strong
+                                id="financeIncome"
+                                class="metric-value finance-income"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Período
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Despesas
+                            </span>
+
+                            <strong
+                                id="financeExpenses"
+                                class="metric-value finance-expense"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Período
+                            </small>
+
+                        </article>
+
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Resultado
+                            </span>
+
+                            <strong
+                                id="financeBalance"
+                                class="metric-value finance-balance"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Período
+                            </small>
+
+                        </article>
+
+                    </div>
+
+
+                    <div class="search-box">
+
+                        <input
+                            type="search"
+                            id="financeSearch"
+                            placeholder="Buscar lançamento..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <div
+                        id="financeList"
+                        class="finance-list"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 NAVEGAÇÃO INFERIOR
+                 ============================================= -->
+
+            <nav class="bottom-navigation">
+
+
+                <button
+                    type="button"
+                    class="nav-item active"
+                    data-section="home"
+                >
+
+                    <span class="nav-icon">
+                        I
+                    </span>
+
+                    <span>
+                        Início
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="products"
+                >
+
+                    <span class="nav-icon">
+                        P
+                    </span>
+
+                    <span>
+                        Produtos
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="stock"
+                >
+
+                    <span class="nav-icon">
+                        E
+                    </span>
+
+                    <span>
+                        Estoque
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="sales"
+                >
+
+                    <span class="nav-icon">
+                        V
+                    </span>
+
+                    <span>
+                        Vendas
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-section="finance"
+                >
+
+                    <span class="nav-icon">
+                        F
+                    </span>
+
+                    <span>
+                        Financeiro
+                    </span>
+
+                </button>
+
+
+            </nav>
+
+
+
+            <!-- =============================================
+                 MODAL — PRODUTO
+                 ============================================= -->
+
+            <div
+                id="productModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="productModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                CATÁLOGO
+                            </span>
+
+                            <h2>
+                                Novo produto
+                            </h2>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            data-close-modal="productModal"
+                            aria-label="Fechar"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+
+                    <form
+                        id="productForm"
+                        class="modal-form"
+                    >
+
+                        <input
+                            type="hidden"
+                            id="productId"
+                        >
+
+
+                        <!-- DADOS DO PRODUTO -->
+
+                        <div class="form-section">
+
+                            <div class="form-group">
+
+                                <label for="productName">
+                                    Nome do produto
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="productName"
+                                    placeholder="Ex.: Legging Power"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-row">
+
+                                <div class="form-group">
+
+                                    <label for="productSku">
+                                        SKU
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="productSku"
+                                        placeholder="Ex.: LEG-001"
+                                    >
+
+                                </div>
+
+
+                                <div class="form-group">
+
+                                    <label for="productCategory">
+                                        Categoria
+                                    </label>
+
+                                    <select id="productCategory">
+
+                                        <option value="">
+                                            Selecione
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="productDescription">
+                                    Descrição
+                                </label>
+
+                                <textarea
+                                    id="productDescription"
+                                    placeholder="Descrição do produto"
+                                ></textarea>
+
+                            </div>
+
+
+                            <div class="form-row">
+
+                                <div class="form-group">
+
+                                    <label for="productCostPrice">
+                                        Preço de custo
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="productCostPrice"
+                                        min="0"
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        placeholder="0,00"
+                                    >
+
+                                </div>
+
+
+                                <div class="form-group">
+
+                                    <label for="productSalePrice">
+                                        Preço de venda
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="productSalePrice"
+                                        min="0"
+                                        step="0.01"
+                                        inputmode="decimal"
+                                        placeholder="0,00"
+                                        required
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="productMinimumStock">
+                                    Estoque mínimo
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="productMinimumStock"
+                                    min="0"
+                                    step="1"
+                                    inputmode="numeric"
+                                    value="0"
+                                >
+
+                            </div>
+
+
+                            <label class="checkbox-field">
+
+                                <input
+                                    type="checkbox"
+                                    id="productActive"
+                                    checked
+                                >
+
+                                <span>
+                                    Produto ativo
+                                </span>
+
+                            </label>
+
+                        </div>
+
+
+
+                        <!-- =================================
+                             CORES
+                             ================================= -->
+
+                        <div class="form-section">
+
+                            <div>
+
+                                <h3>
+                                    Cores disponíveis
+                                </h3>
+
+                                <p
+                                    class="text-muted"
+                                    style="margin-top: 4px; font-size: 12px;"
+                                >
+                                    Selecione as cores que esse produto possui.
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                id="productColors"
+                                class="variation-options"
+                            >
+
+                                <div class="empty-state">
+
+                                    <strong>
+                                        Nenhuma cor cadastrada
+                                    </strong>
+
+                                    <p>
+                                        Cadastre cores primeiro em Produtos.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =================================
+                             TAMANHOS
+                             ================================= -->
+
+                        <div class="form-section">
+
+                            <div>
+
+                                <h3>
+                                    Tamanhos disponíveis
+                                </h3>
+
+                                <p
+                                    class="text-muted"
+                                    style="margin-top: 4px; font-size: 12px;"
+                                >
+                                    Selecione os tamanhos que esse produto possui.
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                id="productSizes"
+                                class="variation-options"
+                            >
+
+                                <div class="empty-state">
+
+                                    <strong>
+                                        Nenhum tamanho cadastrado
+                                    </strong>
+
+                                    <p>
+                                        Cadastre tamanhos primeiro em Produtos.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =================================
+                             COMBINAÇÕES
+                             ================================= -->
+
+                        <div class="form-section">
+
+                            <div>
+
+                                <h3>
+                                    Variações geradas
+                                </h3>
+
+                                <p
+                                    class="text-muted"
+                                    style="margin-top: 4px; font-size: 12px;"
+                                >
+                                    As combinações de cor e tamanho serão criadas automaticamente.
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                id="productVariantsPreview"
+                                class="variation-preview"
+                            >
+
+                                <div class="empty-state">
+
+                                    <strong>
+                                        Nenhuma variação selecionada
+                                    </strong>
+
+                                    <p>
+                                        Selecione pelo menos uma cor e um tamanho.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div
+                            id="productFormMessage"
+                            class="form-message"
+                        ></div>
+
+
+
+                        <div class="modal-actions">
+
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="productModal"
+                            >
+                                Cancelar
+                            </button>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Salvar produto
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 MODAL — CATEGORIA
+                 ============================================= -->
+
+            <div
+                id="categoryModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="categoryModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+                    <div class="modal-header">
 
                         <div>
 
@@ -576,7 +1459,7 @@
                             </span>
 
                             <h2>
-                                Categorias
+                                Nova categoria
                             </h2>
 
                         </div>
@@ -584,1415 +1467,534 @@
 
                         <button
                             type="button"
-                            id="newCategoryButton"
-                            class="module-add-button secondary-add-button"
+                            class="modal-close"
+                            data-close-modal="categoryModal"
+                            aria-label="Fechar"
                         >
-                            + Categoria
+                            ×
                         </button>
 
                     </div>
 
 
-                    <div
-                        id="categoriesList"
-                        class="categories-list"
+                    <form
+                        id="categoryForm"
+                        class="modal-form"
                     >
 
-                        <div class="empty-state">
-
-                            <div class="empty-state-icon">
-                                C
-                            </div>
-
-                            <strong>
-                                Nenhuma categoria
-                            </strong>
-
-                            <p>
-                                Crie categorias para organizar
-                                seus produtos.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-
-                <!-- =================================================
-                     CORES
-                     ================================================= -->
-
-                <section class="categories-section">
-
-                    <div class="section-heading">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                VARIAÇÕES
-                            </span>
-
-                            <h2>
-                                Cores
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            id="newColorButton"
-                            class="module-add-button secondary-add-button"
+                        <input
+                            type="hidden"
+                            id="categoryId"
                         >
-                            + Cor
-                        </button>
-
-                    </div>
-
-
-                    <div
-                        id="colorsList"
-                        class="categories-list"
-                    >
-
-                        <div class="empty-state">
-
-                            <div class="empty-state-icon">
-                                C
-                            </div>
-
-                            <strong>
-                                Nenhuma cor cadastrada
-                            </strong>
-
-                            <p>
-                                Cadastre as cores utilizadas
-                                nos produtos.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-
-                <!-- =================================================
-                     TAMANHOS
-                     ================================================= -->
-
-                <section class="categories-section">
-
-                    <div class="section-heading">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                VARIAÇÕES
-                            </span>
-
-                            <h2>
-                                Tamanhos
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            id="newSizeButton"
-                            class="module-add-button secondary-add-button"
-                        >
-                            + Tamanho
-                        </button>
-
-                    </div>
-
-
-                    <div
-                        id="sizesList"
-                        class="categories-list"
-                    >
-
-                        <div class="empty-state">
-
-                            <div class="empty-state-icon">
-                                T
-                            </div>
-
-                            <strong>
-                                Nenhum tamanho cadastrado
-                            </strong>
-
-                            <p>
-                                Cadastre os tamanhos
-                                utilizados nos produtos.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             ESTOQUE
-             ================================================= -->
-
-        <section
-            id="stockScreen"
-            class="module-screen"
-            hidden
-        >
-
-            <header class="module-header">
-
-                <div>
-
-                    <span class="module-eyebrow">
-                        CONTROLE
-                    </span>
-
-                    <h1>
-                        Estoque
-                    </h1>
-
-                </div>
-
-            </header>
-
-
-            <div class="module-content">
-
-
-                <div class="metrics-grid">
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Total
-                        </span>
-
-                        <strong
-                            id="stockTotal"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Unidades
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Baixo
-                        </span>
-
-                        <strong
-                            id="stockLow"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Variações
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Zerado
-                        </span>
-
-                        <strong
-                            id="stockZero"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Variações
-                        </small>
-
-                    </article>
-
-
-                </div>
-
-
-                <div class="search-box">
-
-                    <input
-                        type="search"
-                        id="stockSearch"
-                        placeholder="Buscar no estoque..."
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div
-                    id="stockList"
-                    class="stock-list"
-                >
-
-                    <div class="empty-state">
-
-                        <div class="empty-state-icon">
-                            E
-                        </div>
-
-                        <strong>
-                            Estoque vazio
-                        </strong>
-
-                        <p>
-                            Os produtos cadastrados
-                            aparecerão aqui.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             VENDAS
-             ================================================= -->
-
-        <section
-            id="salesScreen"
-            class="module-screen"
-            hidden
-        >
-
-            <header class="module-header">
-
-                <div>
-
-                    <span class="module-eyebrow">
-                        COMERCIAL
-                    </span>
-
-                    <h1>
-                        Vendas
-                    </h1>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="newSaleButton"
-                    class="module-add-button"
-                >
-                    + Venda
-                </button>
-
-            </header>
-
-
-            <div class="module-content">
-
-
-                <div class="metrics-grid">
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Hoje
-                        </span>
-
-                        <strong
-                            id="salesToday"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Vendas
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Pedidos
-                        </span>
-
-                        <strong
-                            id="salesOrdersToday"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-                </div>
-
-
-                <div class="search-box">
-
-                    <input
-                        type="search"
-                        id="salesSearch"
-                        placeholder="Buscar venda..."
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div
-                    id="salesList"
-                    class="sales-list"
-                >
-
-                    <div class="empty-state">
-
-                        <div class="empty-state-icon">
-                            V
-                        </div>
-
-                        <strong>
-                            Nenhuma venda
-                        </strong>
-
-                        <p>
-                            As vendas registradas
-                            aparecerão aqui.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             FINANCEIRO
-             ================================================= -->
-
-        <section
-            id="financeScreen"
-            class="module-screen"
-            hidden
-        >
-
-            <header class="module-header">
-
-                <div>
-
-                    <span class="module-eyebrow">
-                        FINANCEIRO
-                    </span>
-
-                    <h1>
-                        Financeiro
-                    </h1>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="newTransactionButton"
-                    class="module-add-button"
-                >
-                    + Lançamento
-                </button>
-
-            </header>
-
-
-            <div class="module-content">
-
-
-                <div class="metrics-grid">
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Receitas
-                        </span>
-
-                        <strong
-                            id="financeIncome"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Período
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Despesas
-                        </span>
-
-                        <strong
-                            id="financeExpenses"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Período
-                        </small>
-
-                    </article>
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Resultado
-                        </span>
-
-                        <strong
-                            id="financeBalance"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Período
-                        </small>
-
-                    </article>
-
-
-                </div>
-
-
-                <div class="search-box">
-
-                    <input
-                        type="search"
-                        id="financeSearch"
-                        placeholder="Buscar lançamento..."
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div
-                    id="financeList"
-                    class="finance-list"
-                >
-
-                    <div class="empty-state">
-
-                        <div class="empty-state-icon">
-                            F
-                        </div>
-
-                        <strong>
-                            Nenhum lançamento
-                        </strong>
-
-                        <p>
-                            Receitas e despesas
-                            aparecerão aqui.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             MODAL — PRODUTO
-             ================================================= -->
-
-        <div
-            id="productModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            CATÁLOGO
-                        </span>
-
-                        <h2>
-                            Novo produto
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="productModal"
-                        aria-label="Fechar"
-                    >
-                        ×
-                    </button>
-
-                </header>
-
-
-                <form
-                    id="productForm"
-                    class="modal-form"
-                >
-
-
-                    <div class="form-section">
-
-                        <h3>
-                            Informações
-                        </h3>
 
 
                         <div class="form-group">
 
-                            <label for="productName">
-                                Nome do produto
+                            <label for="categoryName">
+                                Nome
                             </label>
 
                             <input
                                 type="text"
-                                id="productName"
-                                name="name"
-                                placeholder="Ex.: Legging Fitness"
+                                id="categoryName"
+                                placeholder="Ex.: Leggings"
                                 required
                             >
 
                         </div>
 
 
-                        <div class="form-row">
-
-                            <div class="form-group">
-
-                                <label for="productSku">
-                                    SKU
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="productSku"
-                                    name="sku"
-                                    placeholder="Ex.: LEG001"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="productCategory">
-                                    Categoria
-                                </label>
-
-                                <select
-                                    id="productCategory"
-                                    name="category_id"
-                                >
-
-                                    <option value="">
-                                        Selecione
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-
                         <div class="form-group">
 
-                            <label for="productDescription">
+                            <label for="categoryDescription">
                                 Descrição
                             </label>
 
                             <textarea
-                                id="productDescription"
-                                name="description"
-                                rows="4"
-                                placeholder="Descrição do produto..."
+                                id="categoryDescription"
+                                placeholder="Descrição da categoria"
                             ></textarea>
 
                         </div>
-
-                    </div>
-
-
-
-                    <div class="form-section">
-
-                        <h3>
-                            Preços
-                        </h3>
-
-
-                        <div class="form-row">
-
-                            <div class="form-group">
-
-                                <label for="productCostPrice">
-                                    Custo
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="productCostPrice"
-                                    name="cost_price"
-                                    min="0"
-                                    step="0.01"
-                                    inputmode="decimal"
-                                    placeholder="0,00"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="productSalePrice">
-                                    Venda
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="productSalePrice"
-                                    name="sale_price"
-                                    min="0"
-                                    step="0.01"
-                                    inputmode="decimal"
-                                    placeholder="0,00"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="productMinimumStock">
-                                Estoque mínimo
-                            </label>
-
-                            <input
-                                type="number"
-                                id="productMinimumStock"
-                                name="minimum_stock"
-                                min="0"
-                                step="1"
-                                inputmode="numeric"
-                                value="0"
-                            >
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="form-section">
-
-                        <h3>
-                            Status
-                        </h3>
 
 
                         <label class="checkbox-field">
 
                             <input
                                 type="checkbox"
-                                id="productActive"
-                                name="is_active"
+                                id="categoryActive"
                                 checked
                             >
 
                             <span>
-                                Produto ativo
+                                Categoria ativa
                             </span>
 
                         </label>
 
-                    </div>
 
+                        <div
+                            id="categoryFormMessage"
+                            class="form-message"
+                        ></div>
 
-                    <div
-                        id="productFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
 
+                        <div class="modal-actions">
 
-                    <div class="modal-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-close-modal="productModal"
-                        >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveProductButton"
-                        >
-                            Salvar produto
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </section>
-
-        </div>
-
-
-
-        <!-- =================================================
-             MODAL — CATEGORIA
-             ================================================= -->
-
-        <div
-            id="categoryModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            ORGANIZAÇÃO
-                        </span>
-
-                        <h2>
-                            Nova categoria
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="categoryModal"
-                        aria-label="Fechar"
-                    >
-                        ×
-                    </button>
-
-                </header>
-
-
-                <form
-                    id="categoryForm"
-                    class="modal-form"
-                >
-
-                    <div class="form-group">
-
-                        <label for="categoryName">
-                            Nome
-                        </label>
-
-                        <input
-                            type="text"
-                            id="categoryName"
-                            name="name"
-                            placeholder="Ex.: Leggings"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="categoryDescription">
-                            Descrição
-                        </label>
-
-                        <textarea
-                            id="categoryDescription"
-                            name="description"
-                            rows="4"
-                            placeholder="Descrição opcional..."
-                        ></textarea>
-
-                    </div>
-
-
-                    <label class="checkbox-field">
-
-                        <input
-                            type="checkbox"
-                            id="categoryActive"
-                            name="is_active"
-                            checked
-                        >
-
-                        <span>
-                            Categoria ativa
-                        </span>
-
-                    </label>
-
-
-                    <div
-                        id="categoryFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
-
-
-                    <div class="modal-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-close-modal="categoryModal"
-                        >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveCategoryButton"
-                        >
-                            Salvar categoria
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </section>
-
-        </div>
-
-
-
-        <!-- =================================================
-             MODAL — COR
-             ================================================= -->
-
-        <div
-            id="colorModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            VARIAÇÕES
-                        </span>
-
-                        <h2>
-                            Nova cor
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="colorModal"
-                        aria-label="Fechar"
-                    >
-                        ×
-                    </button>
-
-                </header>
-
-
-                <form
-                    id="colorForm"
-                    class="modal-form"
-                >
-
-                    <div class="form-group">
-
-                        <label for="colorName">
-                            Nome da cor
-                        </label>
-
-                        <input
-                            type="text"
-                            id="colorName"
-                            name="name"
-                            placeholder="Ex.: Rosa"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="colorHex">
-                            Código da cor
-                        </label>
-
-                        <div class="color-input-row">
-
-                            <input
-                                type="color"
-                                id="colorHex"
-                                name="hex_code"
-                                value="#d477a2"
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="categoryModal"
                             >
+                                Cancelar
+                            </button>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Salvar categoria
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 MODAL — COR
+                 ============================================= -->
+
+            <div
+                id="colorModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="colorModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h2>
+                                Nova cor
+                            </h2>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            data-close-modal="colorModal"
+                            aria-label="Fechar"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <form
+                        id="colorForm"
+                        class="modal-form"
+                    >
+
+                        <input
+                            type="hidden"
+                            id="colorId"
+                        >
+
+
+                        <div class="form-group">
+
+                            <label for="colorName">
+                                Nome da cor
+                            </label>
 
                             <input
                                 type="text"
-                                id="colorHexText"
-                                placeholder="#D477A2"
-                                value="#D477A2"
-                                maxlength="7"
-                                autocomplete="off"
+                                id="colorName"
+                                placeholder="Ex.: Rosa"
+                                required
                             >
 
                         </div>
 
-                    </div>
 
+                        <div class="form-group">
 
-                    <div class="color-preview-wrapper">
+                            <label for="colorHex">
+                                Código da cor
+                            </label>
 
-                        <span>
-                            Prévia
-                        </span>
+                            <div class="color-input-row">
 
-                        <div
-                            id="colorPreview"
-                            class="color-preview"
-                            style="background:#D477A2;"
-                        ></div>
+                                <input
+                                    type="color"
+                                    id="colorHex"
+                                    value="#E8A0B8"
+                                >
 
-                    </div>
+                                <input
+                                    type="text"
+                                    id="colorHexText"
+                                    value="#E8A0B8"
+                                    placeholder="#000000"
+                                    maxlength="7"
+                                >
 
+                            </div>
 
-                    <label class="checkbox-field">
 
-                        <input
-                            type="checkbox"
-                            id="colorActive"
-                            name="is_active"
-                            checked
-                        >
+                            <div class="color-preview-wrapper">
 
-                        <span>
-                            Cor ativa
-                        </span>
+                                <span
+                                    id="colorPreview"
+                                    class="color-preview"
+                                    style="background: #E8A0B8;"
+                                ></span>
 
-                    </label>
-
-
-                    <div
-                        id="colorFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
-
-
-                    <div class="modal-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-close-modal="colorModal"
-                        >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveColorButton"
-                        >
-                            Salvar cor
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </section>
-
-        </div>
-
-
-
-        <!-- =================================================
-             MODAL — TAMANHO
-             ================================================= -->
-
-        <div
-            id="sizeModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            VARIAÇÕES
-                        </span>
-
-                        <h2>
-                            Novo tamanho
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="sizeModal"
-                        aria-label="Fechar"
-                    >
-                        ×
-                    </button>
-
-                </header>
-
-
-                <form
-                    id="sizeForm"
-                    class="modal-form"
-                >
-
-                    <div class="form-group">
-
-                        <label for="sizeName">
-                            Tamanho
-                        </label>
-
-                        <input
-                            type="text"
-                            id="sizeName"
-                            name="name"
-                            placeholder="Ex.: M"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="sizeDisplayOrder">
-                            Ordem de exibição
-                        </label>
-
-                        <input
-                            type="number"
-                            id="sizeDisplayOrder"
-                            name="display_order"
-                            min="0"
-                            step="1"
-                            inputmode="numeric"
-                            value="0"
-                        >
-
-                    </div>
-
-
-                    <label class="checkbox-field">
-
-                        <input
-                            type="checkbox"
-                            id="sizeActive"
-                            name="is_active"
-                            checked
-                        >
-
-                        <span>
-                            Tamanho ativo
-                        </span>
-
-                    </label>
-
-
-                    <div
-                        id="sizeFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
-
-
-                    <div class="modal-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-close-modal="sizeModal"
-                        >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveSizeButton"
-                        >
-                            Salvar tamanho
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </section>
-
-        </div>
-
-
-
-        <!-- =================================================
-             MODAL — VENDA
-             ================================================= -->
-
-        <div
-            id="saleModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            COMERCIAL
-                        </span>
-
-                        <h2>
-                            Nova venda
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="saleModal"
-                        aria-label="Fechar"
-                    >
-                        ×
-                    </button>
-
-                </header>
-
-
-                <form
-                    id="saleForm"
-                    class="modal-form"
-                >
-
-                    <div class="form-section">
-
-                        <h3>
-                            Itens da venda
-                        </h3>
-
-
-                        <div
-                            id="saleItems"
-                            class="sale-items"
-                        >
-
-                            <div class="empty-state">
-
-                                <strong>
-                                    Nenhum item
-                                </strong>
-
-                                <p>
-                                    Adicione produtos à venda.
-                                </p>
+                                <span>
+                                    Pré-visualização
+                                </span>
 
                             </div>
 
                         </div>
 
 
+                        <label class="checkbox-field">
+
+                            <input
+                                type="checkbox"
+                                id="colorActive"
+                                checked
+                            >
+
+                            <span>
+                                Cor ativa
+                            </span>
+
+                        </label>
+
+
+                        <div
+                            id="colorFormMessage"
+                            class="form-message"
+                        ></div>
+
+
+                        <div class="modal-actions">
+
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="colorModal"
+                            >
+                                Cancelar
+                            </button>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Salvar cor
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 MODAL — TAMANHO
+                 ============================================= -->
+
+            <div
+                id="sizeModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="sizeModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h2>
+                                Novo tamanho
+                            </h2>
+
+                        </div>
+
+
                         <button
                             type="button"
-                            id="addSaleItemButton"
-                            class="secondary-button"
+                            class="modal-close"
+                            data-close-modal="sizeModal"
+                            aria-label="Fechar"
                         >
-                            + Adicionar produto
+                            ×
                         </button>
 
                     </div>
 
 
-                    <div class="form-section">
+                    <form
+                        id="sizeForm"
+                        class="modal-form"
+                    >
 
-                        <div class="form-row">
-
-                            <div class="form-group">
-
-                                <label for="saleDiscount">
-                                    Desconto
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="saleDiscount"
-                                    name="discount"
-                                    min="0"
-                                    step="0.01"
-                                    inputmode="decimal"
-                                    value="0"
-                                >
-
-                            </div>
+                        <input
+                            type="hidden"
+                            id="sizeId"
+                        >
 
 
-                            <div class="form-group">
+                        <div class="form-group">
 
-                                <label for="salePaymentMethod">
-                                    Pagamento
-                                </label>
+                            <label for="sizeName">
+                                Tamanho
+                            </label>
 
-                                <select
-                                    id="salePaymentMethod"
-                                    name="payment_method"
-                                >
+                            <input
+                                type="text"
+                                id="sizeName"
+                                placeholder="Ex.: M"
+                                required
+                            >
 
-                                    <option value="">
-                                        Selecione
-                                    </option>
+                        </div>
 
-                                    <option value="pix">
-                                        PIX
-                                    </option>
 
-                                    <option value="dinheiro">
-                                        Dinheiro
-                                    </option>
+                        <div class="form-group">
 
-                                    <option value="cartao_credito">
-                                        Cartão de crédito
-                                    </option>
+                            <label for="sizeDisplayOrder">
+                                Ordem de exibição
+                            </label>
 
-                                    <option value="cartao_debito">
-                                        Cartão de débito
-                                    </option>
+                            <input
+                                type="number"
+                                id="sizeDisplayOrder"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
 
-                                    <option value="transferencia">
-                                        Transferência
-                                    </option>
+                        </div>
 
-                                </select>
 
-                            </div>
+                        <label class="checkbox-field">
+
+                            <input
+                                type="checkbox"
+                                id="sizeActive"
+                                checked
+                            >
+
+                            <span>
+                                Tamanho ativo
+                            </span>
+
+                        </label>
+
+
+                        <div
+                            id="sizeFormMessage"
+                            class="form-message"
+                        ></div>
+
+
+                        <div class="modal-actions">
+
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="sizeModal"
+                            >
+                                Cancelar
+                            </button>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Salvar tamanho
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 MODAL — VENDA
+                 ============================================= -->
+
+            <div
+                id="saleModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="saleModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                COMERCIAL
+                            </span>
+
+                            <h2>
+                                Nova venda
+                            </h2>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            data-close-modal="saleModal"
+                            aria-label="Fechar"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <form
+                        id="saleForm"
+                        class="modal-form"
+                    >
+
+
+                        <div class="form-section">
+
+                            <h3>
+                                Produtos
+                            </h3>
+
+
+                            <div
+                                id="saleItems"
+                                class="sale-items"
+                            ></div>
+
+
+                            <button
+                                type="button"
+                                id="addSaleItemButton"
+                                class="secondary-button"
+                            >
+                                + Adicionar produto
+                            </button>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="saleDiscount">
+                                Desconto
+                            </label>
+
+                            <input
+                                type="number"
+                                id="saleDiscount"
+                                min="0"
+                                step="0.01"
+                                inputmode="decimal"
+                                value="0"
+                                placeholder="0,00"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="salePaymentMethod">
+                                Forma de pagamento
+                            </label>
+
+                            <select id="salePaymentMethod">
+
+                                <option value="">
+                                    Selecione
+                                </option>
+
+                                <option value="pix">
+                                    Pix
+                                </option>
+
+                                <option value="credit_card">
+                                    Cartão de crédito
+                                </option>
+
+                                <option value="debit_card">
+                                    Cartão de débito
+                                </option>
+
+                                <option value="cash">
+                                    Dinheiro
+                                </option>
+
+                                <option value="transfer">
+                                    Transferência
+                                </option>
+
+                            </select>
 
                         </div>
 
@@ -2005,9 +2007,7 @@
 
                             <textarea
                                 id="saleNotes"
-                                name="notes"
-                                rows="3"
-                                placeholder="Observações da venda..."
+                                placeholder="Observações da venda"
                             ></textarea>
 
                         </div>
@@ -2025,155 +2025,150 @@
 
                         </div>
 
-                    </div>
+
+                        <div
+                            id="saleFormMessage"
+                            class="form-message"
+                        ></div>
 
 
-                    <div
-                        id="saleFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
+                        <div class="modal-actions">
+
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="saleModal"
+                            >
+                                Cancelar
+                            </button>
 
 
-                    <div class="modal-actions">
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Registrar venda
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 MODAL — FINANCEIRO
+                 ============================================= -->
+
+            <div
+                id="transactionModal"
+                class="modal"
+                hidden
+            >
+
+                <div
+                    class="modal-overlay"
+                    data-close-modal="transactionModal"
+                ></div>
+
+
+                <section class="modal-card">
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                FINANCEIRO
+                            </span>
+
+                            <h2>
+                                Novo lançamento
+                            </h2>
+
+                        </div>
+
 
                         <button
                             type="button"
-                            class="secondary-button"
-                            data-close-modal="saleModal"
+                            class="modal-close"
+                            data-close-modal="transactionModal"
+                            aria-label="Fechar"
                         >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveSaleButton"
-                        >
-                            Finalizar venda
+                            ×
                         </button>
 
                     </div>
 
-                </form>
 
-            </section>
-
-        </div>
-
-
-
-        <!-- =================================================
-             MODAL — FINANCEIRO
-             ================================================= -->
-
-        <div
-            id="transactionModal"
-            class="modal"
-            hidden
-        >
-
-            <div class="modal-overlay"></div>
-
-
-            <section class="modal-card">
-
-                <header class="modal-header">
-
-                    <div>
-
-                        <span class="module-eyebrow">
-                            FINANCEIRO
-                        </span>
-
-                        <h2>
-                            Novo lançamento
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        data-close-modal="transactionModal"
-                        aria-label="Fechar"
+                    <form
+                        id="transactionForm"
+                        class="modal-form"
                     >
-                        ×
-                    </button>
-
-                </header>
 
 
-                <form
-                    id="transactionForm"
-                    class="modal-form"
-                >
+                        <div class="form-group">
 
-                    <div class="form-group">
+                            <label for="transactionType">
+                                Tipo
+                            </label>
 
-                        <label for="transactionType">
-                            Tipo
-                        </label>
+                            <select
+                                id="transactionType"
+                                required
+                            >
 
-                        <select
-                            id="transactionType"
-                            name="transaction_type"
-                            required
-                        >
+                                <option value="">
+                                    Selecione
+                                </option>
 
-                            <option value="">
-                                Selecione
-                            </option>
+                                <option value="income">
+                                    Receita
+                                </option>
 
-                            <option value="income">
-                                Receita
-                            </option>
+                                <option value="expense">
+                                    Despesa
+                                </option>
 
-                            <option value="expense">
-                                Despesa
-                            </option>
+                            </select>
 
-                        </select>
-
-                    </div>
+                        </div>
 
 
-                    <div class="form-group">
+                        <div class="form-group">
 
-                        <label for="transactionCategory">
-                            Categoria
-                        </label>
+                            <label for="transactionCategory">
+                                Categoria
+                            </label>
 
-                        <input
-                            type="text"
-                            id="transactionCategory"
-                            name="category"
-                            placeholder="Ex.: Fornecedores"
-                        >
+                            <input
+                                type="text"
+                                id="transactionCategory"
+                                placeholder="Ex.: Fornecedores"
+                            >
 
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="transactionDescription">
-                            Descrição
-                        </label>
-
-                        <input
-                            type="text"
-                            id="transactionDescription"
-                            name="description"
-                            placeholder="Descrição do lançamento"
-                            required
-                        >
-
-                    </div>
+                        </div>
 
 
-                    <div class="form-row">
+                        <div class="form-group">
+
+                            <label for="transactionDescription">
+                                Descrição
+                            </label>
+
+                            <input
+                                type="text"
+                                id="transactionDescription"
+                                placeholder="Descrição do lançamento"
+                                required
+                            >
+
+                        </div>
+
 
                         <div class="form-group">
 
@@ -2184,7 +2179,6 @@
                             <input
                                 type="number"
                                 id="transactionAmount"
-                                name="amount"
                                 min="0"
                                 step="0.01"
                                 inputmode="decimal"
@@ -2204,223 +2198,148 @@
                             <input
                                 type="date"
                                 id="transactionDate"
-                                name="transaction_date"
                                 required
                             >
 
                         </div>
 
-                    </div>
 
+                        <div class="form-group">
 
-                    <div class="form-group">
+                            <label for="transactionPaymentMethod">
+                                Forma de pagamento
+                            </label>
 
-                        <label for="transactionPaymentMethod">
-                            Forma de pagamento
-                        </label>
+                            <select id="transactionPaymentMethod">
 
-                        <select
-                            id="transactionPaymentMethod"
-                            name="payment_method"
-                        >
+                                <option value="">
+                                    Selecione
+                                </option>
 
-                            <option value="">
-                                Selecione
-                            </option>
+                                <option value="pix">
+                                    Pix
+                                </option>
 
-                            <option value="pix">
-                                PIX
-                            </option>
+                                <option value="credit_card">
+                                    Cartão de crédito
+                                </option>
 
-                            <option value="dinheiro">
-                                Dinheiro
-                            </option>
+                                <option value="debit_card">
+                                    Cartão de débito
+                                </option>
 
-                            <option value="cartao_credito">
-                                Cartão de crédito
-                            </option>
+                                <option value="cash">
+                                    Dinheiro
+                                </option>
 
-                            <option value="cartao_debito">
-                                Cartão de débito
-                            </option>
+                                <option value="transfer">
+                                    Transferência
+                                </option>
 
-                            <option value="transferencia">
-                                Transferência
-                            </option>
+                                <option value="bank_slip">
+                                    Boleto
+                                </option>
 
-                            <option value="outro">
-                                Outro
-                            </option>
+                            </select>
 
-                        </select>
+                        </div>
 
-                    </div>
 
+                        <div class="form-group">
 
-                    <div class="form-group">
+                            <label for="transactionNotes">
+                                Observações
+                            </label>
 
-                        <label for="transactionNotes">
-                            Observações
-                        </label>
+                            <textarea
+                                id="transactionNotes"
+                                placeholder="Observações"
+                            ></textarea>
 
-                        <textarea
-                            id="transactionNotes"
-                            name="notes"
-                            rows="3"
-                            placeholder="Observações..."
-                        ></textarea>
+                        </div>
 
-                    </div>
 
+                        <div
+                            id="transactionFormMessage"
+                            class="form-message"
+                        ></div>
 
-                    <div
-                        id="transactionFormMessage"
-                        class="form-message"
-                        aria-live="polite"
-                    ></div>
 
+                        <div class="modal-actions">
 
-                    <div class="modal-actions">
+                            <button
+                                type="button"
+                                class="secondary-button modal-close"
+                                data-close-modal="transactionModal"
+                            >
+                                Cancelar
+                            </button>
 
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-close-modal="transactionModal"
-                        >
-                            Cancelar
-                        </button>
 
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Salvar lançamento
+                            </button>
 
-                        <button
-                            type="submit"
-                            class="primary-button"
-                            id="saveTransactionButton"
-                        >
-                            Salvar lançamento
-                        </button>
+                        </div>
 
-                    </div>
+                    </form>
 
-                </form>
+                </section>
 
-            </section>
+            </div>
 
-        </div>
 
+        </main>
 
+    </div>
 
-        <!-- =================================================
-             NAVEGAÇÃO INFERIOR
-             ================================================= -->
 
-        <nav class="bottom-navigation">
 
+    <!-- =====================================================
+         SUPABASE
+         ===================================================== -->
 
-            <button
-                type="button"
-                class="nav-item active"
-                data-section="home"
-            >
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
 
-                <span class="nav-icon">
-                    I
-                </span>
+    <script src="js/supabase.js"></script>
 
-                <span>
-                    Início
-                </span>
+    <script src="js/app.js"></script>
 
-            </button>
 
+    <!-- =====================================================
+         SERVICE WORKER
+         ===================================================== -->
 
-            <button
-                type="button"
-                class="nav-item"
-                data-section="products"
-            >
+    <script>
 
-                <span class="nav-icon">
-                    P
-                </span>
+        if ("serviceWorker" in navigator) {
 
-                <span>
-                    Produtos
-                </span>
+            window.addEventListener(
+                "load",
+                () => {
 
-            </button>
+                    navigator.serviceWorker
+                        .register("./service-worker.js")
+                        .catch(
+                            error => {
+                                console.error(
+                                    "Erro ao registrar Service Worker:",
+                                    error
+                                );
+                            }
+                        );
 
+                }
+            );
 
-            <button
-                type="button"
-                class="nav-item"
-                data-section="stock"
-            >
+        }
 
-                <span class="nav-icon">
-                    E
-                </span>
-
-                <span>
-                    Estoque
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-item"
-                data-section="sales"
-            >
-
-                <span class="nav-icon">
-                    V
-                </span>
-
-                <span>
-                    Vendas
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="nav-item"
-                data-section="finance"
-            >
-
-                <span class="nav-icon">
-                    F
-                </span>
-
-                <span>
-                    Financeiro
-                </span>
-
-            </button>
-
-
-        </nav>
-
-    </main>
-
-</div>
-
-
-
-<!-- =====================================================
-     SUPABASE
-     ===================================================== -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
-<script src="js/supabase.js"></script>
-
-<script src="js/app.js"></script>
-
+    </script>
 
 </body>
 
