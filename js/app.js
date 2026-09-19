@@ -13,6 +13,7 @@
 
 let currentUser = null;
 let appInitialized = false;
+let currentSection = "home";
 
 let categoriesCache = [];
 let colorsCache = [];
@@ -23,6 +24,7 @@ let salesCache = [];
 let financeCache = [];
 
 let productImagesCache = {};
+
 let productVariationsDraft = [];
 let productPhotosDraft = [];
 let productPhotoPreviewUrls = [];
@@ -93,10 +95,12 @@ function todayISO() {
         date.getFullYear();
 
     const month =
-        String(date.getMonth() + 1).padStart(2, "0");
+        String(date.getMonth() + 1)
+            .padStart(2, "0");
 
     const day =
-        String(date.getDate()).padStart(2, "0");
+        String(date.getDate())
+            .padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 }
@@ -119,12 +123,9 @@ function showMessage(
         message || "";
 
     element.className =
-        `form-message ${type}`;
-
-    if (!message) {
-        element.className =
-            "form-message";
-    }
+        message
+            ? `form-message ${type}`
+            : "form-message";
 }
 
 
@@ -140,21 +141,28 @@ function setLoading(
 
     if (loading) {
 
-        button.dataset.originalText =
-            button.textContent;
+        if (
+            !button.dataset.originalText
+        ) {
+            button.dataset.originalText =
+                button.textContent;
+        }
 
         button.disabled = true;
-
-        button.textContent =
-            text;
+        button.textContent = text;
 
     } else {
 
         button.disabled = false;
 
-        button.textContent =
-            button.dataset.originalText ||
-            button.textContent;
+        if (
+            button.dataset.originalText
+        ) {
+            button.textContent =
+                button.dataset.originalText;
+
+            delete button.dataset.originalText;
+        }
     }
 }
 
@@ -167,37 +175,50 @@ function getAuthErrorMessage(error) {
         ).toLowerCase();
 
     if (
-        message.includes("invalid login credentials") ||
-        message.includes("invalid credentials")
+        message.includes(
+            "invalid login credentials"
+        ) ||
+        message.includes(
+            "invalid credentials"
+        )
     ) {
         return "E-mail ou senha incorretos.";
     }
 
     if (
-        message.includes("email not confirmed")
+        message.includes(
+            "email not confirmed"
+        )
     ) {
         return "O e-mail desta conta ainda não foi confirmado.";
     }
 
     if (
-        message.includes("too many requests")
+        message.includes(
+            "too many requests"
+        )
     ) {
         return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
     }
 
-    return error?.message ||
-        "Não foi possível entrar. Tente novamente.";
+    return (
+        error?.message ||
+        "Não foi possível entrar. Tente novamente."
+    );
 }
 
 
 function getProductMainImage(productId) {
 
     const images =
-        productImagesCache[productId] || [];
+        productImagesCache[
+            productId
+        ] || [];
 
     const primary =
         images.find(
-            image => image.is_primary === true
+            image =>
+                image.is_primary === true
         );
 
     return (
@@ -214,7 +235,9 @@ function productImageHtml(
 ) {
 
     const image =
-        getProductMainImage(productId);
+        getProductMainImage(
+            productId
+        );
 
     if (image) {
 
@@ -236,25 +259,143 @@ function productImageHtml(
 }
 
 
+function getProductVariants(
+    productId
+) {
+
+    return variantsCache.filter(
+        variant =>
+            variant.product_id ===
+            productId
+    );
+}
+
+
+function getProductTotalStock(
+    productId
+) {
+
+    return getProductVariants(
+        productId
+    ).reduce(
+        (sum, variant) =>
+            sum +
+            Number(
+                variant.stock_quantity || 0
+            ),
+        0
+    );
+}
+
+
+function getProductColorNames(
+    productId
+) {
+
+    const names = [];
+
+    getProductVariants(
+        productId
+    ).forEach(
+        variant => {
+
+            const name =
+                variant.colors?.name;
+
+            if (
+                name &&
+                !names.includes(name)
+            ) {
+                names.push(name);
+            }
+        }
+    );
+
+    return names;
+}
+
+
+function getProductSizeNames(
+    productId
+) {
+
+    const names = [];
+
+    getProductVariants(
+        productId
+    ).forEach(
+        variant => {
+
+            const name =
+                variant.sizes?.name;
+
+            if (
+                name &&
+                !names.includes(name)
+            ) {
+                names.push(name);
+            }
+        }
+    );
+
+    return names;
+}
+
+
+function getStockStatus(
+    stock,
+    minimum
+) {
+
+    stock =
+        Number(stock || 0);
+
+    minimum =
+        Number(minimum || 0);
+
+    if (stock === 0) {
+        return {
+            className: "zero",
+            label: "Sem estoque"
+        };
+    }
+
+    if (
+        minimum > 0 &&
+        stock <= minimum
+    ) {
+        return {
+            className: "low",
+            label: "Estoque baixo"
+        };
+    }
+
+    return {
+        className: "normal",
+        label: "Normal"
+    };
+}
+
+
 // =========================================================
 // FOTOS DOS PRODUTOS
 // =========================================================
 
 function revokeProductPhotoPreviewUrls() {
 
-    productPhotoPreviewUrls.forEach(url => {
+    productPhotoPreviewUrls.forEach(
+        url => {
 
-        try {
-            URL.revokeObjectURL(url);
-        } catch (error) {
-
-            console.error(
-                "Erro ao liberar preview da imagem:",
-                error
-            );
+            try {
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(
+                    "Erro ao liberar preview da imagem:",
+                    error
+                );
+            }
         }
-
-    });
+    );
 
     productPhotoPreviewUrls = [];
 }
@@ -365,11 +506,15 @@ function renderProductPhotoPreview() {
 
     container.innerHTML = "";
 
-    container.appendChild(fragment);
+    container.appendChild(
+        fragment
+    );
 }
 
 
-function handleProductPhotoSelection(event) {
+function handleProductPhotoSelection(
+    event
+) {
 
     const files =
         Array.from(
@@ -422,7 +567,9 @@ function handleProductPhotoSelection(event) {
 }
 
 
-async function loadImageForOptimization(file) {
+async function loadImageForOptimization(
+    file
+) {
 
     if (
         typeof createImageBitmap ===
@@ -448,17 +595,14 @@ async function loadImageForOptimization(file) {
 
                     try {
                         bitmap.close();
-                    } catch (error) {
-                        // Não interromper.
-                    }
-
+                    } catch (error) {}
                 }
             };
 
         } catch (error) {
 
             console.warn(
-                "createImageBitmap não conseguiu processar a imagem. Tentando Image:",
+                "createImageBitmap falhou. Tentando Image:",
                 error
             );
         }
@@ -480,11 +624,12 @@ async function loadImageForOptimization(file) {
                         () => resolve(img);
 
                     img.onerror =
-                        () => reject(
-                            new Error(
-                                "O navegador não conseguiu decodificar esta imagem."
-                            )
-                        );
+                        () =>
+                            reject(
+                                new Error(
+                                    "O navegador não conseguiu decodificar esta imagem."
+                                )
+                            );
 
                     img.src =
                         objectUrl;
@@ -500,7 +645,9 @@ async function loadImageForOptimization(file) {
 
     } finally {
 
-        URL.revokeObjectURL(objectUrl);
+        URL.revokeObjectURL(
+            objectUrl
+        );
     }
 }
 
@@ -537,7 +684,9 @@ function canvasToBlob(
 }
 
 
-async function optimizeProductImage(file) {
+async function optimizeProductImage(
+    file
+) {
 
     if (!file) {
         throw new Error(
@@ -555,15 +704,21 @@ async function optimizeProductImage(file) {
     }
 
     const image =
-        await loadImageForOptimization(file);
+        await loadImageForOptimization(
+            file
+        );
 
     try {
 
         const originalWidth =
-            Number(image.width || 0);
+            Number(
+                image.width || 0
+            );
 
         const originalHeight =
-            Number(image.height || 0);
+            Number(
+                image.height || 0
+            );
 
         if (
             !originalWidth ||
@@ -600,7 +755,8 @@ async function optimizeProductImage(file) {
 
         for (
             let dimensionIndex = 0;
-            dimensionIndex < dimensionAttempts.length;
+            dimensionIndex <
+                dimensionAttempts.length;
             dimensionIndex++
         ) {
 
@@ -620,20 +776,22 @@ async function optimizeProductImage(file) {
                 );
 
             const dimensions = {
-                width: Math.max(
-                    1,
-                    Math.round(
-                        originalWidth *
-                        scale
+                width:
+                    Math.max(
+                        1,
+                        Math.round(
+                            originalWidth *
+                            scale
+                        )
+                    ),
+                height:
+                    Math.max(
+                        1,
+                        Math.round(
+                            originalHeight *
+                            scale
+                        )
                     )
-                ),
-                height: Math.max(
-                    1,
-                    Math.round(
-                        originalHeight *
-                        scale
-                    )
-                )
             };
 
             const canvas =
@@ -678,19 +836,17 @@ async function optimizeProductImage(file) {
 
             for (
                 let qualityIndex = 0;
-                qualityIndex < qualityAttempts.length;
+                qualityIndex <
+                    qualityAttempts.length;
                 qualityIndex++
             ) {
-
-                const quality =
-                    qualityAttempts[
-                        qualityIndex
-                    ];
 
                 const blob =
                     await canvasToBlob(
                         canvas,
-                        quality
+                        qualityAttempts[
+                            qualityIndex
+                        ]
                     );
 
                 lastBlob =
@@ -759,26 +915,28 @@ function createOptimizedImageName(
             originalName ||
             "produto"
         )
-        .replace(
-            /\.[^/.]+$/,
-            ""
-        )
-        .replace(
-            /[^a-zA-Z0-9_-]+/g,
-            "-"
-        )
-        .replace(
-            /^-+|-+$/g,
-            ""
-        );
+            .replace(
+                /\.[^/.]+$/,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]+/g,
+                "-"
+            )
+            .replace(
+                /^-+|-+$/g,
+                ""
+            );
 
     const safeBaseName =
         baseName ||
         "produto";
 
-    return `${safeBaseName}-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 10)}.jpg`;
+    return (
+        `${safeBaseName}-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 10)}.jpg`
+    );
 }
 
 
@@ -804,7 +962,7 @@ function createProductImageStoragePath(
 
 
 async function loadProductImages(
-    productIds
+    productIds = []
 ) {
 
     productImagesCache = {};
@@ -816,30 +974,42 @@ async function loadProductImages(
         return;
     }
 
+    const uniqueProductIds =
+        [
+            ...new Set(
+                productIds.filter(Boolean)
+            )
+        ];
+
+    if (!uniqueProductIds.length) {
+        return;
+    }
+
     const {
         data,
         error
-    } = await supabaseClient
-        .from("product_images")
-        .select(`
-            id,
-            product_id,
-            storage_path,
-            public_url,
-            is_primary,
-            display_order
-        `)
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .in(
-            "product_id",
-            productIds
-        )
-        .order(
-            "display_order"
-        );
+    } =
+        await supabaseClient
+            .from("product_images")
+            .select(`
+                id,
+                product_id,
+                storage_path,
+                public_url,
+                is_primary,
+                display_order
+            `)
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .in(
+                "product_id",
+                uniqueProductIds
+            )
+            .order(
+                "display_order"
+            );
 
     if (error) {
 
@@ -851,23 +1021,24 @@ async function loadProductImages(
         return;
     }
 
-    (data || []).forEach(image => {
+    (data || []).forEach(
+        image => {
 
-        if (
-            !productImagesCache[
-                image.product_id
-            ]
-        ) {
+            if (
+                !productImagesCache[
+                    image.product_id
+                ]
+            ) {
+                productImagesCache[
+                    image.product_id
+                ] = [];
+            }
 
             productImagesCache[
                 image.product_id
-            ] = [];
+            ].push(image);
         }
-
-        productImagesCache[
-            image.product_id
-        ].push(image);
-    });
+    );
 }
 
 
@@ -886,8 +1057,9 @@ async function uploadProductImages(
         };
     }
 
-    if (!productPhotosDraft.length) {
-
+    if (
+        !productPhotosDraft.length
+    ) {
         return {
             uploaded: [],
             failed: []
@@ -908,7 +1080,10 @@ async function uploadProductImages(
 
     const existingMaxOrder =
         existingImages.reduce(
-            (max, image) =>
+            (
+                max,
+                image
+            ) =>
                 Math.max(
                     max,
                     Number(
@@ -920,12 +1095,15 @@ async function uploadProductImages(
 
     for (
         let index = 0;
-        index < productPhotosDraft.length;
+        index <
+            productPhotosDraft.length;
         index++
     ) {
 
         const originalFile =
-            productPhotosDraft[index];
+            productPhotosDraft[
+                index
+            ];
 
         try {
 
@@ -944,7 +1122,6 @@ async function uploadProductImages(
                 optimizedFile.size >
                 PRODUCT_IMAGE_MAX_SIZE
             ) {
-
                 throw new Error(
                     "A imagem otimizada ainda ultrapassou o limite de 8 MB."
                 );
@@ -965,34 +1142,40 @@ async function uploadProductImages(
 
             const {
                 error: uploadError
-            } = await supabaseClient
-                .storage
-                .from("product-images")
-                .upload(
-                    path,
-                    optimizedFile,
-                    {
-                        upsert: false,
-                        contentType:
-                            "image/jpeg",
-                        cacheControl:
-                            "31536000"
-                    }
-                );
+            } =
+                await supabaseClient
+                    .storage
+                    .from(
+                        "product-images"
+                    )
+                    .upload(
+                        path,
+                        optimizedFile,
+                        {
+                            upsert: false,
+                            contentType:
+                                "image/jpeg",
+                            cacheControl:
+                                "31536000"
+                        }
+                    );
 
             if (uploadError) {
                 throw uploadError;
             }
 
             const {
-                data: publicUrlData
+                data:
+                    publicUrlData
             } =
                 supabaseClient
                     .storage
                     .from(
                         "product-images"
                     )
-                    .getPublicUrl(path);
+                    .getPublicUrl(
+                        path
+                    );
 
             const publicUrl =
                 publicUrlData?.publicUrl ||
@@ -1007,7 +1190,9 @@ async function uploadProductImages(
                         .from(
                             "product-images"
                         )
-                        .remove([path]);
+                        .remove([
+                            path
+                        ]);
 
                 } catch (cleanupError) {
 
@@ -1032,10 +1217,13 @@ async function uploadProductImages(
                 1;
 
             const {
-                error: imageInsertError
+                error:
+                    imageInsertError
             } =
                 await supabaseClient
-                    .from("product_images")
+                    .from(
+                        "product_images"
+                    )
                     .insert({
                         user_id:
                             currentUser.id,
@@ -1051,7 +1239,9 @@ async function uploadProductImages(
                             displayOrder
                     });
 
-            if (imageInsertError) {
+            if (
+                imageInsertError
+            ) {
 
                 try {
 
@@ -1060,7 +1250,9 @@ async function uploadProductImages(
                         .from(
                             "product-images"
                         )
-                        .remove([path]);
+                        .remove([
+                            path
+                        ]);
 
                 } catch (cleanupError) {
 
@@ -1117,7 +1309,20 @@ const sectionMap = {
 };
 
 
-function showSection(sectionName) {
+function showSection(
+    sectionName
+) {
+
+    if (
+        !sectionMap[
+            sectionName
+        ]
+    ) {
+        sectionName = "home";
+    }
+
+    currentSection =
+        sectionName;
 
     Object.entries(
         sectionMap
@@ -1137,39 +1342,58 @@ function showSection(sectionName) {
     );
 
     document
-        .querySelectorAll(".nav-item")
-        .forEach(button => {
+        .querySelectorAll(
+            ".nav-item"
+        )
+        .forEach(
+            button => {
 
-            button.classList.toggle(
-                "active",
-                button.dataset.section ===
-                sectionName
-            );
-        });
+                button.classList.toggle(
+                    "active",
+                    button.dataset.section ===
+                    sectionName
+                );
+            }
+        );
 
     window.scrollTo({
         top: 0,
         behavior: "smooth"
     });
 
-    if (sectionName === "home") {
+    if (
+        sectionName ===
+        "home"
+    ) {
         loadDashboard();
     }
 
-    if (sectionName === "products") {
+    if (
+        sectionName ===
+        "products"
+    ) {
         loadProductsPage();
     }
 
-    if (sectionName === "stock") {
+    if (
+        sectionName ===
+        "stock"
+    ) {
         loadStock();
     }
 
-    if (sectionName === "sales") {
+    if (
+        sectionName ===
+        "sales"
+    ) {
         loadSales();
         loadVariants();
     }
 
-    if (sectionName === "finance") {
+    if (
+        sectionName ===
+        "finance"
+    ) {
         loadFinance();
     }
 }
@@ -1179,7 +1403,9 @@ function showSection(sectionName) {
 // LOGIN / LOGOUT
 // =========================================================
 
-async function handleLogin(event) {
+async function handleLogin(
+    event
+) {
 
     event.preventDefault();
     event.stopPropagation();
@@ -1206,7 +1432,10 @@ async function handleLogin(event) {
         ""
     );
 
-    if (!email || !password) {
+    if (
+        !email ||
+        !password
+    ) {
 
         showMessage(
             "loginMessage",
@@ -1228,7 +1457,8 @@ async function handleLogin(event) {
             data,
             error
         } =
-            await supabaseClient.auth
+            await supabaseClient
+                .auth
                 .signInWithPassword({
                     email,
                     password
@@ -1264,7 +1494,9 @@ async function handleLogin(event) {
 
         showMessage(
             "loginMessage",
-            getAuthErrorMessage(error)
+            getAuthErrorMessage(
+                error
+            )
         );
 
     } finally {
@@ -1281,7 +1513,8 @@ async function handleLogout() {
 
     try {
 
-        await supabaseClient.auth
+        await supabaseClient
+            .auth
             .signOut();
 
     } catch (error) {
@@ -1294,6 +1527,7 @@ async function handleLogout() {
 
     currentUser = null;
     appInitialized = false;
+    currentSection = "home";
 
     clearProductPhotosDraft();
 
@@ -1310,12 +1544,12 @@ async function handleLogout() {
     if (loginScreen) {
         loginScreen.hidden = false;
     }
-
-    showSection("home");
 }
 
 
-async function showApplication(user) {
+async function showApplication(
+    user
+) {
 
     currentUser =
         user;
@@ -1325,6 +1559,10 @@ async function showApplication(user) {
 
     const appScreen =
         $("appScreen");
+
+    const wasVisible =
+        appScreen &&
+        !appScreen.hidden;
 
     if (loginScreen) {
         loginScreen.hidden = true;
@@ -1340,7 +1578,8 @@ async function showApplication(user) {
     if (userName) {
 
         const fullName =
-            user.user_metadata?.full_name;
+            user.user_metadata
+                ?.full_name;
 
         userName.textContent =
             fullName ||
@@ -1353,9 +1592,21 @@ async function showApplication(user) {
         appInitialized = true;
 
         await loadInitialData();
+
+        showSection("home");
+
+        return;
     }
 
-    showSection("home");
+    /*
+     * Não força mais Home quando o aplicativo
+     * recebe novamente o evento SIGNED_IN.
+     */
+    if (!wasVisible) {
+        showSection(
+            currentSection || "home"
+        );
+    }
 }
 
 
@@ -1372,14 +1623,15 @@ async function loadCategories() {
     const {
         data,
         error
-    } = await supabaseClient
-        .from("categories")
-        .select("*")
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .order("name");
+    } =
+        await supabaseClient
+            .from("categories")
+            .select("*")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order("name");
 
     if (error) {
 
@@ -1422,49 +1674,53 @@ function renderCategories() {
     }
 
     container.innerHTML =
-        categoriesCache.map(
-            category => `
+        categoriesCache
+            .map(
+                category => `
 
-            <div class="category-card">
+                <div class="category-card">
 
-                <div class="category-card-info">
+                    <div class="category-card-info">
 
-                    <strong>
-                        ${escapeHtml(category.name)}
-                    </strong>
+                        <strong>
+                            ${escapeHtml(
+                                category.name
+                            )}
+                        </strong>
 
-                    <span>
-                        ${escapeHtml(
-                            category.description ||
-                            "Sem descrição"
-                        )}
-                    </span>
+                        <span>
+                            ${escapeHtml(
+                                category.description ||
+                                "Sem descrição"
+                            )}
+                        </span>
+
+                    </div>
+
+                    <div class="category-card-actions">
+
+                        <button
+                            type="button"
+                            class="icon-button"
+                            data-edit-category="${category.id}"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            type="button"
+                            class="icon-button danger"
+                            data-delete-category="${category.id}"
+                        >
+                            ×
+                        </button>
+
+                    </div>
 
                 </div>
-
-                <div class="category-card-actions">
-
-                    <button
-                        type="button"
-                        class="icon-button"
-                        data-edit-category="${category.id}"
-                    >
-                        ✎
-                    </button>
-
-                    <button
-                        type="button"
-                        class="icon-button danger"
-                        data-delete-category="${category.id}"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-            </div>
-        `
-        ).join("");
+            `
+            )
+            .join("");
 }
 
 
@@ -1491,28 +1747,34 @@ function populateCategorySelect() {
             category =>
                 category.is_active !== false
         )
-        .forEach(category => {
+        .forEach(
+            category => {
 
-            const option =
-                document.createElement(
-                    "option"
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    category.id;
+
+                option.textContent =
+                    category.name;
+
+                select.appendChild(
+                    option
                 );
-
-            option.value =
-                category.id;
-
-            option.textContent =
-                category.name;
-
-            select.appendChild(option);
-        });
+            }
+        );
 
     if (
-        [...select.options]
-            .some(
-                option =>
-                    option.value === current
-            )
+        [
+            ...select.options
+        ].some(
+            option =>
+                option.value ===
+                current
+        )
     ) {
         select.value =
             current;
@@ -1550,11 +1812,15 @@ function openCategoryModal(
         ""
     );
 
-    openModal("categoryModal");
+    openModal(
+        "categoryModal"
+    );
 }
 
 
-async function saveCategory(event) {
+async function saveCategory(
+    event
+) {
 
     event.preventDefault();
 
@@ -1563,16 +1829,23 @@ async function saveCategory(event) {
     }
 
     const id =
-        $("categoryId").value.trim();
+        $("categoryId")
+            .value
+            .trim();
 
     const name =
-        $("categoryName").value.trim();
+        $("categoryName")
+            .value
+            .trim();
 
     const description =
-        $("categoryDescription").value.trim();
+        $("categoryDescription")
+            .value
+            .trim();
 
     const isActive =
-        $("categoryActive").checked;
+        $("categoryActive")
+            .checked;
 
     if (!name) {
 
@@ -1587,7 +1860,8 @@ async function saveCategory(event) {
     const payload = {
         name,
         description,
-        is_active: isActive
+        is_active:
+            isActive
     };
 
     try {
@@ -1600,7 +1874,10 @@ async function saveCategory(event) {
                 await supabaseClient
                     .from("categories")
                     .update(payload)
-                    .eq("id", id)
+                    .eq(
+                        "id",
+                        id
+                    )
                     .eq(
                         "user_id",
                         currentUser.id
@@ -1644,7 +1921,9 @@ async function saveCategory(event) {
 }
 
 
-async function deleteCategory(id) {
+async function deleteCategory(
+    id
+) {
 
     if (!currentUser) {
         return;
@@ -1660,14 +1939,18 @@ async function deleteCategory(id) {
 
     const {
         error
-    } = await supabaseClient
-        .from("categories")
-        .delete()
-        .eq("id", id)
-        .eq(
-            "user_id",
-            currentUser.id
-        );
+    } =
+        await supabaseClient
+            .from("categories")
+            .delete()
+            .eq(
+                "id",
+                id
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            );
 
     if (error) {
 
@@ -1700,14 +1983,15 @@ async function loadColors() {
     const {
         data,
         error
-    } = await supabaseClient
-        .from("colors")
-        .select("*")
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .order("name");
+    } =
+        await supabaseClient
+            .from("colors")
+            .select("*")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order("name");
 
     if (error) {
 
@@ -1750,62 +2034,68 @@ function renderColors() {
     }
 
     container.innerHTML =
-        colorsCache.map(
-            color => {
+        colorsCache
+            .map(
+                color => {
 
-                const hex =
-                    color.hex_code ||
-                    "#cccccc";
+                    const hex =
+                        color.hex_code ||
+                        "#cccccc";
 
-                return `
+                    return `
 
-                <div class="color-card">
+                    <div class="color-card">
 
-                    <div class="color-card-info">
+                        <div class="color-card-info">
 
-                        <span
-                            class="color-card-swatch"
-                            style="background:${escapeHtml(hex)}"
-                        ></span>
+                            <span
+                                class="color-card-swatch"
+                                style="background:${escapeHtml(hex)}"
+                            ></span>
 
-                        <div class="color-card-text">
+                            <div class="color-card-text">
 
-                            <strong class="color-card-name">
-                                ${escapeHtml(color.name)}
-                            </strong>
+                                <strong class="color-card-name">
+                                    ${escapeHtml(
+                                        color.name
+                                    )}
+                                </strong>
 
-                            <small class="color-card-code">
-                                ${escapeHtml(hex)}
-                            </small>
+                                <small class="color-card-code">
+                                    ${escapeHtml(
+                                        hex
+                                    )}
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                        <div class="color-card-actions">
+
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-edit-color="${color.id}"
+                            >
+                                ✎
+                            </button>
+
+                            <button
+                                type="button"
+                                class="icon-button danger"
+                                data-delete-color="${color.id}"
+                            >
+                                ×
+                            </button>
 
                         </div>
 
                     </div>
-
-                    <div class="color-card-actions">
-
-                        <button
-                            type="button"
-                            class="icon-button"
-                            data-edit-color="${color.id}"
-                        >
-                            ✎
-                        </button>
-
-                        <button
-                            type="button"
-                            class="icon-button danger"
-                            data-delete-color="${color.id}"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                </div>
-            `;
-            }
-        ).join("");
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -1870,11 +2160,15 @@ function openColorModal(
         ""
     );
 
-    openModal("colorModal");
+    openModal(
+        "colorModal"
+    );
 }
 
 
-async function saveColor(event) {
+async function saveColor(
+    event
+) {
 
     event.preventDefault();
 
@@ -1883,16 +2177,23 @@ async function saveColor(event) {
     }
 
     const id =
-        $("colorId").value.trim();
+        $("colorId")
+            .value
+            .trim();
 
     const name =
-        $("colorName").value.trim();
+        $("colorName")
+            .value
+            .trim();
 
     const hex =
-        $("colorHexText").value.trim();
+        $("colorHexText")
+            .value
+            .trim();
 
     const isActive =
-        $("colorActive").checked;
+        $("colorActive")
+            .checked;
 
     if (!name) {
 
@@ -1905,7 +2206,8 @@ async function saveColor(event) {
     }
 
     if (
-        !/^#[0-9A-Fa-f]{6}$/.test(hex)
+        !/^#[0-9A-Fa-f]{6}$/
+            .test(hex)
     ) {
 
         showMessage(
@@ -1934,7 +2236,10 @@ async function saveColor(event) {
                 await supabaseClient
                     .from("colors")
                     .update(payload)
-                    .eq("id", id)
+                    .eq(
+                        "id",
+                        id
+                    )
                     .eq(
                         "user_id",
                         currentUser.id
@@ -1978,7 +2283,9 @@ async function saveColor(event) {
 }
 
 
-async function deleteColor(id) {
+async function deleteColor(
+    id
+) {
 
     if (!currentUser) {
         return;
@@ -1994,14 +2301,18 @@ async function deleteColor(id) {
 
     const {
         error
-    } = await supabaseClient
-        .from("colors")
-        .delete()
-        .eq("id", id)
-        .eq(
-            "user_id",
-            currentUser.id
-        );
+    } =
+        await supabaseClient
+            .from("colors")
+            .delete()
+            .eq(
+                "id",
+                id
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            );
 
     if (error) {
 
@@ -2034,15 +2345,18 @@ async function loadSizes() {
     const {
         data,
         error
-    } = await supabaseClient
-        .from("sizes")
-        .select("*")
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .order("display_order")
-        .order("name");
+    } =
+        await supabaseClient
+            .from("sizes")
+            .select("*")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order(
+                "display_order"
+            )
+            .order("name");
 
     if (error) {
 
@@ -2085,57 +2399,64 @@ function renderSizes() {
     }
 
     container.innerHTML =
-        sizesCache.map(
-            size => `
+        sizesCache
+            .map(
+                size => `
 
-            <div class="size-card">
+                <div class="size-card">
 
-                <div class="size-card-info">
+                    <div class="size-card-info">
 
-                    <span class="size-badge">
-                        ${escapeHtml(size.name)}
-                    </span>
-
-                    <div>
-
-                        <strong class="size-card-name">
-                            Tamanho ${escapeHtml(size.name)}
-                        </strong>
-
-                        <small class="size-card-order">
-                            Ordem:
-                            ${Number(
-                                size.display_order || 0
+                        <span class="size-badge">
+                            ${escapeHtml(
+                                size.name
                             )}
-                        </small>
+                        </span>
+
+                        <div>
+
+                            <strong class="size-card-name">
+                                Tamanho
+                                ${escapeHtml(
+                                    size.name
+                                )}
+                            </strong>
+
+                            <small class="size-card-order">
+                                Ordem:
+                                ${Number(
+                                    size.display_order || 0
+                                )}
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                    <div class="size-card-actions">
+
+                        <button
+                            type="button"
+                            class="icon-button"
+                            data-edit-size="${size.id}"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            type="button"
+                            class="icon-button danger"
+                            data-delete-size="${size.id}"
+                        >
+                            ×
+                        </button>
 
                     </div>
 
                 </div>
-
-                <div class="size-card-actions">
-
-                    <button
-                        type="button"
-                        class="icon-button"
-                        data-edit-size="${size.id}"
-                    >
-                        ✎
-                    </button>
-
-                    <button
-                        type="button"
-                        class="icon-button danger"
-                        data-delete-size="${size.id}"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-            </div>
-        `
-        ).join("");
+            `
+            )
+            .join("");
 }
 
 
@@ -2169,11 +2490,15 @@ function openSizeModal(
         ""
     );
 
-    openModal("sizeModal");
+    openModal(
+        "sizeModal"
+    );
 }
 
 
-async function saveSize(event) {
+async function saveSize(
+    event
+) {
 
     event.preventDefault();
 
@@ -2182,19 +2507,24 @@ async function saveSize(event) {
     }
 
     const id =
-        $("sizeId").value.trim();
+        $("sizeId")
+            .value
+            .trim();
 
     const name =
-        $("sizeName").value.trim();
+        $("sizeName")
+            .value
+            .trim();
 
     const displayOrder =
         Number(
-            $("sizeDisplayOrder").value ||
-            0
+            $("sizeDisplayOrder")
+                .value || 0
         );
 
     const isActive =
-        $("sizeActive").checked;
+        $("sizeActive")
+            .checked;
 
     if (!name) {
 
@@ -2224,7 +2554,10 @@ async function saveSize(event) {
                 await supabaseClient
                     .from("sizes")
                     .update(payload)
-                    .eq("id", id)
+                    .eq(
+                        "id",
+                        id
+                    )
                     .eq(
                         "user_id",
                         currentUser.id
@@ -2268,7 +2601,9 @@ async function saveSize(event) {
 }
 
 
-async function deleteSize(id) {
+async function deleteSize(
+    id
+) {
 
     if (!currentUser) {
         return;
@@ -2284,14 +2619,18 @@ async function deleteSize(id) {
 
     const {
         error
-    } = await supabaseClient
-        .from("sizes")
-        .delete()
-        .eq("id", id)
-        .eq(
-            "user_id",
-            currentUser.id
-        );
+    } =
+        await supabaseClient
+            .from("sizes")
+            .delete()
+            .eq(
+                "id",
+                id
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            );
 
     if (error) {
 
@@ -2339,38 +2678,41 @@ function renderProductVariationOptions() {
                 color =>
                     color.is_active !== false
             )
-            .forEach(color => {
+            .forEach(
+                color => {
 
-                const option =
-                    document.createElement(
-                        "option"
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        color.id;
+
+                    option.textContent =
+                        color.name;
+
+                    option.dataset.colorName =
+                        color.name || "";
+
+                    option.dataset.colorHex =
+                        color.hex_code ||
+                        "#cccccc";
+
+                    colorSelect.appendChild(
+                        option
                     );
-
-                option.value =
-                    color.id;
-
-                option.textContent =
-                    color.name;
-
-                option.dataset.colorName =
-                    color.name || "";
-
-                option.dataset.colorHex =
-                    color.hex_code ||
-                    "#cccccc";
-
-                colorSelect.appendChild(
-                    option
-                );
-            });
+                }
+            );
 
         if (
-            [...colorSelect.options]
-                .some(
-                    option =>
-                        option.value ===
-                        currentColor
-                )
+            [
+                ...colorSelect.options
+            ].some(
+                option =>
+                    option.value ===
+                    currentColor
+            )
         ) {
             colorSelect.value =
                 currentColor;
@@ -2393,34 +2735,37 @@ function renderProductVariationOptions() {
                 size =>
                     size.is_active !== false
             )
-            .forEach(size => {
+            .forEach(
+                size => {
 
-                const option =
-                    document.createElement(
-                        "option"
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        size.id;
+
+                    option.textContent =
+                        size.name;
+
+                    option.dataset.sizeName =
+                        size.name || "";
+
+                    sizeSelect.appendChild(
+                        option
                     );
-
-                option.value =
-                    size.id;
-
-                option.textContent =
-                    size.name;
-
-                option.dataset.sizeName =
-                    size.name || "";
-
-                sizeSelect.appendChild(
-                    option
-                );
-            });
+                }
+            );
 
         if (
-            [...sizeSelect.options]
-                .some(
-                    option =>
-                        option.value ===
-                        currentSize
-                )
+            [
+                ...sizeSelect.options
+            ].some(
+                option =>
+                    option.value ===
+                    currentSize
+            )
         ) {
             sizeSelect.value =
                 currentSize;
@@ -2451,76 +2796,81 @@ function renderProductVariationsList() {
     }
 
     container.innerHTML =
-        productVariationsDraft.map(
-            (variation, index) => {
+        productVariationsDraft
+            .map(
+                (
+                    variation,
+                    index
+                ) => {
 
-                const hex =
-                    variation.colorHex ||
-                    "#cccccc";
+                    const hex =
+                        variation.colorHex ||
+                        "#cccccc";
 
-                return `
+                    return `
 
-                <div
-                    class="product-variant-draft-item"
-                    data-variation-index="${index}"
-                >
+                    <div
+                        class="product-variant-draft-item"
+                        data-variation-index="${index}"
+                    >
 
-                    <div class="product-variant-draft-info">
+                        <div class="product-variant-draft-info">
 
-                        <span
-                            class="variation-color-dot"
-                            style="background:${escapeHtml(hex)}"
-                        ></span>
+                            <span
+                                class="variation-color-dot"
+                                style="background:${escapeHtml(hex)}"
+                            ></span>
 
-                        <strong>
-                            ${escapeHtml(
-                                variation.colorName ||
-                                "Sem cor"
-                            )}
-                        </strong>
+                            <strong>
+                                ${escapeHtml(
+                                    variation.colorName ||
+                                    "Sem cor"
+                                )}
+                            </strong>
 
-                        <span class="product-variant-draft-size">
-                            ${escapeHtml(
-                                variation.sizeName ||
-                                "Sem tamanho"
-                            )}
-                        </span>
+                            <span class="product-variant-draft-size">
+                                ${escapeHtml(
+                                    variation.sizeName ||
+                                    "Sem tamanho"
+                                )}
+                            </span>
 
-                    </div>
+                        </div>
 
-                    <div class="product-variant-draft-actions">
+                        <div class="product-variant-draft-actions">
 
-                        <label class="product-variant-quantity-control">
+                            <label class="product-variant-quantity-control">
 
-                            <span>Qtd.</span>
+                                <span>Qtd.</span>
 
-                            <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                inputmode="numeric"
-                                value="${Number(
-                                    variation.quantity || 0
-                                )}"
-                                data-variation-quantity="${index}"
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    inputmode="numeric"
+                                    value="${Number(
+                                        variation.quantity || 0
+                                    )}"
+                                    data-variation-quantity="${index}"
+                                >
+
+                            </label>
+
+                            <button
+                                type="button"
+                                class="icon-button danger"
+                                data-remove-variation="${index}"
                             >
+                                🗑
+                            </button>
 
-                        </label>
-
-                        <button
-                            type="button"
-                            class="icon-button danger"
-                            data-remove-variation="${index}"
-                        >
-                            🗑
-                        </button>
+                        </div>
 
                     </div>
-
-                </div>
-            `;
-            }
-        ).join("");
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -2579,7 +2929,9 @@ function addProductVariation() {
     }
 
     if (
-        !Number.isInteger(quantity) ||
+        !Number.isInteger(
+            quantity
+        ) ||
         quantity < 0
     ) {
 
@@ -2615,13 +2967,15 @@ function addProductVariation() {
     const color =
         colorsCache.find(
             item =>
-                item.id === colorId
+                item.id ===
+                colorId
         );
 
     const size =
         sizesCache.find(
             item =>
-                item.id === sizeId
+                item.id ===
+                sizeId
         );
 
     productVariationsDraft.push({
@@ -2629,7 +2983,8 @@ function addProductVariation() {
         colorId,
         colorName:
             color?.name ||
-            colorSelect.selectedOptions[0]
+            colorSelect
+                .selectedOptions[0]
                 ?.textContent ||
             "",
         colorHex:
@@ -2638,7 +2993,8 @@ function addProductVariation() {
         sizeId,
         sizeName:
             size?.name ||
-            sizeSelect.selectedOptions[0]
+            sizeSelect
+                .selectedOptions[0]
                 ?.textContent ||
             "",
         quantity
@@ -2671,7 +3027,9 @@ function removeProductVariation(
         Number(index);
 
     if (
-        !Number.isInteger(numericIndex) ||
+        !Number.isInteger(
+            numericIndex
+        ) ||
         numericIndex < 0 ||
         numericIndex >=
             productVariationsDraft.length
@@ -2708,7 +3066,9 @@ function updateProductVariationQuantity(
         Number(value);
 
     if (
-        !Number.isInteger(quantity) ||
+        !Number.isInteger(
+            quantity
+        ) ||
         quantity < 0
     ) {
         return;
@@ -2754,7 +3114,9 @@ function generateBatchVariations() {
             "1"
         );
 
-    if (quantityValue === null) {
+    if (
+        quantityValue === null
+    ) {
         return;
     }
 
@@ -2762,7 +3124,9 @@ function generateBatchVariations() {
         Number(quantityValue);
 
     if (
-        !Number.isInteger(quantity) ||
+        !Number.isInteger(
+            quantity
+        ) ||
         quantity < 0
     ) {
 
@@ -2796,7 +3160,8 @@ function generateBatchVariations() {
                     }
 
                     productVariationsDraft.push({
-                        variantId: null,
+                        variantId:
+                            null,
                         colorId:
                             color.id,
                         colorName:
@@ -2811,7 +3176,7 @@ function generateBatchVariations() {
                         quantity
                     });
 
-                    added += 1;
+                    added++;
                 }
             );
         }
@@ -2842,20 +3207,21 @@ async function loadProducts() {
     const {
         data,
         error
-    } = await supabaseClient
-        .from("products")
-        .select(`
-            *,
-            categories (
-                id,
-                name
+    } =
+        await supabaseClient
+            .from("products")
+            .select(`
+                *,
+                categories (
+                    id,
+                    name
+                )
+            `)
+            .eq(
+                "user_id",
+                currentUser.id
             )
-        `)
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .order("name");
+            .order("name");
 
     if (error) {
 
@@ -2872,7 +3238,8 @@ async function loadProducts() {
 
     await loadProductImages(
         productsCache.map(
-            product => product.id
+            product =>
+                product.id
         )
     );
 
@@ -2884,80 +3251,137 @@ function renderProductCard(
     product
 ) {
 
+    const variants =
+        getProductVariants(
+            product.id
+        );
+
+    const colors =
+        getProductColorNames(
+            product.id
+        );
+
+    const sizes =
+        getProductSizeNames(
+            product.id
+        );
+
+    const totalStock =
+        getProductTotalStock(
+            product.id
+        );
+
+    const minimum =
+        Number(
+            product.minimum_stock || 0
+        );
+
+    const status =
+        getStockStatus(
+            totalStock,
+            minimum
+        );
+
+    const colorText =
+        colors.length
+            ? colors.join(", ")
+            : "Sem cores";
+
+    const sizeText =
+        sizes.length
+            ? sizes.join(", ")
+            : "Sem tamanhos";
+
     return `
 
-        <div class="product-card">
+        <article
+            class="product-card"
+            data-edit-product="${product.id}"
+            tabindex="0"
+            role="button"
+            aria-label="Editar ${escapeHtml(product.name)}"
+        >
 
-            ${productImageHtml(
-                product.id
-            )}
+            <div class="product-card-image-wrapper">
+
+                ${productImageHtml(
+                    product.id,
+                    "product-card-image"
+                )}
+
+            </div>
 
             <div class="product-card-info">
 
-                <strong>
+                <strong class="product-card-name">
                     ${escapeHtml(
                         product.name
                     )}
                 </strong>
 
-                <span>
+                <span class="product-card-sku">
+                    SKU:
                     ${escapeHtml(
                         product.sku ||
                         "Sem SKU"
                     )}
                 </span>
 
-                <small>
+                <small class="product-card-category">
                     ${escapeHtml(
                         product.categories?.name ||
                         "Sem categoria"
                     )}
                 </small>
 
+                <div class="product-card-details">
+
+                    <span>
+                        <b>Cores:</b>
+                        ${escapeHtml(
+                            colorText
+                        )}
+                    </span>
+
+                    <span>
+                        <b>Tamanhos:</b>
+                        ${escapeHtml(
+                            sizeText
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="product-card-stock">
+
+                    <span>
+                        Estoque:
+                        <strong>
+                            ${totalStock}
+                        </strong>
+                    </span>
+
+                    <span
+                        class="product-stock-status ${status.className}"
+                    >
+                        ${status.label}
+                    </span>
+
+                </div>
+
+                <div class="product-card-price">
+
+                    <strong>
+                        ${formatCurrency(
+                            product.sale_price
+                        )}
+                    </strong>
+
+                </div>
+
             </div>
 
-            <div class="product-card-price">
-
-                <strong>
-                    ${formatCurrency(
-                        product.sale_price
-                    )}
-                </strong>
-
-                <small>
-                    Custo:
-                    ${formatCurrency(
-                        product.cost_price
-                    )}
-                </small>
-
-            </div>
-
-            <div class="product-card-actions">
-
-                <button
-                    type="button"
-                    class="icon-button"
-                    data-edit-product="${product.id}"
-                    title="Editar produto"
-                    aria-label="Editar produto"
-                >
-                    ✏️
-                </button>
-
-                <button
-                    type="button"
-                    class="icon-button danger"
-                    data-delete-product="${product.id}"
-                    title="Excluir produto"
-                    aria-label="Excluir produto"
-                >
-                    🗑️
-                </button>
-
-            </div>
-
-        </div>
+        </article>
     `;
 }
 
@@ -3008,11 +3432,11 @@ function resetProductForm() {
             "Novo produto";
     }
 
-    const photoPreview =
-        $("productPhotoPreview");
+    const existingPhotos =
+        $("productExistingPhotos");
 
-    if (photoPreview) {
-        photoPreview.innerHTML =
+    if (existingPhotos) {
+        existingPhotos.innerHTML =
             "";
     }
 
@@ -3024,14 +3448,6 @@ function resetProductForm() {
     renderProductVariationOptions();
     renderProductVariationsList();
     populateCategorySelect();
-
-    const existingPhotos =
-        $("productExistingPhotos");
-
-    if (existingPhotos) {
-        existingPhotos.innerHTML =
-            "";
-    }
 }
 
 
@@ -3074,34 +3490,38 @@ async function loadProductForEdit(
     const {
         data: variants,
         error
-    } = await supabaseClient
-        .from("product_variants")
-        .select(`
-            id,
-            product_id,
-            color_id,
-            size_id,
-            stock_quantity,
-            minimum_stock,
-            is_active,
-            colors (
-                id,
-                name,
-                hex_code
-            ),
-            sizes (
-                id,
-                name
+    } =
+        await supabaseClient
+            .from(
+                "product_variants"
             )
-        `)
-        .eq(
-            "user_id",
-            currentUser.id
-        )
-        .eq(
-            "product_id",
-            product.id
-        );
+            .select(`
+                id,
+                product_id,
+                color_id,
+                size_id,
+                stock_quantity,
+                minimum_stock,
+                is_active,
+                colors (
+                    id,
+                    name,
+                    hex_code
+                ),
+                sizes (
+                    id,
+                    name
+                )
+            `)
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .eq(
+                "product_id",
+                product.id
+            )
+            .order("id");
 
     if (error) {
         throw error;
@@ -3136,13 +3556,10 @@ async function loadProductForEdit(
     renderProductVariationOptions();
     renderProductVariationsList();
 
-    const images =
+    renderExistingProductPhotos(
         productImagesCache[
             product.id
-        ] || [];
-
-    renderExistingProductPhotos(
-        images
+        ] || []
     );
 
     const title =
@@ -3211,7 +3628,10 @@ function renderExistingProductPhotos(
         <div class="product-existing-photos-grid">
 
             ${images.map(
-                (image, index) => `
+                (
+                    image,
+                    index
+                ) => `
 
                 <div class="product-existing-photo">
 
@@ -3248,17 +3668,19 @@ function openProductModal(
 
         loadProductForEdit(
             product
-        ).catch(error => {
+        ).catch(
+            error => {
 
-            console.error(
-                "Erro ao abrir produto para edição:",
-                error
-            );
+                console.error(
+                    "Erro ao abrir produto para edição:",
+                    error
+                );
 
-            alert(
-                "Não foi possível carregar os dados do produto."
-            );
-        });
+                alert(
+                    "Não foi possível carregar os dados do produto."
+                );
+            }
+        );
 
         return;
     }
@@ -3271,7 +3693,9 @@ function openProductModal(
 }
 
 
-async function saveProduct(event) {
+async function saveProduct(
+    event
+) {
 
     event.preventDefault();
 
@@ -3283,41 +3707,51 @@ async function saveProduct(event) {
         event.submitter;
 
     const id =
-        $("productId").value.trim();
+        $("productId")
+            .value
+            .trim();
 
     const name =
-        $("productName").value.trim();
+        $("productName")
+            .value
+            .trim();
 
     const sku =
-        $("productSku").value.trim();
+        $("productSku")
+            .value
+            .trim();
 
     const categoryId =
-        $("productCategory").value ||
+        $("productCategory")
+            .value ||
         null;
 
     const description =
-        $("productDescription").value.trim();
+        $("productDescription")
+            .value
+            .trim();
 
     const costPrice =
         Number(
-            $("productCostPrice").value ||
-            0
+            $("productCostPrice")
+                .value || 0
         );
 
     const salePrice =
         Number(
-            $("productSalePrice").value ||
-            0
+            $("productSalePrice")
+                .value || 0
         );
 
     const minimumStock =
         Number(
-            $("productMinimumStock").value ||
-            0
+            $("productMinimumStock")
+                .value || 0
         );
 
     const isActive =
-        $("productActive").checked;
+        $("productActive")
+            .checked;
 
     if (!name) {
 
@@ -3330,8 +3764,8 @@ async function saveProduct(event) {
     }
 
     if (
-        salePrice < 0 ||
-        costPrice < 0
+        costPrice < 0 ||
+        salePrice < 0
     ) {
 
         showMessage(
@@ -3391,10 +3825,6 @@ async function saveProduct(event) {
 
         let product;
 
-        // =================================================
-        // CRIAÇÃO
-        // =================================================
-
         if (!id) {
 
             const {
@@ -3426,28 +3856,27 @@ async function saveProduct(event) {
             ) {
 
                 const variants =
-                    productVariationsDraft
-                        .map(
-                            variation => ({
-                                user_id:
-                                    currentUser.id,
-                                product_id:
-                                    product.id,
-                                color_id:
-                                    variation.colorId,
-                                size_id:
-                                    variation.sizeId,
-                                stock_quantity:
-                                    Number(
-                                        variation.quantity ||
-                                        0
-                                    ),
-                                minimum_stock:
-                                    minimumStock,
-                                is_active:
-                                    true
-                            })
-                        );
+                    productVariationsDraft.map(
+                        variation => ({
+                            user_id:
+                                currentUser.id,
+                            product_id:
+                                product.id,
+                            color_id:
+                                variation.colorId,
+                            size_id:
+                                variation.sizeId,
+                            stock_quantity:
+                                Number(
+                                    variation.quantity ||
+                                    0
+                                ),
+                            minimum_stock:
+                                minimumStock,
+                            is_active:
+                                true
+                        })
+                    );
 
                 const {
                     error:
@@ -3462,12 +3891,6 @@ async function saveProduct(event) {
                         );
 
                 if (variantsError) {
-
-                    console.error(
-                        "Erro ao criar variações:",
-                        variantsError
-                    );
-
                     throw new Error(
                         "Não foi possível criar as variações do produto. O produto será desfeito."
                     );
@@ -3478,10 +3901,6 @@ async function saveProduct(event) {
                 true;
 
         } else {
-
-            // =================================================
-            // EDIÇÃO DO PRODUTO
-            // =================================================
 
             const {
                 data,
@@ -3511,13 +3930,14 @@ async function saveProduct(event) {
             createdProductId =
                 id;
 
-            // Atualiza as variações existentes.
             for (
                 const variation
                 of productVariationsDraft
             ) {
 
-                if (variation.variantId) {
+                if (
+                    variation.variantId
+                ) {
 
                     const {
                         error:
@@ -3589,28 +4009,25 @@ async function saveProduct(event) {
                                     true
                             });
 
-                    if (newVariantError) {
+                    if (
+                        newVariantError
+                    ) {
                         throw newVariantError;
                     }
                 }
             }
 
             /*
-             * Não removemos automaticamente variações existentes
-             * que não estejam no draft. Isso evita apagar uma
-             * variação que possa estar vinculada ao histórico de vendas.
+             * Variações antigas não presentes no draft
+             * não são excluídas automaticamente.
              *
-             * O usuário pode continuar editando quantidades,
-             * cores/tamanhos e adicionando novas combinações.
+             * Isso preserva possíveis vínculos históricos
+             * com vendas e movimentações.
              */
 
             productAndVariantsCreated =
                 true;
         }
-
-        // =================================================
-        // FOTOS
-        // =================================================
 
         let photoResult = {
             uploaded: [],
@@ -3633,10 +4050,6 @@ async function saveProduct(event) {
                 );
         }
 
-        // =================================================
-        // FINALIZAÇÃO
-        // =================================================
-
         closeModal(
             "productModal"
         );
@@ -3649,9 +4062,10 @@ async function saveProduct(event) {
         editingProductId =
             null;
 
-        await loadProducts();
-
-        await loadStock();
+        await Promise.all([
+            loadProducts(),
+            loadVariants()
+        ]);
 
         await loadDashboard();
 
@@ -3736,7 +4150,8 @@ async function deleteProduct(
     const product =
         productsCache.find(
             item =>
-                item.id === productId
+                item.id ===
+                productId
         );
 
     if (!product) {
@@ -3745,7 +4160,7 @@ async function deleteProduct(
 
     const confirmed =
         confirm(
-            `Excluir o produto "${product.name}"?\n\nEssa operação respeitará os vínculos existentes no banco de dados.`
+            `Excluir o produto "${product.name}"?\n\nSe existirem vendas, estoque ou outros registros vinculados, o banco poderá impedir a exclusão.`
         );
 
     if (!confirmed) {
@@ -3777,12 +4192,6 @@ async function deleteProduct(
             throw imagesError;
         }
 
-        /*
-         * O produto é excluído primeiro.
-         * Se houver relações que impeçam a exclusão,
-         * o Supabase retornará o erro e não prosseguimos
-         * com limpeza do Storage.
-         */
         const {
             error
         } =
@@ -3832,9 +4241,10 @@ async function deleteProduct(
             }
         }
 
-        await loadProducts();
-
-        await loadStock();
+        await Promise.all([
+            loadProducts(),
+            loadVariants()
+        ]);
 
         await loadDashboard();
 
@@ -3921,9 +4331,22 @@ async function loadVariants() {
             )
         ];
 
-    if (productIds.length) {
+    const allProductIds =
+        [
+            ...new Set([
+                ...productIds,
+                ...productsCache.map(
+                    product =>
+                        product.id
+                )
+            ])
+        ];
+
+    if (
+        allProductIds.length
+    ) {
         await loadProductImages(
-            productIds
+            allProductIds
         );
     }
 }
@@ -3933,9 +4356,18 @@ async function loadStock() {
 
     await loadVariants();
 
+    const activeVariants =
+        variantsCache.filter(
+            variant =>
+                variant.is_active !== false
+        );
+
     const total =
-        variantsCache.reduce(
-            (sum, variant) =>
+        activeVariants.reduce(
+            (
+                sum,
+                variant
+            ) =>
                 sum +
                 Number(
                     variant.stock_quantity ||
@@ -3945,7 +4377,7 @@ async function loadStock() {
         );
 
     const low =
-        variantsCache.filter(
+        activeVariants.filter(
             variant => {
 
                 const stock =
@@ -3964,13 +4396,14 @@ async function loadStock() {
 
                 return (
                     stock > 0 &&
+                    minimum > 0 &&
                     stock <= minimum
                 );
             }
         ).length;
 
     const zero =
-        variantsCache.filter(
+        activeVariants.filter(
             variant =>
                 Number(
                     variant.stock_quantity ||
@@ -4030,22 +4463,24 @@ function renderStockCard(
             0
         );
 
-    let status =
-        "normal";
-
-    if (stock === 0) {
-        status = "zero";
-    } else if (stock <= minimum) {
-        status = "low";
-    }
+    const status =
+        getStockStatus(
+            stock,
+            minimum
+        );
 
     return `
 
         <div class="stock-card">
 
-            ${productImageHtml(
-                productId
-            )}
+            <div class="stock-card-image-wrapper">
+
+                ${productImageHtml(
+                    productId,
+                    "stock-card-image"
+                )}
+
+            </div>
 
             <div class="stock-card-info">
 
@@ -4070,10 +4505,17 @@ function renderStockCard(
                     ${minimum}
                 </small>
 
+                <small>
+                    Status:
+                    ${escapeHtml(
+                        status.label
+                    )}
+                </small>
+
             </div>
 
             <div
-                class="stock-card-quantity ${status}"
+                class="stock-card-quantity ${status.className}"
             >
 
                 <strong>
@@ -4094,7 +4536,10 @@ function renderStockCard(
 function renderStock() {
 
     renderStockCollection(
-        variantsCache
+        variantsCache.filter(
+            variant =>
+                variant.is_active !== false
+        )
     );
 }
 
@@ -4336,14 +4781,19 @@ function ensureSaleModalUI() {
         );
 
     if (modalBody) {
+
         modalBody.appendChild(
             wrapper
         );
+
     } else if (modalContent) {
+
         modalContent.appendChild(
             wrapper
         );
+
     } else {
+
         modal.appendChild(
             wrapper
         );
@@ -4383,8 +4833,7 @@ function ensureSaleModalUI() {
 
 function resetSaleDraft() {
 
-    saleDraft =
-        [];
+    saleDraft = [];
 
     saleProductPickerOpen =
         false;
@@ -4398,24 +4847,21 @@ function resetSaleDraft() {
         $("saleDiscountInput");
 
     if (discount) {
-        discount.value =
-            "0";
+        discount.value = "0";
     }
 
     const payment =
         $("salePaymentMethod");
 
     if (payment) {
-        payment.value =
-            "";
+        payment.value = "";
     }
 
     const notes =
         $("saleNotesInput");
 
     if (notes) {
-        notes.value =
-            "";
+        notes.value = "";
     }
 
     showMessage(
@@ -4426,7 +4872,6 @@ function resetSaleDraft() {
     closeSaleProductPicker();
 
     renderSaleItems();
-
     renderSaleSummary();
 }
 
@@ -4437,11 +4882,10 @@ async function openNewSaleModal() {
 
     resetSaleDraft();
 
-    if (
-        !variantsCache.length
-    ) {
-        await loadVariants();
-    }
+    await Promise.all([
+        loadProducts(),
+        loadVariants()
+    ]);
 
     openModal(
         "saleModal"
@@ -4465,15 +4909,32 @@ function toggleSaleProductPicker() {
             !saleProductPickerOpen;
     }
 
-    if (saleProductPickerOpen) {
+    if (
+        saleProductPickerOpen
+    ) {
 
         const search =
             $("saleProductSearchInput");
 
         if (search) {
-            search.value =
-                "";
+            search.value = "";
             search.focus();
+        }
+
+        const variantPicker =
+            $("saleVariantPicker");
+
+        if (variantPicker) {
+            variantPicker.hidden =
+                true;
+        }
+
+        const list =
+            $("saleProductPickerList");
+
+        if (list) {
+            list.hidden =
+                false;
         }
 
         renderSaleProductPicker();
@@ -4493,8 +4954,23 @@ function closeSaleProductPicker() {
         $("saleProductPicker");
 
     if (picker) {
-        picker.hidden =
+        picker.hidden = true;
+    }
+
+    const variantPicker =
+        $("saleVariantPicker");
+
+    if (variantPicker) {
+        variantPicker.hidden =
             true;
+    }
+
+    const list =
+        $("saleProductPickerList");
+
+    if (list) {
+        list.hidden =
+            false;
     }
 }
 
@@ -4514,23 +4990,28 @@ function renderSaleProductPicker() {
                 ?.value ||
             ""
         )
-        .toLowerCase()
-        .trim();
+            .toLowerCase()
+            .trim();
 
     const productsWithStock =
         productsCache.filter(
             product => {
 
+                if (
+                    product.is_active === false
+                ) {
+                    return false;
+                }
+
                 const variants =
-                    variantsCache.filter(
-                        variant =>
-                            variant.product_id ===
-                            product.id
+                    getProductVariants(
+                        product.id
                     );
 
                 const available =
                     variants.some(
                         variant =>
+                            variant.is_active !== false &&
                             Number(
                                 variant.stock_quantity ||
                                 0
@@ -4553,7 +5034,9 @@ function renderSaleProductPicker() {
             }
         );
 
-    if (!productsWithStock.length) {
+    if (
+        !productsWithStock.length
+    ) {
 
         container.innerHTML = `
             <div class="empty-state">
@@ -4566,79 +5049,82 @@ function renderSaleProductPicker() {
     }
 
     container.innerHTML =
-        productsWithStock.map(
-            product => {
+        productsWithStock
+            .map(
+                product => {
 
-                const variants =
-                    variantsCache.filter(
-                        variant =>
-                            variant.product_id ===
-                                product.id &&
-                            Number(
-                                variant.stock_quantity ||
-                                0
-                            ) > 0
-                    );
+                    const variants =
+                        getProductVariants(
+                            product.id
+                        ).filter(
+                            variant =>
+                                variant.is_active !== false &&
+                                Number(
+                                    variant.stock_quantity ||
+                                    0
+                                ) > 0
+                        );
 
-                const totalStock =
-                    variants.reduce(
-                        (
-                            sum,
-                            variant
-                        ) =>
-                            sum +
-                            Number(
-                                variant.stock_quantity ||
-                                0
-                            ),
-                        0
-                    );
+                    const totalStock =
+                        variants.reduce(
+                            (
+                                sum,
+                                variant
+                            ) =>
+                                sum +
+                                Number(
+                                    variant.stock_quantity ||
+                                    0
+                                ),
+                            0
+                        );
 
-                return `
+                    return `
 
-                <button
-                    type="button"
-                    class="sale-product-picker-item"
-                    data-sale-select-product="${product.id}"
-                >
+                    <button
+                        type="button"
+                        class="sale-product-picker-item"
+                        data-sale-select-product="${product.id}"
+                    >
 
-                    ${productImageHtml(
-                        product.id,
-                        "sale-product-picker-image"
-                    )}
+                        ${productImageHtml(
+                            product.id,
+                            "sale-product-picker-image"
+                        )}
 
-                    <span>
+                        <span>
+
+                            <strong>
+                                ${escapeHtml(
+                                    product.name
+                                )}
+                            </strong>
+
+                            <small>
+                                ${escapeHtml(
+                                    product.sku ||
+                                    "Sem SKU"
+                                )}
+                            </small>
+
+                            <small>
+                                Estoque:
+                                ${totalStock}
+                            </small>
+
+                        </span>
 
                         <strong>
-                            ${escapeHtml(
-                                product.name
+                            ${formatCurrency(
+                                product.sale_price
                             )}
                         </strong>
 
-                        <small>
-                            ${escapeHtml(
-                                product.sku ||
-                                "Sem SKU"
-                            )}
-                        </small>
-
-                        <small>
-                            Estoque:
-                            ${totalStock}
-                        </small>
-
-                    </span>
-
-                    <strong>
-                        ${formatCurrency(
-                            product.sale_price
-                        )}
-                    </strong>
-
-                </button>
-            `;
-            }
-        ).join("");
+                    </button>
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -4656,10 +5142,12 @@ function renderSaleVariantPicker(
     const product =
         productsCache.find(
             item =>
-                item.id === productId
+                item.id ===
+                productId
         );
 
     if (!product) {
+
         container.hidden =
             true;
 
@@ -4667,10 +5155,11 @@ function renderSaleVariantPicker(
     }
 
     const variants =
-        variantsCache.filter(
+        getProductVariants(
+            productId
+        ).filter(
             variant =>
-                variant.product_id ===
-                    productId &&
+                variant.is_active !== false &&
                 Number(
                     variant.stock_quantity ||
                     0
@@ -4824,38 +5313,46 @@ function addSaleVariant(
             return;
         }
 
-        existing.quantity +=
-            1;
+        existing.quantity += 1;
 
     } else {
 
         saleDraft.push({
             variantId:
                 variant.id,
+
             productId:
                 product.id,
+
             productName:
                 product.name,
+
             productImage:
                 getProductMainImage(
                     product.id
                 ),
+
             variantDescription:
                 `${variant.colors?.name || "Sem cor"} / ${variant.sizes?.name || "Sem tamanho"}`,
+
             colorName:
                 variant.colors?.name ||
                 "Sem cor",
+
             sizeName:
                 variant.sizes?.name ||
                 "Sem tamanho",
-            quantity:
-                1,
+
+            quantity: 1,
+
             stock,
+
             unitPrice:
                 Number(
                     product.sale_price ||
                     0
                 ),
+
             unitCost:
                 Number(
                     product.cost_price ||
@@ -4867,7 +5364,6 @@ function addSaleVariant(
     closeSaleProductPicker();
 
     renderSaleItems();
-
     renderSaleSummary();
 
     showMessage(
@@ -4900,102 +5396,108 @@ function renderSaleItems() {
     }
 
     container.innerHTML =
-        saleDraft.map(
-            (item, index) => {
+        saleDraft
+            .map(
+                (
+                    item,
+                    index
+                ) => {
 
-                const subtotal =
-                    item.quantity *
-                    item.unitPrice;
+                    const subtotal =
+                        item.quantity *
+                        item.unitPrice;
 
-                return `
+                    return `
 
-                <div class="sale-draft-item">
+                    <div class="sale-draft-item">
 
-                    ${
-                        item.productImage
-                            ? `
-                            <img
-                                src="${escapeHtml(
-                                    item.productImage
-                                )}"
-                                alt="Produto"
-                                loading="lazy"
+                        ${
+                            item.productImage
+                                ? `
+                                <img
+                                    src="${escapeHtml(
+                                        item.productImage
+                                    )}"
+                                    alt="Produto"
+                                    loading="lazy"
+                                >
+                                `
+                                : `
+                                <div>
+                                    📷
+                                </div>
+                                `
+                        }
+
+                        <div>
+
+                            <strong>
+                                ${escapeHtml(
+                                    item.productName
+                                )}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(
+                                    item.variantDescription
+                                )}
+                            </span>
+
+                            <small>
+                                ${formatCurrency(
+                                    item.unitPrice
+                                )}
+                                cada
+                            </small>
+
+                        </div>
+
+                        <div>
+
+                            <button
+                                type="button"
+                                data-sale-decrease="${index}"
                             >
-                            `
-                            : `
-                            <div>
-                                📷
-                            </div>
-                            `
-                    }
+                                −
+                            </button>
 
-                    <div>
+                            <input
+                                type="number"
+                                min="1"
+                                max="${item.stock}"
+                                step="1"
+                                value="${item.quantity}"
+                                data-sale-quantity="${index}"
+                            >
+
+                            <button
+                                type="button"
+                                data-sale-increase="${index}"
+                            >
+                                +
+                            </button>
+
+                        </div>
 
                         <strong>
-                            ${escapeHtml(
-                                item.productName
+                            ${formatCurrency(
+                                subtotal
                             )}
                         </strong>
 
-                        <span>
-                            ${escapeHtml(
-                                item.variantDescription
-                            )}
-                        </span>
-
-                        <small>
-                            ${formatCurrency(
-                                item.unitPrice
-                            )} cada
-                        </small>
-
-                    </div>
-
-                    <div>
-
                         <button
                             type="button"
-                            data-sale-decrease="${index}"
+                            class="icon-button danger"
+                            data-sale-remove="${index}"
                         >
-                            −
-                        </button>
-
-                        <input
-                            type="number"
-                            min="1"
-                            max="${item.stock}"
-                            step="1"
-                            value="${item.quantity}"
-                            data-sale-quantity="${index}"
-                        >
-
-                        <button
-                            type="button"
-                            data-sale-increase="${index}"
-                        >
-                            +
+                            🗑️
                         </button>
 
                     </div>
-
-                    <strong>
-                        ${formatCurrency(
-                            subtotal
-                        )}
-                    </strong>
-
-                    <button
-                        type="button"
-                        class="icon-button danger"
-                        data-sale-remove="${index}"
-                    >
-                        🗑️
-                    </button>
-
-                </div>
-            `;
-            }
-        ).join("");
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -5015,7 +5517,9 @@ function updateSaleItemQuantity(
         Number(value);
 
     if (
-        !Number.isInteger(quantity)
+        !Number.isInteger(
+            quantity
+        )
     ) {
         return;
     }
@@ -5042,7 +5546,6 @@ function updateSaleItemQuantity(
         quantity;
 
     renderSaleItems();
-
     renderSaleSummary();
 }
 
@@ -5064,7 +5567,6 @@ function removeSaleItem(
     );
 
     renderSaleItems();
-
     renderSaleSummary();
 }
 
@@ -5073,7 +5575,10 @@ function renderSaleSummary() {
 
     const subtotal =
         saleDraft.reduce(
-            (sum, item) =>
+            (
+                sum,
+                item
+            ) =>
                 sum +
                 (
                     item.quantity *
@@ -5092,13 +5597,22 @@ function renderSaleSummary() {
             )
         );
 
+    const safeDiscount =
+        Math.min(
+            discount,
+            subtotal
+        );
+
     const total =
         Math.max(
             0,
-            subtotal - discount
+            subtotal -
+            safeDiscount
         );
 
-    if ($("saleSubtotalValue")) {
+    if (
+        $("saleSubtotalValue")
+    ) {
 
         $("saleSubtotalValue")
             .textContent =
@@ -5107,7 +5621,9 @@ function renderSaleSummary() {
             );
     }
 
-    if ($("saleTotalValue")) {
+    if (
+        $("saleTotalValue")
+    ) {
 
         $("saleTotalValue")
             .textContent =
@@ -5118,7 +5634,8 @@ function renderSaleSummary() {
 
     return {
         subtotal,
-        discount,
+        discount:
+            safeDiscount,
         total
     };
 }
@@ -5166,7 +5683,6 @@ async function loadSales() {
         data || [];
 
     renderSales();
-
     updateSalesMetrics();
 }
 
@@ -5178,24 +5694,23 @@ function updateSalesMetrics() {
 
     const todaySales =
         salesCache.filter(
-            sale => {
-
-                return (
-                    sale.status !==
-                        "cancelled" &&
-                    String(
-                        sale.sale_date ||
-                        ""
-                    ).startsWith(
-                        today
-                    )
-                );
-            }
+            sale =>
+                sale.status !==
+                    "cancelled" &&
+                String(
+                    sale.sale_date ||
+                    ""
+                ).startsWith(
+                    today
+                )
         );
 
     const total =
         todaySales.reduce(
-            (sum, sale) =>
+            (
+                sum,
+                sale
+            ) =>
                 sum +
                 Number(
                     sale.total ||
@@ -5213,7 +5728,9 @@ function updateSalesMetrics() {
             );
     }
 
-    if ($("salesOrdersToday")) {
+    if (
+        $("salesOrdersToday")
+    ) {
 
         $("salesOrdersToday")
             .textContent =
@@ -5303,9 +5820,11 @@ function renderSales() {
     }
 
     container.innerHTML =
-        salesCache.map(
-            renderSaleHistoryCard
-        ).join("");
+        salesCache
+            .map(
+                renderSaleHistoryCard
+            )
+            .join("");
 }
 
 
@@ -5364,26 +5883,20 @@ async function registerSale() {
         "Registrando..."
     );
 
-    let saleId =
-        null;
+    let saleId = null;
 
-    const updatedVariants =
-        [];
+    const updatedVariants = [];
 
-    let saleItemsInserted =
-        false;
-
-    let inventoryMovementsInserted =
-        false;
-
-    let financeInserted =
-        false;
+    let saleItemsInserted = false;
+    let inventoryMovementsInserted = false;
+    let financeInserted = false;
 
     try {
 
-        // =================================================
-        // VALIDA ESTOQUE NOVAMENTE ANTES DE GRAVAR
-        // =================================================
+        /*
+         * Revalida o estoque diretamente no banco
+         * imediatamente antes da gravação.
+         */
 
         for (
             const item
@@ -5391,7 +5904,8 @@ async function registerSale() {
         ) {
 
             const {
-                data: currentVariant,
+                data:
+                    currentVariant,
                 error:
                     variantReadError
             } =
@@ -5418,6 +5932,7 @@ async function registerSale() {
                 variantReadError ||
                 !currentVariant
             ) {
+
                 throw new Error(
                     `Não foi possível verificar o estoque de "${item.productName}".`
                 );
@@ -5433,6 +5948,7 @@ async function registerSale() {
                 item.quantity >
                 currentStock
             ) {
+
                 throw new Error(
                     `Estoque insuficiente para "${item.productName}" (${item.variantDescription}). Disponível: ${currentStock}.`
                 );
@@ -5441,10 +5957,6 @@ async function registerSale() {
             item.currentStock =
                 currentStock;
         }
-
-        // =================================================
-        // CRIA VENDA
-        // =================================================
 
         const saleNumber =
             await getNextSaleNumber();
@@ -5491,10 +6003,6 @@ async function registerSale() {
 
         saleId =
             sale.id;
-
-        // =================================================
-        // SALE ITEMS
-        // =================================================
 
         const saleItems =
             saleDraft.map(
@@ -5550,10 +6058,6 @@ async function registerSale() {
         saleItemsInserted =
             true;
 
-        // =================================================
-        // ESTOQUE + MOVIMENTAÇÕES
-        // =================================================
-
         const movements = [];
 
         for (
@@ -5570,6 +6074,12 @@ async function registerSale() {
             const newStock =
                 previousStock -
                 item.quantity;
+
+            /*
+             * O filtro pelo estoque anterior evita
+             * sobrescrever uma alteração feita por
+             * outra operação entre a leitura e a baixa.
+             */
 
             const {
                 data:
@@ -5620,16 +6130,22 @@ async function registerSale() {
             movements.push({
                 user_id:
                     currentUser.id,
+
                 product_variant_id:
                     item.variantId,
+
                 movement_type:
                     "sale",
+
                 quantity:
                     item.quantity,
+
                 reference_id:
                     sale.id,
+
                 reason:
                     `Venda #${saleNumber}`,
+
                 notes:
                     item.variantDescription
             });
@@ -5654,10 +6170,6 @@ async function registerSale() {
         inventoryMovementsInserted =
             true;
 
-        // =================================================
-        // FINANCEIRO AUTOMÁTICO
-        // =================================================
-
         const {
             error:
                 financeError
@@ -5669,22 +6181,29 @@ async function registerSale() {
                 .insert({
                     user_id:
                         currentUser.id,
+
                     transaction_type:
                         "income",
+
                     category:
                         "Venda",
+
                     description:
                         `Venda #${saleNumber}`,
+
                     amount:
                         summary.total,
+
                     transaction_date:
                         todayISO(),
+
                     payment_method:
                         paymentMethod,
+
                     reference_id:
                         sale.id,
-                    notes:
-                        notes
+
+                    notes
                 });
 
         if (financeError) {
@@ -5693,10 +6212,6 @@ async function registerSale() {
 
         financeInserted =
             true;
-
-        // =================================================
-        // SUCESSO
-        // =================================================
 
         closeModal(
             "saleModal"
@@ -5720,9 +6235,9 @@ async function registerSale() {
             error
         );
 
-        // =================================================
-        // ROLLBACK FINANCEIRO
-        // =================================================
+        /*
+         * Rollback financeiro.
+         */
 
         if (
             financeInserted &&
@@ -5744,9 +6259,9 @@ async function registerSale() {
                 );
         }
 
-        // =================================================
-        // ROLLBACK MOVIMENTAÇÕES
-        // =================================================
+        /*
+         * Rollback das movimentações.
+         */
 
         if (
             inventoryMovementsInserted &&
@@ -5768,9 +6283,9 @@ async function registerSale() {
                 );
         }
 
-        // =================================================
-        // ROLLBACK ESTOQUE
-        // =================================================
+        /*
+         * Rollback do estoque.
+         */
 
         for (
             const variant
@@ -5799,9 +6314,9 @@ async function registerSale() {
                 );
         }
 
-        // =================================================
-        // ROLLBACK SALE ITEMS
-        // =================================================
+        /*
+         * Rollback dos itens da venda.
+         */
 
         if (
             saleItemsInserted &&
@@ -5823,9 +6338,9 @@ async function registerSale() {
                 );
         }
 
-        // =================================================
-        // ROLLBACK VENDA
-        // =================================================
+        /*
+         * Rollback da venda.
+         */
 
         if (saleId) {
 
@@ -5939,7 +6454,6 @@ async function loadFinance() {
         data || [];
 
     renderFinance();
-
     updateFinanceMetrics();
 }
 
@@ -6042,51 +6556,53 @@ function renderFinance() {
     }
 
     container.innerHTML =
-        financeCache.map(
-            transaction => {
+        financeCache
+            .map(
+                transaction => {
 
-                const income =
-                    transaction.transaction_type ===
-                    "income";
+                    const income =
+                        transaction.transaction_type ===
+                        "income";
 
-                return `
+                    return `
 
-                <div class="finance-card">
+                    <div class="finance-card">
 
-                    <div>
+                        <div>
 
-                        <strong>
-                            ${escapeHtml(
-                                transaction.description
+                            <strong>
+                                ${escapeHtml(
+                                    transaction.description
+                                )}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(
+                                    transaction.category ||
+                                    "Sem categoria"
+                                )}
+                            </span>
+
+                        </div>
+
+                        <strong class="${
+                            income
+                                ? "income"
+                                : "expense"
+                        }">
+
+                            ${income ? "+" : "-"}
+                            ${formatCurrency(
+                                transaction.amount
                             )}
+
                         </strong>
 
-                        <span>
-                            ${escapeHtml(
-                                transaction.category ||
-                                "Sem categoria"
-                            )}
-                        </span>
-
                     </div>
-
-                    <strong class="${
-                        income
-                            ? "income"
-                            : "expense"
-                    }">
-
-                        ${income ? "+" : "-"}
-                        ${formatCurrency(
-                            transaction.amount
-                        )}
-
-                    </strong>
-
-                </div>
-            `;
-            }
-        ).join("");
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -6126,7 +6642,8 @@ async function saveTransaction(
     }
 
     const type =
-        $("transactionType").value;
+        $("transactionType")
+            .value;
 
     const category =
         $("transactionCategory")
@@ -6146,7 +6663,8 @@ async function saveTransaction(
         );
 
     const date =
-        $("transactionDate").value;
+        $("transactionDate")
+            .value;
 
     const paymentMethod =
         $("transactionPaymentMethod")
@@ -6199,19 +6717,28 @@ async function saveTransaction(
                 .insert({
                     user_id:
                         currentUser.id,
+
                     transaction_type:
                         type,
+
                     category:
-                        category || null,
+                        category ||
+                        null,
+
                     description,
+
                     amount,
+
                     transaction_date:
                         date,
+
                     payment_method:
                         paymentMethod ||
                         null,
+
                     notes:
-                        notes || null
+                        notes ||
+                        null
                 });
 
         if (error) {
@@ -6223,7 +6750,6 @@ async function saveTransaction(
         );
 
         await loadFinance();
-
         await loadDashboard();
 
     } catch (error) {
@@ -6318,6 +6844,13 @@ async function loadDashboard() {
         variantsCache.filter(
             variant => {
 
+                if (
+                    variant.is_active ===
+                    false
+                ) {
+                    return false;
+                }
+
                 const stock =
                     Number(
                         variant.stock_quantity ||
@@ -6332,8 +6865,10 @@ async function loadDashboard() {
                         0
                     );
 
-                return stock <=
-                    minimum;
+                return (
+                    minimum > 0 &&
+                    stock <= minimum
+                );
             }
         ).length;
 
@@ -6375,7 +6910,9 @@ async function loadDashboard() {
 // MODAIS
 // =========================================================
 
-function openModal(id) {
+function openModal(
+    id
+) {
 
     const modal =
         $(id);
@@ -6393,7 +6930,9 @@ function openModal(id) {
 }
 
 
-function closeModal(id) {
+function closeModal(
+    id
+) {
 
     const modal =
         $(id);
@@ -6408,6 +6947,12 @@ function closeModal(id) {
     document.body.classList.remove(
         "modal-open"
     );
+
+    if (
+        id === "saleModal"
+    ) {
+        closeSaleProductPicker();
+    }
 }
 
 
@@ -6427,6 +6972,7 @@ function bindEvents() {
             handleLogin
         );
 
+
     // =================================================
     // LOGOUT
     // =================================================
@@ -6437,6 +6983,7 @@ function bindEvents() {
             handleLogout
         );
 
+
     // =================================================
     // NAVEGAÇÃO
     // =================================================
@@ -6445,23 +6992,27 @@ function bindEvents() {
         .querySelectorAll(
             "[data-section]"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const section =
-                        button.dataset.section;
+                        const section =
+                            button.dataset
+                                .section;
 
-                    if (section) {
-                        showSection(
-                            section
-                        );
+                        if (section) {
+                            showSection(
+                                section
+                            );
+                        }
                     }
-                }
-            );
-        });
+                );
+            }
+        );
+
 
     // =================================================
     // NOVOS
@@ -6507,6 +7058,7 @@ function bindEvents() {
             openTransactionModal
         );
 
+
     // =================================================
     // FORMULÁRIOS
     // =================================================
@@ -6541,6 +7093,7 @@ function bindEvents() {
             saveTransaction
         );
 
+
     // =================================================
     // FOTOS
     // =================================================
@@ -6550,6 +7103,7 @@ function bindEvents() {
             "change",
             handleProductPhotoSelection
         );
+
 
     // =================================================
     // COLOR PICKER
@@ -6567,7 +7121,8 @@ function bindEvents() {
             event => {
 
                 let value =
-                    event.target.value
+                    event.target
+                        .value
                         .trim();
 
                 if (
@@ -6589,6 +7144,7 @@ function bindEvents() {
                 }
             }
         );
+
 
     // =================================================
     // VARIAÇÕES
@@ -6636,6 +7192,7 @@ function bindEvents() {
                 )
         );
 
+
     // =================================================
     // CLIQUES DE VARIAÇÕES
     // =================================================
@@ -6664,6 +7221,7 @@ function bindEvents() {
         }
     );
 
+
     document.addEventListener(
         "input",
         event => {
@@ -6686,6 +7244,7 @@ function bindEvents() {
             }
         }
     );
+
 
     // =================================================
     // FECHAR MODAIS
@@ -6720,7 +7279,8 @@ function bindEvents() {
 
             if (
                 modal &&
-                event.target === modal
+                event.target ===
+                    modal
             ) {
 
                 closeModal(
@@ -6729,6 +7289,7 @@ function bindEvents() {
             }
         }
     );
+
 
     // =================================================
     // CATEGORIAS / CORES / TAMANHOS
@@ -6869,24 +7430,25 @@ function bindEvents() {
                 return;
             }
 
+
             // =================================================
             // PRODUTOS
             // =================================================
 
-            const editProductButton =
+            const productCard =
                 event.target.closest(
                     "[data-edit-product]"
                 );
 
             if (
-                editProductButton
+                productCard
             ) {
 
                 const product =
                     productsCache.find(
                         item =>
                             item.id ===
-                            editProductButton
+                            productCard
                                 .dataset
                                 .editProduct
                     );
@@ -6900,23 +7462,6 @@ function bindEvents() {
                 return;
             }
 
-            const deleteProductButton =
-                event.target.closest(
-                    "[data-delete-product]"
-                );
-
-            if (
-                deleteProductButton
-            ) {
-
-                deleteProduct(
-                    deleteProductButton
-                        .dataset
-                        .deleteProduct
-                );
-
-                return;
-            }
 
             // =================================================
             // VENDAS
@@ -7073,6 +7618,7 @@ function bindEvents() {
         }
     );
 
+
     // =================================================
     // QUANTIDADE DOS ITENS DA VENDA
     // =================================================
@@ -7099,6 +7645,51 @@ function bindEvents() {
             );
         }
     );
+
+
+    // =================================================
+    // TECLADO — CARD DE PRODUTO
+    // =================================================
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            const card =
+                event.target.closest(
+                    "[data-edit-product]"
+                );
+
+            if (!card) {
+                return;
+            }
+
+            if (
+                event.key ===
+                    "Enter" ||
+                event.key ===
+                    " "
+            ) {
+
+                event.preventDefault();
+
+                const product =
+                    productsCache.find(
+                        item =>
+                            item.id ===
+                            card.dataset
+                                .editProduct
+                    );
+
+                if (product) {
+                    openProductModal(
+                        product
+                    );
+                }
+            }
+        }
+    );
+
 
     // =================================================
     // BUSCAS
@@ -7134,7 +7725,9 @@ function bindEvents() {
 // FILTROS
 // =========================================================
 
-function filterProducts(event) {
+function filterProducts(
+    event
+) {
 
     const search =
         event.target.value
@@ -7145,15 +7738,23 @@ function filterProducts(event) {
         productsCache.filter(
             product => {
 
+                const name =
+                    String(
+                        product.name ||
+                        ""
+                    )
+                        .toLowerCase();
+
+                const sku =
+                    String(
+                        product.sku ||
+                        ""
+                    )
+                        .toLowerCase();
+
                 return (
-                    product.name
-                        ?.toLowerCase()
-                        .includes(search)
-                ) ||
-                (
-                    product.sku
-                        ?.toLowerCase()
-                        .includes(search)
+                    name.includes(search) ||
+                    sku.includes(search)
                 );
             }
         );
@@ -7189,13 +7790,17 @@ function renderProductCollection(
     }
 
     container.innerHTML =
-        products.map(
-            renderProductCard
-        ).join("");
+        products
+            .map(
+                renderProductCard
+            )
+            .join("");
 }
 
 
-function filterStock(event) {
+function filterStock(
+    event
+) {
 
     const search =
         event.target.value
@@ -7253,13 +7858,17 @@ function renderStockCollection(
     }
 
     container.innerHTML =
-        variants.map(
-            renderStockCard
-        ).join("");
+        variants
+            .map(
+                renderStockCard
+            )
+            .join("");
 }
 
 
-function filterSales(event) {
+function filterSales(
+    event
+) {
 
     const search =
         event.target.value
@@ -7268,15 +7877,15 @@ function filterSales(event) {
 
     const filtered =
         salesCache.filter(
-            sale => {
-
-                return String(
+            sale =>
+                String(
                     sale.sale_number ||
                     ""
-                ).includes(
-                    search
-                );
-            }
+                )
+                    .toLowerCase()
+                    .includes(
+                        search
+                    )
         );
 
     const container =
@@ -7298,13 +7907,17 @@ function filterSales(event) {
     }
 
     container.innerHTML =
-        filtered.map(
-            renderSaleHistoryCard
-        ).join("");
+        filtered
+            .map(
+                renderSaleHistoryCard
+            )
+            .join("");
 }
 
 
-function filterFinance(event) {
+function filterFinance(
+    event
+) {
 
     const search =
         event.target.value
@@ -7350,51 +7963,53 @@ function filterFinance(event) {
     }
 
     container.innerHTML =
-        filtered.map(
-            transaction => {
+        filtered
+            .map(
+                transaction => {
 
-                const income =
-                    transaction.transaction_type ===
-                    "income";
+                    const income =
+                        transaction.transaction_type ===
+                        "income";
 
-                return `
+                    return `
 
-                <div class="finance-card">
+                    <div class="finance-card">
 
-                    <div>
+                        <div>
 
-                        <strong>
-                            ${escapeHtml(
-                                transaction.description
+                            <strong>
+                                ${escapeHtml(
+                                    transaction.description
+                                )}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(
+                                    transaction.category ||
+                                    "Sem categoria"
+                                )}
+                            </span>
+
+                        </div>
+
+                        <strong class="${
+                            income
+                                ? "income"
+                                : "expense"
+                        }">
+
+                            ${income ? "+" : "-"}
+                            ${formatCurrency(
+                                transaction.amount
                             )}
+
                         </strong>
 
-                        <span>
-                            ${escapeHtml(
-                                transaction.category ||
-                                "Sem categoria"
-                            )}
-                        </span>
-
                     </div>
-
-                    <strong class="${
-                        income
-                            ? "income"
-                            : "expense"
-                    }">
-
-                        ${income ? "+" : "-"}
-                        ${formatCurrency(
-                            transaction.amount
-                        )}
-
-                    </strong>
-
-                </div>
-            `;
-            }
-        ).join("");
+                `;
+                }
+            )
+            .join("");
 }
 
 
@@ -7404,12 +8019,27 @@ function filterFinance(event) {
 
 async function loadProductsPage() {
 
+    /*
+     * Produtos precisam de:
+     * - produtos
+     * - categorias
+     * - cores
+     * - tamanhos
+     * - variações
+     * - fotos
+     *
+     * Tudo é carregado em lote.
+     */
+
     await Promise.all([
         loadCategories(),
         loadColors(),
         loadSizes(),
-        loadProducts()
+        loadProducts(),
+        loadVariants()
     ]);
+
+    renderProducts();
 }
 
 
@@ -7441,7 +8071,8 @@ async function checkSession() {
             data,
             error
         } =
-            await supabaseClient.auth
+            await supabaseClient
+                .auth
                 .getSession();
 
         if (error) {
@@ -7566,11 +8197,15 @@ document.addEventListener(
                         appInitialized =
                             false;
 
+                        currentSection =
+                            "home";
+
                         clearProductPhotosDraft();
 
                         if (
                             $("appScreen")
                         ) {
+
                             $("appScreen")
                                 .hidden =
                                 true;
@@ -7579,6 +8214,7 @@ document.addEventListener(
                         if (
                             $("loginScreen")
                         ) {
+
                             $("loginScreen")
                                 .hidden =
                                 false;
