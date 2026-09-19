@@ -42,6 +42,11 @@
 
     <title>MabijuFit</title>
 
+
+    <!-- =====================================================
+         PWA
+         ===================================================== -->
+
     <link
         rel="manifest"
         href="manifest.json"
@@ -58,9 +63,14 @@
         href="assets/icons/icon-192.png"
     >
 
+
+    <!-- =====================================================
+         CSS
+         ===================================================== -->
+
     <link
         rel="stylesheet"
-        href="css/style.css?v=3"
+        href="css/style.css?v=4"
     >
 
 </head>
@@ -82,6 +92,9 @@
 
             <section class="login-card">
 
+
+                <!-- LOGO -->
+
                 <div class="login-logo">
 
                     <img
@@ -91,6 +104,8 @@
 
                 </div>
 
+
+                <!-- TÍTULO -->
 
                 <div class="login-header">
 
@@ -105,10 +120,15 @@
                 </div>
 
 
+                <!-- FORMULÁRIO -->
+
                 <form
                     id="loginForm"
                     class="login-form"
                 >
+
+
+                    <!-- E-MAIL -->
 
                     <div class="form-group">
 
@@ -128,6 +148,8 @@
                     </div>
 
 
+                    <!-- SENHA -->
+
                     <div class="form-group">
 
                         <label for="password">
@@ -146,6 +168,8 @@
                     </div>
 
 
+                    <!-- BOTÃO -->
+
                     <button
                         type="submit"
                         id="loginButton"
@@ -155,14 +179,19 @@
                     </button>
 
 
+                    <!-- MENSAGEM -->
+
                     <p
                         id="loginMessage"
                         class="login-message"
                         aria-live="polite"
                     ></p>
 
+
                 </form>
 
+
+                <!-- RODAPÉ -->
 
                 <div class="login-footer">
 
@@ -175,6 +204,7 @@
                     </span>
 
                 </div>
+
 
             </section>
 
@@ -193,7 +223,9 @@
         >
 
 
-            <!-- HEADER -->
+            <!-- =================================================
+                 HEADER PRINCIPAL
+                 ================================================= -->
 
             <header class="dashboard-header">
 
@@ -223,254 +255,471 @@
 
 
 
-            <!-- CONTEÚDO -->
+            <!-- =================================================
+                 TELA INÍCIO / DASHBOARD
+                 ================================================= -->
 
-            <section class="dashboard-content">
-
-
-                <div class="dashboard-title">
-
-                    <span>
-                        Visão geral
-                    </span>
-
-                    <h2>
-                        Resumo da loja
-                    </h2>
-
-                </div>
+            <section
+                id="homeScreen"
+                class="module-screen"
+            >
 
 
-
-                <!-- CARDS -->
-
-                <div class="metrics-grid">
+                <section class="dashboard-content">
 
 
-                    <article class="metric-card">
+                    <!-- TÍTULO -->
 
-                        <span class="metric-label">
-                            Vendas
+                    <div class="dashboard-title">
+
+                        <span>
+                            Visão geral
                         </span>
-
-                        <strong
-                            id="metricSales"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Pedidos
-                        </span>
-
-                        <strong
-                            id="metricOrders"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Estoque baixo
-                        </span>
-
-                        <strong
-                            id="metricLowStock"
-                            class="metric-value"
-                        >
-                            0
-                        </strong>
-
-                        <small>
-                            Produtos
-                        </small>
-
-                    </article>
-
-
-
-                    <article class="metric-card">
-
-                        <span class="metric-label">
-                            Despesas
-                        </span>
-
-                        <strong
-                            id="metricExpenses"
-                            class="metric-value"
-                        >
-                            R$ 0,00
-                        </strong>
-
-                        <small>
-                            Hoje
-                        </small>
-
-                    </article>
-
-
-                </div>
-
-
-
-                <!-- ACESSOS RÁPIDOS -->
-
-                <section class="dashboard-section">
-
-                    <div class="section-heading">
 
                         <h2>
-                            Acessos rápidos
+                            Resumo da loja
                         </h2>
 
                     </div>
 
 
-                    <div class="quick-actions">
+
+                    <!-- =================================================
+                         MÉTRICAS
+                         ================================================= -->
+
+                    <div class="metrics-grid">
 
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="products"
-                        >
+                        <!-- VENDAS -->
 
-                            <span class="quick-action-icon">
-                                P
-                            </span>
+                        <article class="metric-card">
 
-                            <span>
-                                Produtos
-                            </span>
-
-                        </button>
-
-
-
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="stock"
-                        >
-
-                            <span class="quick-action-icon">
-                                E
-                            </span>
-
-                            <span>
-                                Estoque
-                            </span>
-
-                        </button>
-
-
-
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="sales"
-                        >
-
-                            <span class="quick-action-icon">
-                                V
-                            </span>
-
-                            <span>
+                            <span class="metric-label">
                                 Vendas
                             </span>
 
-                        </button>
+                            <strong
+                                id="metricSales"
+                                class="metric-value"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
 
 
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="finance"
-                        >
+                        <!-- PEDIDOS -->
 
-                            <span class="quick-action-icon">
-                                F
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Pedidos
                             </span>
 
-                            <span>
-                                Financeiro
+                            <strong
+                                id="metricOrders"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
+
+
+
+                        <!-- ESTOQUE BAIXO -->
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Estoque baixo
                             </span>
 
-                        </button>
+                            <strong
+                                id="metricLowStock"
+                                class="metric-value"
+                            >
+                                0
+                            </strong>
+
+                            <small>
+                                Produtos
+                            </small>
+
+                        </article>
+
+
+
+                        <!-- DESPESAS -->
+
+                        <article class="metric-card">
+
+                            <span class="metric-label">
+                                Despesas
+                            </span>
+
+                            <strong
+                                id="metricExpenses"
+                                class="metric-value"
+                            >
+                                R$ 0,00
+                            </strong>
+
+                            <small>
+                                Hoje
+                            </small>
+
+                        </article>
 
 
                     </div>
 
-                </section>
 
 
+                    <!-- =================================================
+                         ACESSOS RÁPIDOS
+                         ================================================= -->
 
-                <!-- ATIVIDADE -->
+                    <section class="dashboard-section">
 
-                <section class="dashboard-section">
+                        <div class="section-heading">
 
-                    <div class="section-heading">
+                            <h2>
+                                Acessos rápidos
+                            </h2>
 
-                        <h2>
-                            Atividade recente
-                        </h2>
-
-                    </div>
-
-
-                    <div
-                        id="recentActivity"
-                        class="empty-state"
-                    >
-
-                        <div class="empty-state-icon">
-                            M
                         </div>
 
-                        <strong>
-                            Nenhuma atividade ainda
-                        </strong>
 
-                        <p>
-                            As vendas e movimentações
-                            aparecerão aqui.
-                        </p>
+                        <div class="quick-actions">
 
-                    </div>
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="products"
+                            >
+
+                                <span class="quick-action-icon">
+                                    P
+                                </span>
+
+                                <span>
+                                    Produtos
+                                </span>
+
+                            </button>
+
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="stock"
+                            >
+
+                                <span class="quick-action-icon">
+                                    E
+                                </span>
+
+                                <span>
+                                    Estoque
+                                </span>
+
+                            </button>
+
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="sales"
+                            >
+
+                                <span class="quick-action-icon">
+                                    V
+                                </span>
+
+                                <span>
+                                    Vendas
+                                </span>
+
+                            </button>
+
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="finance"
+                            >
+
+                                <span class="quick-action-icon">
+                                    F
+                                </span>
+
+                                <span>
+                                    Financeiro
+                                </span>
+
+                            </button>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- =================================================
+                         ATIVIDADE RECENTE
+                         ================================================= -->
+
+                    <section class="dashboard-section">
+
+                        <div class="section-heading">
+
+                            <h2>
+                                Atividade recente
+                            </h2>
+
+                        </div>
+
+
+                        <div
+                            id="recentActivity"
+                            class="empty-state"
+                        >
+
+                            <div class="empty-state-icon">
+                                M
+                            </div>
+
+                            <strong>
+                                Nenhuma atividade ainda
+                            </strong>
+
+                            <p>
+                                As vendas e movimentações
+                                aparecerão aqui.
+                            </p>
+
+                        </div>
+
+                    </section>
+
 
                 </section>
-
 
             </section>
 
 
 
-            <!-- NAVEGAÇÃO INFERIOR -->
+            <!-- =================================================
+                 TELA DE PRODUTOS
+                 ================================================= -->
+
+            <section
+                id="productsScreen"
+                class="module-screen"
+                hidden
+            >
+
+
+                <!-- CABEÇALHO -->
+
+                <header class="module-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            CATÁLOGO
+                        </span>
+
+                        <h1>
+                            Produtos
+                        </h1>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="newProductButton"
+                        class="module-add-button"
+                    >
+                        + Novo
+                    </button>
+
+                </header>
+
+
+
+                <!-- CONTEÚDO -->
+
+                <div class="module-content">
+
+
+                    <!-- BUSCA -->
+
+                    <div class="search-box">
+
+                        <input
+                            type="search"
+                            id="productSearch"
+                            placeholder="Buscar produto..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+
+                    <!-- LISTA -->
+
+                    <div
+                        id="productsList"
+                        class="products-list"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                P
+                            </div>
+
+                            <strong>
+                                Nenhum produto cadastrado
+                            </strong>
+
+                            <p>
+                                Cadastre seu primeiro produto
+                                para começar a controlar o estoque.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 TELA DE ESTOQUE
+                 ================================================= -->
+
+            <section
+                id="stockScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="placeholder-screen">
+
+                    <span class="module-eyebrow">
+                        CONTROLE
+                    </span>
+
+                    <h1>
+                        Estoque
+                    </h1>
+
+                    <p>
+                        Controle de entradas,
+                        saídas e produtos com
+                        estoque baixo.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 TELA DE VENDAS
+                 ================================================= -->
+
+            <section
+                id="salesScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="placeholder-screen">
+
+                    <span class="module-eyebrow">
+                        COMERCIAL
+                    </span>
+
+                    <h1>
+                        Vendas
+                    </h1>
+
+                    <p>
+                        Registro e acompanhamento
+                        das vendas da loja.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 TELA FINANCEIRA
+                 ================================================= -->
+
+            <section
+                id="financeScreen"
+                class="module-screen"
+                hidden
+            >
+
+                <div class="placeholder-screen">
+
+                    <span class="module-eyebrow">
+                        FINANCEIRO
+                    </span>
+
+                    <h1>
+                        Financeiro
+                    </h1>
+
+                    <p>
+                        Controle de receitas,
+                        despesas e resultados.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 NAVEGAÇÃO INFERIOR
+                 ================================================= -->
 
             <nav class="bottom-navigation">
 
+
+                <!-- INÍCIO -->
 
                 <button
                     type="button"
@@ -490,6 +739,8 @@
 
 
 
+                <!-- PRODUTOS -->
+
                 <button
                     type="button"
                     class="nav-item"
@@ -507,6 +758,8 @@
                 </button>
 
 
+
+                <!-- ESTOQUE -->
 
                 <button
                     type="button"
@@ -526,6 +779,8 @@
 
 
 
+                <!-- VENDAS -->
+
                 <button
                     type="button"
                     class="nav-item"
@@ -543,6 +798,8 @@
                 </button>
 
 
+
+                <!-- FINANCEIRO -->
 
                 <button
                     type="button"
@@ -574,11 +831,14 @@
          SCRIPTS
          ===================================================== -->
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
 
     <script src="js/supabase.js"></script>
 
     <script src="js/app.js"></script>
+
 
 </body>
 
