@@ -14,7 +14,7 @@ async function initializeApp() {
     registerServiceWorker();
 
     setupLoginForm();
-
+    setupLogout();
     await checkExistingSession();
 }
 
@@ -158,12 +158,15 @@ async function checkExistingSession() {
 
         if (data.session) {
 
-            console.log(
-                "Usuário já autenticado:",
-                data.session.user
-            );
+    console.log(
+        "Usuário já autenticado:",
+        data.session.user
+    );
 
-        }
+    showAppScreen(
+        data.session.user
+    );
+}
 
     } catch (error) {
 
