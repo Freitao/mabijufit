@@ -1,0 +1,329 @@
+/* =========================================================
+   MABIJUFIT — IDENTIDADE VISUAL
+   ========================================================= */
+
+:root {
+    --pink-50: #fff8fb;
+    --pink-100: #fcecf3;
+    --pink-200: #f7d7e4;
+    --pink-300: #efb9ce;
+    --pink-400: #df91b1;
+    --pink-500: #c96f94;
+
+    --gold: #c6a15b;
+    --gold-light: #ead9b5;
+
+    --white: #ffffff;
+    --black: #1f1b1d;
+    --gray-600: #6f686b;
+    --gray-400: #aaa2a6;
+
+    --background: #fffafd;
+    --border: #f0dfe7;
+
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+
+    --shadow-soft:
+        0 8px 30px rgba(150, 90, 115, 0.10);
+
+    --transition:
+        180ms ease;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--pink-50) 0%,
+            var(--background) 45%,
+            var(--white) 100%
+        );
+
+    color: var(--black);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+#app {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.app-header {
+    width: 100%;
+
+    padding:
+        calc(env(safe-area-inset-top) + 18px)
+        20px
+        18px;
+
+    background: rgba(255, 255, 255, 0.88);
+
+    border-bottom: 1px solid var(--border);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.brand-name {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+
+    color: var(--black);
+}
+
+.brand-subtitle {
+    font-size: 0.78rem;
+    color: var(--gray-600);
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.app-content {
+    width: 100%;
+    max-width: 600px;
+
+    margin: 0 auto;
+
+    padding:
+        28px 20px
+        calc(40px + env(safe-area-inset-bottom));
+}
+
+
+/* =========================================================
+   WELCOME CARD
+   ========================================================= */
+
+.welcome-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-align: center;
+
+    padding: 34px 24px;
+
+    background: var(--white);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-soft);
+}
+
+
+/* =========================================================
+   LOGO TEMPORÁRIO
+   ========================================================= */
+
+.welcome-logo {
+    width: 82px;
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 22px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--pink-200),
+            var(--pink-400)
+        );
+
+    color: var(--white);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 2.4rem;
+    font-weight: 600;
+
+    box-shadow:
+        0 10px 28px rgba(201, 111, 148, 0.25);
+}
+
+
+/* =========================================================
+   TEXTOS
+   ========================================================= */
+
+.welcome-card h1 {
+    margin-bottom: 10px;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 1.7rem;
+    font-weight: 600;
+
+    line-height: 1.2;
+
+    color: var(--black);
+}
+
+.welcome-card p {
+    max-width: 300px;
+
+    margin-bottom: 26px;
+
+    color: var(--gray-600);
+
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   BOTÃO
+   ========================================================= */
+
+.primary-button {
+    width: 100%;
+    min-height: 52px;
+
+    border: 0;
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--pink-400),
+            var(--pink-500)
+        );
+
+    color: var(--white);
+
+    font-size: 1rem;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 20px rgba(201, 111, 148, 0.25);
+
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        opacity var(--transition);
+}
+
+.primary-button:active {
+    transform: scale(0.98);
+}
+
+.primary-button:hover {
+    box-shadow:
+        0 10px 24px rgba(201, 111, 148, 0.32);
+}
+
+.primary-button:focus-visible {
+    outline: 3px solid var(--gold-light);
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   DESKTOP / TELAS MAIORES
+   ========================================================= */
+
+@media (min-width: 768px) {
+
+    .app-header {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+
+    .app-content {
+        padding-top: 60px;
+    }
+
+    .welcome-card {
+        padding: 50px 40px;
+    }
+
+    .primary-button {
+        max-width: 280px;
+    }
+}
+
+
+/* =========================================================
+   REDUÇÃO DE ANIMAÇÕES
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}
