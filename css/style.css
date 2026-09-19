@@ -2492,3 +2492,131 @@ textarea:disabled {
 .w-full {
     width: 100% !important;
 }
+/* =========================================================
+   MABIJUFIT — ÍCONES DOS BOTÕES DE AÇÃO
+   ========================================================= */
+
+.category-card-actions button,
+.color-card-actions button,
+.size-card-actions button {
+    position: relative;
+
+    font-size: 0 !important;
+
+    overflow: hidden;
+}
+
+
+/* EDITAR */
+
+.category-card-actions button[data-edit-category]::before,
+.color-card-actions button[data-edit-color]::before,
+.size-card-actions button[data-edit-size]::before {
+    content: "";
+
+    position: absolute;
+
+    width: 15px;
+    height: 5px;
+
+    background: currentColor;
+
+    border-radius: 3px;
+
+    transform:
+        rotate(-45deg);
+
+    box-shadow:
+        -4px 0 0 -1px currentColor;
+}
+
+
+/* Pequena ponta do lápis */
+
+.category-card-actions button[data-edit-category]::after,
+.color-card-actions button[data-edit-color]::after,
+.size-card-actions button[data-edit-size]::after {
+    content: "";
+
+    position: absolute;
+
+    width: 0;
+    height: 0;
+
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+    border-right: 5px solid currentColor;
+
+    transform:
+        translate(
+            -7px,
+            6px
+        )
+        rotate(-45deg);
+}
+
+
+/* EXCLUIR */
+
+.category-card-actions button[data-delete-category]::before,
+.color-card-actions button[data-delete-color]::before,
+.size-card-actions button[data-delete-size]::before {
+    content: "";
+
+    position: absolute;
+
+    width: 13px;
+    height: 15px;
+
+    border:
+        2px solid currentColor;
+
+    border-top: 0;
+
+    border-radius:
+        0 0 3px 3px;
+}
+
+
+/* Tampa da lixeira */
+
+.category-card-actions button[data-delete-category]::after,
+.color-card-actions button[data-delete-color]::after,
+.size-card-actions button[data-delete-size]::after {
+    content: "";
+
+    position: absolute;
+
+    width: 17px;
+    height: 3px;
+
+    top: 10px;
+
+    border-radius: 3px;
+
+    background: currentColor;
+
+    box-shadow:
+        5px 4px 0 -1px currentColor;
+}
+
+
+/* =========================================================
+   HOVER / TOQUE
+   ========================================================= */
+
+.category-card-actions button[data-edit-category]:hover,
+.color-card-actions button[data-edit-color]:hover,
+.size-card-actions button[data-edit-size]:hover {
+    background: var(--pink-100);
+
+    color: var(--pink-600);
+}
+
+.category-card-actions button[data-delete-category]:hover,
+.color-card-actions button[data-delete-color]:hover,
+.size-card-actions button[data-delete-size]:hover {
+    background: #fbe7eb;
+
+    color: var(--red);
+}
