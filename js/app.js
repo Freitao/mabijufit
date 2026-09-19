@@ -1,3384 +1,2332 @@
-// =========================================================
-// MABIJUFIT — APLICAÇÃO PRINCIPAL
-// =========================================================
+/* =========================================================
+   MABIJUFIT — APP PRINCIPAL
+   ========================================================= */
 
-const App = {
+"use strict";
 
-    currentSection: "home",
-    currentUser: null,
-    products: [],
+/* =========================================================
+   ESTADO
+   ========================================================= */
+
+const state = {
+    user: null,
     categories: [],
-    saleItems: [],
+    colors: [],
+    sizes: [],
+    products: [],
+    sales: [],
+    financialTransactions: []
+};
 
+/* =========================================================
+   UTILITÁRIOS
+   ========================================================= */
 
-    // =====================================================
-    // INICIALIZAÇÃO
-    // =====================================================
+const $ = (id) => document.getElementById(id);
 
-    async init() {
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
 
-        this.bindEvents();
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
 
-        await this.checkSession();
+function formatCurrency(value) {
+    const number = Number(value || 0);
 
-        this.setDefaultTransactionDate();
+    return number.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
 
-    },
+function formatDate(value) {
+    if (!value) {
+        return "-";
+    }
 
+    const date = new Date(value);
 
-    // =====================================================
-    // EVENTOS
-    // =====================================================
+    if (Number.isNaN(date.getTime())) {
+        return "-";
+    }
 
-    bindEvents() {
+    return date.toLocaleDateString("pt-BR");
+}
 
-        // LOGIN
-        const loginForm = document.getElementById("loginForm");
+function formatDateTime(value) {
+    if (!value) {
+        return "-";
+    }
 
-        if (loginForm) {
-            loginForm.addEventListener(
-                "submit",
-                (event) => this.handleLogin(event)
-            );
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "-";
+    }
+
+    return date.toLocaleString("pt-BR");
+}
+
+function normalizeHexColor(value) {
+    if (!value) {
+        return "#000000";
+    }
+
+    let hex = String(value).trim();
+
+    if (!hex.startsWith("#")) {
+        hex = `#${hex}`;
+    }
+
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        return hex.toUpperCase();
+    }
+
+    return "#000000";
+}
+
+function showElement(id) {
+    const element = $(id);
+
+    if (element) {
+        element.classList.remove("hidden");
+    }
+}
+
+function hideElement(id) {
+    const element = $(id);
+
+    if (element) {
+        element.classList.add("hidden");
+    }
+}
+
+function setMessage(id, message, type = "") {
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message || "";
+    element.className = "form-message";
+
+    if (type) {
+        element.classList.add(type);
+    }
+}
+
+function translateDatabaseError(error) {
+    if (!error) {
+        return "Ocorreu um erro inesperado.";
+    }
+
+    const message = error.message || String(error);
+
+    if (
+        message.includes("duplicate key") ||
+        message.includes("unique constraint")
+    ) {
+        return "Este registro já existe.";
+    }
+
+    if (
+        message.includes("row-level security") ||
+        message.includes("violates row-level security")
+    ) {
+        return "Você não possui permissão para realizar esta operação.";
+    }
+
+    if (message.includes("foreign key")) {
+        return "Este registro está sendo utilizado por outro registro.";
+    }
+
+    if (message.includes("not-null")) {
+        return "Preencha todos os campos obrigatórios.";
+    }
+
+    return message;
+}
+
+/* =========================================================
+   AUTENTICAÇÃO
+   ========================================================= */
+
+async function checkSession() {
+    try {
+        const {
+            data: { session },
+            error
+        } = await supabaseClient.auth.getSession();
+
+        if (error) {
+            throw error;
         }
 
+        if (session?.user) {
+            state.user = session.user;
 
-        // LOGOUT
-        const logoutButton =
-            document.getElementById("logoutButton");
+            showElement("appScreen");
+            hideElement("loginScreen");
 
-        if (logoutButton) {
+            await initializeApp();
+        } else {
+            state.user = null;
 
-            logoutButton.addEventListener(
-                "click",
-                () => this.handleLogout()
-            );
+            hideElement("appScreen");
+            showElement("loginScreen");
+        }
+    } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
 
+        state.user = null;
+
+        hideElement("appScreen");
+        showElement("loginScreen");
+    }
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = $("loginEmail")?.value.trim();
+    const password = $("loginPassword")?.value;
+
+    const messageElement = $("loginMessage");
+
+    if (!email || !password) {
+        if (messageElement) {
+            messageElement.textContent =
+                "Informe e-mail e senha.";
         }
 
-
-        // NAVEGAÇÃO
-        document
-            .querySelectorAll("[data-section]")
-            .forEach((button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const section =
-                            button.dataset.section;
-
-                        if (section) {
-                            this.navigate(section);
-                        }
-
-                    }
-                );
-
-            });
-
-
-        // NOVO PRODUTO
-        const newProductButton =
-            document.getElementById("newProductButton");
-
-        if (newProductButton) {
-
-            newProductButton.addEventListener(
-                "click",
-                () => this.openModal("productModal")
-            );
-
-        }
-
-
-        // NOVA CATEGORIA
-        const newCategoryButton =
-            document.getElementById("newCategoryButton");
-
-        if (newCategoryButton) {
-
-            newCategoryButton.addEventListener(
-                "click",
-                () => this.openModal("categoryModal")
-            );
-
-        }
-
-
-        // NOVA VENDA
-        const newSaleButton =
-            document.getElementById("newSaleButton");
-
-        if (newSaleButton) {
-
-            newSaleButton.addEventListener(
-                "click",
-                () => this.openSaleModal()
-            );
-
-        }
-
-
-        // NOVO LANÇAMENTO
-        const newTransactionButton =
-            document.getElementById("newTransactionButton");
-
-        if (newTransactionButton) {
-
-            newTransactionButton.addEventListener(
-                "click",
-                () => this.openModal("transactionModal")
-            );
-
-        }
-
-
-        // FECHAR MODAIS
-        document
-            .querySelectorAll("[data-close-modal]")
-            .forEach((button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const modalId =
-                            button.dataset.closeModal;
-
-                        this.closeModal(modalId);
-
-                    }
-                );
-
-            });
-
-
-        // CLIQUE NO OVERLAY
-        document
-            .querySelectorAll(".modal-overlay")
-            .forEach((overlay) => {
-
-                overlay.addEventListener(
-                    "click",
-                    () => {
-
-                        const modal =
-                            overlay.closest(".modal");
-
-                        if (modal) {
-                            this.closeModal(modal.id);
-                        }
-
-                    }
-                );
-
-            });
-
-
-        // FORM PRODUTO
-        const productForm =
-            document.getElementById("productForm");
-
-        if (productForm) {
-
-            productForm.addEventListener(
-                "submit",
-                (event) => this.handleProductSubmit(event)
-            );
-
-        }
-
-
-        // FORM CATEGORIA
-        const categoryForm =
-            document.getElementById("categoryForm");
-
-        if (categoryForm) {
-
-            categoryForm.addEventListener(
-                "submit",
-                (event) => this.handleCategorySubmit(event)
-            );
-
-        }
-
-
-        // FORM VENDA
-        const saleForm =
-            document.getElementById("saleForm");
-
-        if (saleForm) {
-
-            saleForm.addEventListener(
-                "submit",
-                (event) => this.handleSaleSubmit(event)
-            );
-
-        }
-
-
-        // FORM FINANCEIRO
-        const transactionForm =
-            document.getElementById("transactionForm");
-
-        if (transactionForm) {
-
-            transactionForm.addEventListener(
-                "submit",
-                (event) => this.handleTransactionSubmit(event)
-            );
-
-        }
-
-
-        // BUSCA PRODUTOS
-        const productSearch =
-            document.getElementById("productSearch");
-
-        if (productSearch) {
-
-            productSearch.addEventListener(
-                "input",
-                () => this.renderProducts()
-            );
-
-        }
-
-
-        // BUSCA ESTOQUE
-        const stockSearch =
-            document.getElementById("stockSearch");
-
-        if (stockSearch) {
-
-            stockSearch.addEventListener(
-                "input",
-                () => this.renderStock()
-            );
-
-        }
-
-
-        // BUSCA VENDAS
-        const salesSearch =
-            document.getElementById("salesSearch");
-
-        if (salesSearch) {
-
-            salesSearch.addEventListener(
-                "input",
-                () => this.loadSales()
-            );
-
-        }
-
-
-        // BUSCA FINANCEIRO
-        const financeSearch =
-            document.getElementById("financeSearch");
-
-        if (financeSearch) {
-
-            financeSearch.addEventListener(
-                "input",
-                () => this.loadFinancialTransactions()
-            );
-
-        }
-
-
-        // ADICIONAR ITEM À VENDA
-        const addSaleItemButton =
-            document.getElementById("addSaleItemButton");
-
-        if (addSaleItemButton) {
-
-            addSaleItemButton.addEventListener(
-                "click",
-                () => this.addSaleItem()
-            );
-
-        }
-
-
-        // DESCONTO DA VENDA
-        const saleDiscount =
-            document.getElementById("saleDiscount");
-
-        if (saleDiscount) {
-
-            saleDiscount.addEventListener(
-                "input",
-                () => this.calculateSaleTotal()
-            );
-
-        }
-
-
-        // ESC
-        document.addEventListener(
-            "keydown",
-            (event) => {
-
-                if (event.key !== "Escape") {
-                    return;
-                }
-
-                document
-                    .querySelectorAll(".modal:not([hidden])")
-                    .forEach((modal) => {
-
-                        this.closeModal(modal.id);
-
-                    });
-
-            }
-        );
-
-    },
-
-
-    // =====================================================
-    // SESSÃO
-    // =====================================================
-
-    async checkSession() {
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth.getSession();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (data.session) {
-
-                this.currentUser =
-                    data.session.user;
-
-                await this.showApp();
-
-            } else {
-
-                this.showLogin();
-
-            }
-
-
-            supabaseClient.auth.onAuthStateChange(
-                async (_event, session) => {
-
-                    if (session) {
-
-                        this.currentUser =
-                            session.user;
-
-                        await this.showApp();
-
-                    } else {
-
-                        this.currentUser = null;
-
-                        this.showLogin();
-
-                    }
-
-                }
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao verificar sessão:",
-                error
-            );
-
-            this.showLogin();
-
-        }
-
-    },
-
-
-    // =====================================================
-    // LOGIN
-    // =====================================================
-
-    async handleLogin(event) {
-
-        event.preventDefault();
-
-
-        const email =
-            document.getElementById("email").value.trim();
-
-        const password =
-            document.getElementById("password").value;
-
-
-        const button =
-            document.getElementById("loginButton");
-
-        const message =
-            document.getElementById("loginMessage");
-
-
-        if (!email || !password) {
-
-            this.showMessage(
-                message,
-                "Preencha e-mail e senha.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        button.disabled = true;
-
-        button.textContent = "Entrando...";
-
-        message.textContent = "";
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth.signInWithPassword({
-
+        return;
+    }
+
+    if (messageElement) {
+        messageElement.textContent = "Entrando...";
+    }
+
+    try {
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
                 email,
                 password
-
             });
 
+        if (error) {
+            throw error;
+        }
 
-            if (error) {
-                throw error;
-            }
+        state.user = data.user;
 
+        if (messageElement) {
+            messageElement.textContent = "";
+        }
 
-            this.currentUser = data.user;
+        hideElement("loginScreen");
+        showElement("appScreen");
 
-            await this.showApp();
+        await initializeApp();
+    } catch (error) {
+        console.error("Erro no login:", error);
 
+        if (messageElement) {
+            messageElement.textContent =
+                "E-mail ou senha inválidos.";
+        }
+    }
+}
 
-        } catch (error) {
+async function handleLogout() {
+    try {
+        await supabaseClient.auth.signOut();
+    } catch (error) {
+        console.error("Erro ao sair:", error);
+    }
 
-            console.error(
-                "Erro no login:",
-                error
+    state.user = null;
+
+    hideElement("appScreen");
+    showElement("loginScreen");
+}
+
+/* =========================================================
+   NAVEGAÇÃO
+   ========================================================= */
+
+function showSection(sectionId) {
+    document
+        .querySelectorAll("[data-section]")
+        .forEach((section) => {
+            section.classList.add("hidden");
+        });
+
+    const target = $(sectionId);
+
+    if (target) {
+        target.classList.remove("hidden");
+    }
+
+    document
+        .querySelectorAll("[data-nav]")
+        .forEach((button) => {
+            button.classList.toggle(
+                "active",
+                button.dataset.nav === sectionId
             );
-
-
-            this.showMessage(
-                message,
-                this.translateAuthError(error),
-                "error"
-            );
-
-
-        } finally {
-
-            button.disabled = false;
-
-            button.textContent = "Entrar";
-
-        }
-
-    },
-
-
-    // =====================================================
-    // LOGOUT
-    // =====================================================
-
-    async handleLogout() {
-
-        try {
-
-            await supabaseClient.auth.signOut();
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao sair:",
-                error
-            );
-
-        }
-
-    },
-
-
-    // =====================================================
-    // MOSTRAR LOGIN
-    // =====================================================
-
-    showLogin() {
-
-        const loginScreen =
-            document.getElementById("loginScreen");
-
-        const appScreen =
-            document.getElementById("appScreen");
-
-
-        if (loginScreen) {
-            loginScreen.hidden = false;
-        }
-
-        if (appScreen) {
-            appScreen.hidden = true;
-        }
-
-    },
-
-
-    // =====================================================
-    // MOSTRAR APLICAÇÃO
-    // =====================================================
-
-    async showApp() {
-
-        const loginScreen =
-            document.getElementById("loginScreen");
-
-        const appScreen =
-            document.getElementById("appScreen");
-
-
-        if (loginScreen) {
-            loginScreen.hidden = true;
-        }
-
-        if (appScreen) {
-            appScreen.hidden = false;
-        }
-
-
-        await this.loadUserProfile();
-
-        await this.loadCategories();
-
-        await this.loadProducts();
-
-        await this.loadDashboard();
-
-    },
-
-
-    // =====================================================
-    // PERFIL
-    // =====================================================
-
-    async loadUserProfile() {
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        const userName =
-            document.getElementById("userName");
-
-
-        if (!userName) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("profiles")
-                .select("full_name")
-                .eq("id", this.currentUser.id)
-                .maybeSingle();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            const name =
-                data?.full_name ||
-                this.currentUser.email?.split("@")[0] ||
-                "MabijuFit";
-
-
-            userName.textContent = name;
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar perfil:",
-                error
-            );
-
-
-            userName.textContent =
-                this.currentUser.email?.split("@")[0] ||
-                "MabijuFit";
-
-        }
-
-    },
-
-
-    // =====================================================
-    // NAVEGAÇÃO
-    // =====================================================
-
-    async navigate(section) {
-
-        const screens = {
-
-            home: "homeScreen",
-
-            products: "productsScreen",
-
-            stock: "stockScreen",
-
-            sales: "salesScreen",
-
-            finance: "financeScreen"
-
-        };
-
-
-        if (!screens[section]) {
-            return;
-        }
-
-
-        Object.values(screens)
-            .forEach((screenId) => {
-
-                const screen =
-                    document.getElementById(screenId);
-
-                if (screen) {
-                    screen.hidden = true;
+        });
+}
+
+function setupNavigation() {
+    document
+        .querySelectorAll("[data-nav]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                const sectionId = button.dataset.nav;
+
+                if (sectionId) {
+                    showSection(sectionId);
                 }
-
             });
+        });
+}
 
+/* =========================================================
+   MODAIS
+   ========================================================= */
 
-        const target =
-            document.getElementById(
-                screens[section]
-            );
+function openModal(id) {
+    const modal = $(id);
 
+    if (!modal) {
+        return;
+    }
 
-        if (target) {
-            target.hidden = false;
-        }
+    modal.classList.remove("hidden");
 
+    if (id === "productModal") {
+        resetProductForm();
+    }
 
-        document
-            .querySelectorAll(
-                ".nav-item[data-section]"
-            )
-            .forEach((button) => {
+    if (id === "categoryModal") {
+        resetCategoryForm();
+    }
 
-                button.classList.toggle(
-                    "active",
-                    button.dataset.section === section
-                );
+    if (id === "colorModal") {
+        resetColorForm();
+    }
 
+    if (id === "sizeModal") {
+        resetSizeForm();
+    }
+
+    if (id === "transactionModal") {
+        resetTransactionForm();
+    }
+
+    if (id === "saleModal") {
+        resetSaleForm();
+    }
+}
+
+function closeModal(id) {
+    const modal = $(id);
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+function setupModalCloseButtons() {
+    document
+        .querySelectorAll("[data-close-modal]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                closeModal(button.dataset.closeModal);
             });
-
-
-        this.currentSection = section;
-
-
-        if (section === "products") {
-
-            await this.loadCategories();
-
-            await this.loadProducts();
-
-        }
-
-
-        if (section === "stock") {
-
-            await this.loadProducts();
-
-            this.renderStock();
-
-        }
-
-
-        if (section === "sales") {
-
-            await this.loadSales();
-
-        }
-
-
-        if (section === "finance") {
-
-            await this.loadFinancialTransactions();
-
-        }
-
-
-        if (section === "home") {
-
-            await this.loadDashboard();
-
-        }
-
-    },
-
-
-    // =====================================================
-    // MODAIS
-    // =====================================================
-
-    openModal(modalId) {
-
-        const modal =
-            document.getElementById(modalId);
-
-
-        if (!modal) {
-            return;
-        }
-
-
-        modal.hidden = false;
-
-        document.body.classList.add(
-            "modal-open"
-        );
-
-
-        if (modalId === "productModal") {
-
-            this.resetProductForm();
-
-            this.populateCategorySelect();
-
-        }
-
-
-        if (modalId === "categoryModal") {
-
-            this.resetCategoryForm();
-
-        }
-
-
-        if (modalId === "transactionModal") {
-
-            this.resetTransactionForm();
-
-        }
-
-    },
-
-
-    closeModal(modalId) {
-
-        const modal =
-            document.getElementById(modalId);
-
-
-        if (!modal) {
-            return;
-        }
-
-
-        modal.hidden = true;
-
-
-        const visibleModals =
-            document.querySelectorAll(
-                ".modal:not([hidden])"
-            );
-
-
-        if (visibleModals.length === 0) {
-
-            document.body.classList.remove(
-                "modal-open"
-            );
-
-        }
-
-    },
-
-
-    // =====================================================
-    // CATEGORIAS
-    // =====================================================
-
-    async loadCategories() {
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("categories")
-                .select("*")
-                .eq("user_id", this.currentUser.id)
-                .eq("is_active", true)
-                .order("name", {
-                    ascending: true
-                });
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            this.categories = data || [];
-
-
-            this.renderCategories();
-
-            this.populateCategorySelect();
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar categorias:",
-                error
-            );
-
-        }
-
-    },
-
-
-    renderCategories() {
-
-        const container =
-            document.getElementById(
-                "categoriesList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        if (!this.categories.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-
-                    <div class="empty-state-icon">
-                        C
+        });
+
+    document
+        .querySelectorAll(".modal-overlay")
+        .forEach((overlay) => {
+            overlay.addEventListener("click", () => {
+                const modal = overlay.closest(".modal");
+
+                if (modal) {
+                    modal.classList.add("hidden");
+                }
+            });
+        });
+}
+
+/* =========================================================
+   CATEGORIAS
+   ========================================================= */
+
+async function loadCategories() {
+    if (!state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("categories")
+        .select("*")
+        .eq("user_id", state.user.id)
+        .order("name");
+
+    if (error) {
+        console.error("Erro ao carregar categorias:", error);
+        return;
+    }
+
+    state.categories = data || [];
+
+    renderCategories();
+    populateCategorySelect();
+}
+
+function renderCategories() {
+    const container = $("categoriesList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.categories.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhuma categoria cadastrada.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = state.categories
+        .map((category) => {
+            return `
+                <div class="category-card">
+                    <div class="category-card-info">
+                        <div class="category-card-name">
+                            ${escapeHtml(category.name)}
+                        </div>
+
+                        ${
+                            category.description
+                                ? `
+                                    <div class="category-card-description">
+                                        ${escapeHtml(category.description)}
+                                    </div>
+                                `
+                                : ""
+                        }
                     </div>
 
-                    <strong>
-                        Nenhuma categoria
-                    </strong>
+                    <div class="category-card-actions">
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Editar"
+                            data-edit-category="${category.id}"
+                        >
+                            ✎
+                        </button>
 
-                    <p>
-                        Crie categorias para organizar
-                        seus produtos.
-                    </p>
-
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Excluir"
+                            data-delete-category="${category.id}"
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
-
             `;
+        })
+        .join("");
 
-            return;
+    container
+        .querySelectorAll("[data-edit-category]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                editCategory(button.dataset.editCategory);
+            });
+        });
 
+    container
+        .querySelectorAll("[data-delete-category]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                deleteCategory(button.dataset.deleteCategory);
+            });
+        });
+}
+
+function populateCategorySelect() {
+    const select = $("productCategory");
+
+    if (!select) {
+        return;
+    }
+
+    const currentValue = select.value;
+
+    select.innerHTML = `
+        <option value="">Selecione uma categoria</option>
+        ${state.categories
+            .filter((category) => category.is_active !== false)
+            .map(
+                (category) => `
+                    <option value="${category.id}">
+                        ${escapeHtml(category.name)}
+                    </option>
+                `
+            )
+            .join("")}
+    `;
+
+    if (currentValue) {
+        select.value = currentValue;
+    }
+}
+
+function resetCategoryForm() {
+    const form = $("categoryForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    if ($("categoryId")) {
+        $("categoryId").value = "";
+    }
+
+    if ($("categoryActive")) {
+        $("categoryActive").checked = true;
+    }
+
+    setMessage("categoryFormMessage");
+}
+
+function editCategory(id) {
+    const category = state.categories.find(
+        (item) => item.id === id
+    );
+
+    if (!category) {
+        return;
+    }
+
+    openModal("categoryModal");
+
+    if ($("categoryId")) {
+        $("categoryId").value = category.id;
+    }
+
+    if ($("categoryName")) {
+        $("categoryName").value = category.name || "";
+    }
+
+    if ($("categoryDescription")) {
+        $("categoryDescription").value =
+            category.description || "";
+    }
+
+    if ($("categoryActive")) {
+        $("categoryActive").checked =
+            category.is_active !== false;
+    }
+}
+
+async function handleCategorySubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const id = $("categoryId")?.value || "";
+    const name = $("categoryName")?.value.trim();
+    const description =
+        $("categoryDescription")?.value.trim() || "";
+    const isActive =
+        $("categoryActive")?.checked !== false;
+
+    if (!name) {
+        setMessage(
+            "categoryFormMessage",
+            "Informe o nome da categoria.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+        setMessage(
+            "categoryFormMessage",
+            "Salvando..."
+        );
+
+        const payload = {
+            name,
+            description,
+            is_active: isActive
+        };
+
+        let result;
+
+        if (id) {
+            result = await supabaseClient
+                .from("categories")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", state.user.id);
+        } else {
+            result = await supabaseClient
+                .from("categories")
+                .insert({
+                    ...payload,
+                    user_id: state.user.id
+                });
         }
 
+        if (result.error) {
+            throw result.error;
+        }
 
-        container.innerHTML =
-            this.categories
-                .map((category) => `
+        setMessage(
+            "categoryFormMessage",
+            "Categoria salva.",
+            "success"
+        );
 
-                    <article class="category-card">
+        await loadCategories();
+
+        setTimeout(() => {
+            closeModal("categoryModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
+
+        setMessage(
+            "categoryFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
+
+async function deleteCategory(id) {
+    const category = state.categories.find(
+        (item) => item.id === id
+    );
+
+    if (!category) {
+        return;
+    }
+
+    const confirmed = confirm(
+        `Excluir a categoria "${category.name}"?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from("categories")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", state.user.id);
+
+        if (error) {
+            throw error;
+        }
+
+        await loadCategories();
+    } catch (error) {
+        console.error(error);
+
+        alert(translateDatabaseError(error));
+    }
+}
+
+/* =========================================================
+   CORES
+   ========================================================= */
+
+async function loadColors() {
+    if (!state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("colors")
+        .select("*")
+        .eq("user_id", state.user.id)
+        .order("name");
+
+    if (error) {
+        console.error("Erro ao carregar cores:", error);
+        return;
+    }
+
+    state.colors = data || [];
+
+    renderColors();
+    populateColorSelects();
+}
+
+function renderColors() {
+    const container = $("colorsList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.colors.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhuma cor cadastrada.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = state.colors
+        .map((color) => {
+            const hex = normalizeHexColor(color.hex_code);
+
+            return `
+                <div class="color-card">
+                    <div class="color-card-info">
+                        <div
+                            class="color-card-swatch"
+                            style="background-color: ${escapeHtml(hex)}"
+                        ></div>
+
+                        <div class="color-card-text">
+                            <div class="color-card-name">
+                                ${escapeHtml(color.name)}
+                            </div>
+
+                            <div class="color-card-code">
+                                ${escapeHtml(hex)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="color-card-actions">
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Editar"
+                            data-edit-color="${color.id}"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Excluir"
+                            data-delete-color="${color.id}"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+
+    container
+        .querySelectorAll("[data-edit-color]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                editColor(button.dataset.editColor);
+            });
+        });
+
+    container
+        .querySelectorAll("[data-delete-color]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                deleteColor(button.dataset.deleteColor);
+            });
+        });
+}
+
+function populateColorSelects() {
+    document
+        .querySelectorAll("[data-color-select]")
+        .forEach((select) => {
+            const currentValue = select.value;
+
+            select.innerHTML = `
+                <option value="">Selecione uma cor</option>
+
+                ${state.colors
+                    .filter(
+                        (color) =>
+                            color.is_active !== false
+                    )
+                    .map(
+                        (color) => `
+                            <option value="${color.id}">
+                                ${escapeHtml(color.name)}
+                            </option>
+                        `
+                    )
+                    .join("")}
+            `;
+
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+}
+
+function updateColorPreview() {
+    const colorPicker = $("colorHex");
+    const colorText = $("colorHexText");
+    const preview = $("colorPreview");
+
+    if (!colorPicker || !colorText) {
+        return;
+    }
+
+    const hex = normalizeHexColor(colorPicker.value);
+
+    colorText.value = hex;
+
+    if (preview) {
+        preview.style.backgroundColor = hex;
+    }
+}
+
+function updateColorFromText() {
+    const colorPicker = $("colorHex");
+    const colorText = $("colorHexText");
+    const preview = $("colorPreview");
+
+    if (!colorPicker || !colorText) {
+        return;
+    }
+
+    const value = normalizeHexColor(colorText.value);
+
+    colorText.value = value;
+    colorPicker.value = value;
+
+    if (preview) {
+        preview.style.backgroundColor = value;
+    }
+}
+
+function resetColorForm() {
+    const form = $("colorForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    if ($("colorId")) {
+        $("colorId").value = "";
+    }
+
+    if ($("colorActive")) {
+        $("colorActive").checked = true;
+    }
+
+    if ($("colorHex")) {
+        $("colorHex").value = "#D96B8A";
+    }
+
+    if ($("colorHexText")) {
+        $("colorHexText").value = "#D96B8A";
+    }
+
+    if ($("colorPreview")) {
+        $("colorPreview").style.backgroundColor =
+            "#D96B8A";
+    }
+
+    setMessage("colorFormMessage");
+}
+
+function editColor(id) {
+    const color = state.colors.find(
+        (item) => item.id === id
+    );
+
+    if (!color) {
+        return;
+    }
+
+    openModal("colorModal");
+
+    const hex = normalizeHexColor(color.hex_code);
+
+    if ($("colorId")) {
+        $("colorId").value = color.id;
+    }
+
+    if ($("colorName")) {
+        $("colorName").value = color.name || "";
+    }
+
+    if ($("colorHex")) {
+        $("colorHex").value = hex;
+    }
+
+    if ($("colorHexText")) {
+        $("colorHexText").value = hex;
+    }
+
+    if ($("colorPreview")) {
+        $("colorPreview").style.backgroundColor = hex;
+    }
+
+    if ($("colorActive")) {
+        $("colorActive").checked =
+            color.is_active !== false;
+    }
+}
+
+async function handleColorSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const id = $("colorId")?.value || "";
+    const name = $("colorName")?.value.trim();
+    const hexCode = normalizeHexColor(
+        $("colorHexText")?.value ||
+            $("colorHex")?.value ||
+            "#000000"
+    );
+    const isActive =
+        $("colorActive")?.checked !== false;
+
+    if (!name) {
+        setMessage(
+            "colorFormMessage",
+            "Informe o nome da cor.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+        setMessage(
+            "colorFormMessage",
+            "Salvando..."
+        );
+
+        const payload = {
+            name,
+            hex_code: hexCode,
+            is_active: isActive
+        };
+
+        let result;
+
+        if (id) {
+            result = await supabaseClient
+                .from("colors")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", state.user.id);
+        } else {
+            result = await supabaseClient
+                .from("colors")
+                .insert({
+                    ...payload,
+                    user_id: state.user.id
+                });
+        }
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        setMessage(
+            "colorFormMessage",
+            "Cor salva.",
+            "success"
+        );
+
+        await loadColors();
+
+        setTimeout(() => {
+            closeModal("colorModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
+
+        setMessage(
+            "colorFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
+
+async function deleteColor(id) {
+    const color = state.colors.find(
+        (item) => item.id === id
+    );
+
+    if (!color) {
+        return;
+    }
+
+    const confirmed = confirm(
+        `Excluir a cor "${color.name}"?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from("colors")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", state.user.id);
+
+        if (error) {
+            throw error;
+        }
+
+        await loadColors();
+    } catch (error) {
+        console.error(error);
+
+        alert(translateDatabaseError(error));
+    }
+}
+
+/* =========================================================
+   TAMANHOS
+   ========================================================= */
+
+async function loadSizes() {
+    if (!state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("sizes")
+        .select("*")
+        .eq("user_id", state.user.id)
+        .order("display_order", {
+            ascending: true
+        })
+        .order("name", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error("Erro ao carregar tamanhos:", error);
+        return;
+    }
+
+    state.sizes = data || [];
+
+    renderSizes();
+    populateSizeSelects();
+}
+
+function renderSizes() {
+    const container = $("sizesList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.sizes.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhum tamanho cadastrado.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = state.sizes
+        .map((size) => {
+            return `
+                <div class="size-card">
+                    <div class="size-card-info">
+                        <div class="size-badge">
+                            ${escapeHtml(size.name)}
+                        </div>
 
                         <div>
+                            <div class="size-card-name">
+                                Tamanho ${escapeHtml(size.name)}
+                            </div>
 
-                            <strong>
-                                ${this.escapeHtml(
-                                    category.name
+                            <div class="size-card-order">
+                                Ordem: ${Number(
+                                    size.display_order || 0
                                 )}
-                            </strong>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div class="size-card-actions">
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Editar"
+                            data-edit-size="${size.id}"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            class="icon-button"
+                            type="button"
+                            title="Excluir"
+                            data-delete-size="${size.id}"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+
+    container
+        .querySelectorAll("[data-edit-size]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                editSize(button.dataset.editSize);
+            });
+        });
+
+    container
+        .querySelectorAll("[data-delete-size]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                deleteSize(button.dataset.deleteSize);
+            });
+        });
+}
+
+function populateSizeSelects() {
+    document
+        .querySelectorAll("[data-size-select]")
+        .forEach((select) => {
+            const currentValue = select.value;
+
+            select.innerHTML = `
+                <option value="">Selecione um tamanho</option>
+
+                ${state.sizes
+                    .filter(
+                        (size) =>
+                            size.is_active !== false
+                    )
+                    .map(
+                        (size) => `
+                            <option value="${size.id}">
+                                ${escapeHtml(size.name)}
+                            </option>
+                        `
+                    )
+                    .join("")}
+            `;
+
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+}
+
+function resetSizeForm() {
+    const form = $("sizeForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    if ($("sizeId")) {
+        $("sizeId").value = "";
+    }
+
+    if ($("sizeDisplayOrder")) {
+        $("sizeDisplayOrder").value = "0";
+    }
+
+    if ($("sizeActive")) {
+        $("sizeActive").checked = true;
+    }
+
+    setMessage("sizeFormMessage");
+}
+
+function editSize(id) {
+    const size = state.sizes.find(
+        (item) => item.id === id
+    );
+
+    if (!size) {
+        return;
+    }
+
+    openModal("sizeModal");
+
+    if ($("sizeId")) {
+        $("sizeId").value = size.id;
+    }
+
+    if ($("sizeName")) {
+        $("sizeName").value = size.name || "";
+    }
+
+    if ($("sizeDisplayOrder")) {
+        $("sizeDisplayOrder").value =
+            size.display_order ?? 0;
+    }
+
+    if ($("sizeActive")) {
+        $("sizeActive").checked =
+            size.is_active !== false;
+    }
+}
+
+async function handleSizeSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const id = $("sizeId")?.value || "";
+    const name = $("sizeName")?.value.trim();
+    const displayOrder = Number(
+        $("sizeDisplayOrder")?.value || 0
+    );
+    const isActive =
+        $("sizeActive")?.checked !== false;
+
+    if (!name) {
+        setMessage(
+            "sizeFormMessage",
+            "Informe o tamanho.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+        setMessage(
+            "sizeFormMessage",
+            "Salvando..."
+        );
+
+        const payload = {
+            name,
+            display_order: displayOrder,
+            is_active: isActive
+        };
+
+        let result;
+
+        if (id) {
+            result = await supabaseClient
+                .from("sizes")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", state.user.id);
+        } else {
+            result = await supabaseClient
+                .from("sizes")
+                .insert({
+                    ...payload,
+                    user_id: state.user.id
+                });
+        }
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        setMessage(
+            "sizeFormMessage",
+            "Tamanho salvo.",
+            "success"
+        );
+
+        await loadSizes();
+
+        setTimeout(() => {
+            closeModal("sizeModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
+
+        setMessage(
+            "sizeFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
+
+async function deleteSize(id) {
+    const size = state.sizes.find(
+        (item) => item.id === id
+    );
+
+    if (!size) {
+        return;
+    }
+
+    const confirmed = confirm(
+        `Excluir o tamanho "${size.name}"?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from("sizes")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", state.user.id);
+
+        if (error) {
+            throw error;
+        }
+
+        await loadSizes();
+    } catch (error) {
+        console.error(error);
+
+        alert(translateDatabaseError(error));
+    }
+}
+
+/* =========================================================
+   PRODUTOS
+   ========================================================= */
+
+async function loadProducts() {
+    if (!state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select(`
+            *,
+            categories (
+                id,
+                name
+            )
+        `)
+        .eq("user_id", state.user.id)
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+        console.error("Erro ao carregar produtos:", error);
+        return;
+    }
+
+    state.products = data || [];
+
+    renderProducts();
+}
+
+function renderProducts() {
+    const container = $("productsList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.products.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhum produto cadastrado.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = state.products
+        .map((product) => {
+            return `
+                <div class="product-card">
+                    <div class="product-card-top">
+                        <div>
+                            <div class="product-card-name">
+                                ${escapeHtml(product.name)}
+                            </div>
+
+                            <div class="product-card-category">
+                                ${
+                                    product.categories?.name
+                                        ? escapeHtml(
+                                              product
+                                                  .categories
+                                                  .name
+                                          )
+                                        : "Sem categoria"
+                                }
+                            </div>
+                        </div>
+
+                        <div class="product-card-price">
+                            ${formatCurrency(
+                                product.sale_price
+                            )}
+                        </div>
+                    </div>
+
+                    <div class="product-card-meta">
+                        ${
+                            product.sku
+                                ? `
+                                    <span class="product-meta-badge">
+                                        SKU: ${escapeHtml(
+                                            product.sku
+                                        )}
+                                    </span>
+                                `
+                                : ""
+                        }
+
+                        <span class="product-meta-badge">
+                            Custo:
+                            ${formatCurrency(
+                                product.cost_price
+                            )}
+                        </span>
+
+                        <span class="product-meta-badge">
+                            Estoque mínimo:
+                            ${Number(
+                                product.minimum_stock || 0
+                            )}
+                        </span>
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+}
+
+function resetProductForm() {
+    const form = $("productForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    if ($("productId")) {
+        $("productId").value = "";
+    }
+
+    if ($("productActive")) {
+        $("productActive").checked = true;
+    }
+
+    setMessage("productFormMessage");
+}
+
+async function handleProductSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const name = $("productName")?.value.trim();
+    const sku = $("productSku")?.value.trim() || "";
+    const description =
+        $("productDescription")?.value.trim() || "";
+    const categoryId =
+        $("productCategory")?.value || null;
+
+    const costPrice = Number(
+        $("productCostPrice")?.value || 0
+    );
+
+    const salePrice = Number(
+        $("productSalePrice")?.value || 0
+    );
+
+    const minimumStock = Number(
+        $("productMinimumStock")?.value || 0
+    );
+
+    const isActive =
+        $("productActive")?.checked !== false;
+
+    if (!name) {
+        setMessage(
+            "productFormMessage",
+            "Informe o nome do produto.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+        setMessage(
+            "productFormMessage",
+            "Salvando..."
+        );
+
+        const { error } = await supabaseClient
+            .from("products")
+            .insert({
+                user_id: state.user.id,
+                category_id: categoryId,
+                name,
+                sku,
+                description,
+                cost_price: costPrice,
+                sale_price: salePrice,
+                minimum_stock: minimumStock,
+                is_active: isActive
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        setMessage(
+            "productFormMessage",
+            "Produto salvo.",
+            "success"
+        );
+
+        await loadProducts();
+
+        setTimeout(() => {
+            closeModal("productModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
+
+        setMessage(
+            "productFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   ESTOQUE
+   ========================================================= */
+
+async function loadStock() {
+    const container = $("stockList");
+
+    if (!container || !state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("product_variants")
+        .select(`
+            *,
+            products (
+                id,
+                name
+            ),
+            colors (
+                id,
+                name,
+                hex_code
+            ),
+            sizes (
+                id,
+                name
+            )
+        `)
+        .eq("user_id", state.user.id)
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+        console.error("Erro ao carregar estoque:", error);
+
+        container.innerHTML = `
+            <div class="empty-state">
+                Não foi possível carregar o estoque.
+            </div>
+        `;
+
+        return;
+    }
+
+    if (!data?.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhuma variação de produto cadastrada.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = data
+        .map((variant) => {
+            const quantity = Number(
+                variant.stock_quantity || 0
+            );
+
+            const minimum = Number(
+                variant.minimum_stock || 0
+            );
+
+            let className = "";
+
+            if (quantity === 0) {
+                className = "out-stock";
+            } else if (quantity <= minimum) {
+                className = "low-stock";
+            }
+
+            return `
+                <div class="stock-card ${className}">
+                    <div>
+                        <strong>
+                            ${escapeHtml(
+                                variant.products?.name ||
+                                    "Produto"
+                            )}
+                        </strong>
+
+                        <div class="stock-label">
                             ${
-                                category.description
-                                    ? `
-                                        <p>
-                                            ${this.escapeHtml(
-                                                category.description
-                                            )}
-                                        </p>
-                                      `
+                                variant.colors?.name
+                                    ? escapeHtml(
+                                          variant.colors
+                                              .name
+                                      )
                                     : ""
                             }
 
+                            ${
+                                variant.sizes?.name
+                                    ? ` / ${escapeHtml(
+                                          variant.sizes
+                                              .name
+                                      )}`
+                                    : ""
+                            }
                         </div>
+                    </div>
 
-                    </article>
+                    <div class="stock-quantity">
+                        ${quantity}
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+}
 
-                `)
-                .join("");
+/* =========================================================
+   VENDAS
+   ========================================================= */
 
-    },
+function resetSaleForm() {
+    const form = $("saleForm");
 
+    if (form) {
+        form.reset();
+    }
 
-    populateCategorySelect() {
+    if ($("saleId")) {
+        $("saleId").value = "";
+    }
 
-        const select =
-            document.getElementById(
-                "productCategory"
-            );
+    setMessage("saleFormMessage");
 
+    const items = $("saleItems");
 
-        if (!select) {
-            return;
+    if (items) {
+        items.innerHTML = `
+            <div class="empty-state">
+                Nenhum item adicionado.
+            </div>
+        `;
+    }
+}
+
+async function handleSaleSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const paymentMethod =
+        $("salePaymentMethod")?.value || "";
+
+    const discount = Number(
+        $("saleDiscount")?.value || 0
+    );
+
+    const notes =
+        $("saleNotes")?.value.trim() || "";
+
+    try {
+        setMessage(
+            "saleFormMessage",
+            "Registrando venda..."
+        );
+
+        /*
+         * Nesta etapa registramos a venda principal.
+         * Os itens e a baixa automática de estoque entram
+         * na etapa de variações.
+         */
+
+        const { data, error } = await supabaseClient
+            .from("sales")
+            .insert({
+                user_id: state.user.id,
+                subtotal: 0,
+                discount,
+                total: 0,
+                payment_method: paymentMethod,
+                status: "completed",
+                notes
+            })
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
         }
 
+        console.log(
+            "Venda criada:",
+            data
+        );
 
-        const currentValue =
-            select.value;
+        setMessage(
+            "saleFormMessage",
+            "Venda registrada.",
+            "success"
+        );
 
+        await loadSales();
+        await loadDashboard();
 
-        select.innerHTML = `
+        setTimeout(() => {
+            closeModal("saleModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
 
-            <option value="">
-                Selecione
-            </option>
+        setMessage(
+            "saleFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
 
+async function loadSales() {
+    const container = $("salesList");
+
+    if (!container || !state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("sales")
+        .select("*")
+        .eq("user_id", state.user.id)
+        .order("created_at", {
+            ascending: false
+        })
+        .limit(50);
+
+    if (error) {
+        console.error("Erro ao carregar vendas:", error);
+        return;
+    }
+
+    state.sales = data || [];
+
+    renderSales();
+}
+
+function renderSales() {
+    const container = $("salesList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.sales.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhuma venda registrada.
+            </div>
         `;
 
-
-        this.categories.forEach((category) => {
-
-            const option =
-                document.createElement("option");
-
-
-            option.value =
-                category.id;
-
-
-            option.textContent =
-                category.name;
-
-
-            select.appendChild(option);
-
-        });
-
-
-        if (currentValue) {
-            select.value = currentValue;
-        }
-
-    },
-
-
-    async handleCategorySubmit(event) {
-
-        event.preventDefault();
-
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        const form =
-            event.currentTarget;
-
-
-        const button =
-            document.getElementById(
-                "saveCategoryButton"
-            );
-
-
-        const message =
-            document.getElementById(
-                "categoryFormMessage"
-            );
-
-
-        const formData =
-            new FormData(form);
-
-
-        const name =
-            formData.get("name")?.toString().trim();
-
-
-        const description =
-            formData.get("description")?.toString().trim();
-
-
-        const isActive =
-            form.querySelector(
-                '[name="is_active"]'
-            )?.checked ?? true;
-
-
-        if (!name) {
-
-            this.showMessage(
-                message,
-                "Informe o nome da categoria.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        button.disabled = true;
-
-        button.textContent = "Salvando...";
-
-
-        try {
-
-            const {
-                error
-            } = await supabaseClient
-                .from("categories")
-                .insert({
-
-                    user_id:
-                        this.currentUser.id,
-
-                    name,
-
-                    description:
-                        description || null,
-
-                    is_active:
-                        isActive
-
-                });
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            this.showMessage(
-                message,
-                "Categoria criada com sucesso.",
-                "success"
-            );
-
-
-            await this.loadCategories();
-
-
-            setTimeout(() => {
-
-                this.closeModal(
-                    "categoryModal"
-                );
-
-            }, 500);
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao criar categoria:",
-                error
-            );
-
-
-            this.showMessage(
-                message,
-                this.translateDatabaseError(error),
-                "error"
-            );
-
-
-        } finally {
-
-            button.disabled = false;
-
-            button.textContent =
-                "Salvar categoria";
-
-        }
-
-    },
-
-
-    // =====================================================
-    // PRODUTOS
-    // =====================================================
-
-    async loadProducts() {
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("products")
-                .select(`
-                    *,
-                    categories (
-                        id,
-                        name
-                    )
-                `)
-                .eq("user_id", this.currentUser.id)
-                .order("created_at", {
-                    ascending: false
-                });
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            this.products = data || [];
-
-
-            this.renderProducts();
-
-
-            if (this.currentSection === "stock") {
-                this.renderStock();
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar produtos:",
-                error
-            );
-
-        }
-
-    },
-
-
-    renderProducts() {
-
-        const container =
-            document.getElementById(
-                "productsList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        const search =
-            document
-                .getElementById("productSearch")
-                ?.value
-                .trim()
-                .toLowerCase() || "";
-
-
-        const filtered =
-            this.products.filter((product) => {
-
-                const name =
-                    product.name?.toLowerCase() || "";
-
-
-                const sku =
-                    product.sku?.toLowerCase() || "";
-
-
-                const category =
-                    product.categories?.name
-                        ?.toLowerCase() || "";
-
-
-                return (
-                    name.includes(search) ||
-                    sku.includes(search) ||
-                    category.includes(search)
-                );
-
-            });
-
-
-        if (!filtered.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-
-                    <div class="empty-state-icon">
-                        P
-                    </div>
-
-                    <strong>
-                        ${
-                            search
-                                ? "Nenhum produto encontrado"
-                                : "Nenhum produto cadastrado"
-                        }
-                    </strong>
-
-                    <p>
-                        ${
-                            search
-                                ? "Tente outro termo de busca."
-                                : "Cadastre seu primeiro produto para começar."
-                        }
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            filtered
-                .map((product) => {
-
-                    const price =
-                        this.formatCurrency(
-                            product.sale_price
-                        );
-
-
-                    const category =
-                        product.categories?.name ||
-                        "Sem categoria";
-
-
-                    return `
-
-                        <article
-                            class="product-card"
-                            data-product-id="${product.id}"
-                        >
-
-                            <div class="product-card-main">
-
-                                <div class="product-placeholder">
-                                    M
-                                </div>
-
-
-                                <div class="product-card-info">
-
-                                    <strong>
-                                        ${this.escapeHtml(
-                                            product.name
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${this.escapeHtml(
-                                            category
-                                        )}
-                                    </span>
-
-                                    ${
-                                        product.sku
-                                            ? `
-                                                <small>
-                                                    SKU:
-                                                    ${this.escapeHtml(
-                                                        product.sku
-                                                    )}
-                                                </small>
-                                              `
-                                            : ""
-                                    }
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="product-card-price">
-
-                                <strong>
-                                    ${price}
-                                </strong>
-
-                            </div>
-
-                        </article>
-
-                    `;
-
-                })
-                .join("");
-
-    },
-
-
-    async handleProductSubmit(event) {
-
-        event.preventDefault();
-
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        const form =
-            event.currentTarget;
-
-
-        const button =
-            document.getElementById(
-                "saveProductButton"
-            );
-
-
-        const message =
-            document.getElementById(
-                "productFormMessage"
-            );
-
-
-        const formData =
-            new FormData(form);
-
-
-        const name =
-            formData.get("name")?.toString().trim();
-
-
-        const sku =
-            formData.get("sku")?.toString().trim();
-
-
-        const description =
-            formData.get("description")?.toString().trim();
-
-
-        const categoryId =
-            formData.get("category_id") ||
-            null;
-
-
-        const costPrice =
-            this.parseNumber(
-                formData.get("cost_price")
-            );
-
-
-        const salePrice =
-            this.parseNumber(
-                formData.get("sale_price")
-            );
-
-
-        const minimumStock =
-            parseInt(
-                formData.get("minimum_stock"),
-                10
-            ) || 0;
-
-
-        const isActive =
-            form.querySelector(
-                '[name="is_active"]'
-            )?.checked ?? true;
-
-
-        if (!name) {
-
-            this.showMessage(
-                message,
-                "Informe o nome do produto.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (salePrice === null || salePrice < 0) {
-
-            this.showMessage(
-                message,
-                "Informe um preço de venda válido.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        button.disabled = true;
-
-        button.textContent = "Salvando...";
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("products")
-                .insert({
-
-                    user_id:
-                        this.currentUser.id,
-
-                    category_id:
-                        categoryId,
-
-                    name,
-
-                    sku:
-                        sku || null,
-
-                    description:
-                        description || null,
-
-                    cost_price:
-                        costPrice ?? 0,
-
-                    sale_price:
-                        salePrice,
-
-                    minimum_stock:
-                        minimumStock,
-
-                    is_active:
-                        isActive
-
-                })
-                .select()
-                .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            console.log(
-                "Produto criado:",
-                data
-            );
-
-
-            this.showMessage(
-                message,
-                "Produto criado com sucesso.",
-                "success"
-            );
-
-
-            await this.loadProducts();
-
-
-            await this.loadDashboard();
-
-
-            setTimeout(() => {
-
-                this.closeModal(
-                    "productModal"
-                );
-
-            }, 500);
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao criar produto:",
-                error
-            );
-
-
-            this.showMessage(
-                message,
-                this.translateDatabaseError(error),
-                "error"
-            );
-
-
-        } finally {
-
-            button.disabled = false;
-
-            button.textContent =
-                "Salvar produto";
-
-        }
-
-    },
-
-
-    resetProductForm() {
-
-        const form =
-            document.getElementById(
-                "productForm"
-            );
-
-
-        if (!form) {
-            return;
-        }
-
-
-        form.reset();
-
-
-        const active =
-            document.getElementById(
-                "productActive"
-            );
-
-
-        if (active) {
-            active.checked = true;
-        }
-
-
-        const minimum =
-            document.getElementById(
-                "productMinimumStock"
-            );
-
-
-        if (minimum) {
-            minimum.value = "0";
-        }
-
-
-        const message =
-            document.getElementById(
-                "productFormMessage"
-            );
-
-
-        if (message) {
-            message.textContent = "";
-            message.className =
-                "form-message";
-        }
-
-    },
-
-
-    // =====================================================
-    // ESTOQUE
-    // =====================================================
-
-    renderStock() {
-
-        const container =
-            document.getElementById(
-                "stockList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        const search =
-            document
-                .getElementById("stockSearch")
-                ?.value
-                .trim()
-                .toLowerCase() || "";
-
-
-        const filtered =
-            this.products.filter((product) => {
-
-                const name =
-                    product.name?.toLowerCase() || "";
-
-
-                const sku =
-                    product.sku?.toLowerCase() || "";
-
-
-                return (
-                    name.includes(search) ||
-                    sku.includes(search)
-                );
-
-            });
-
-
-        if (!filtered.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-
-                    <div class="empty-state-icon">
-                        E
-                    </div>
-
-                    <strong>
-                        Nenhum produto no estoque
-                    </strong>
-
-                    <p>
-                        Cadastre produtos para
-                        controlar o estoque.
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            filtered
-                .map((product) => `
-
-                    <article class="stock-card">
-
+        return;
+    }
+
+    container.innerHTML = state.sales
+        .map((sale) => {
+            return `
+                <div class="sale-card">
+                    <div class="sale-card-header">
                         <div>
+                            <div class="sale-number">
+                                Venda #${sale.sale_number}
+                            </div>
 
-                            <strong>
-                                ${this.escapeHtml(
-                                    product.name
+                            <div class="sale-date">
+                                ${formatDateTime(
+                                    sale.sale_date
                                 )}
-                            </strong>
-
-                            <span>
-                                Estoque mínimo:
-                                ${product.minimum_stock || 0}
-                            </span>
-
+                            </div>
                         </div>
 
-                        <strong>
-                            —
-                        </strong>
+                        <div class="sale-total">
+                            ${formatCurrency(
+                                sale.total
+                            )}
+                        </div>
+                    </div>
 
-                    </article>
-
-                `)
-                .join("");
-
-    },
-
-
-    // =====================================================
-    // VENDAS
-    // =====================================================
-
-    openSaleModal() {
-
-        this.saleItems = [];
-
-        this.renderSaleItems();
-
-        this.calculateSaleTotal();
-
-        this.openModal("saleModal");
-
-    },
-
-
-    addSaleItem() {
-
-        if (!this.products.length) {
-
-            alert(
-                "Cadastre pelo menos um produto antes de registrar uma venda."
-            );
-
-            return;
-
-        }
-
-
-        this.saleItems.push({
-
-            product_id:
-                this.products[0].id,
-
-            quantity:
-                1,
-
-            unit_price:
-                Number(
-                    this.products[0].sale_price || 0
-                )
-
-        });
-
-
-        this.renderSaleItems();
-
-        this.calculateSaleTotal();
-
-    },
-
-
-    renderSaleItems() {
-
-        const container =
-            document.getElementById(
-                "saleItems"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        if (!this.saleItems.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-
-                    <strong>
-                        Nenhum item
-                    </strong>
-
-                    <p>
-                        Adicione produtos à venda.
-                    </p>
-
+                    <div class="sale-payment">
+                        Pagamento:
+                        ${escapeHtml(
+                            sale.payment_method ||
+                                "-"
+                        )}
+                    </div>
                 </div>
-
             `;
+        })
+        .join("");
+}
 
-            return;
+/* =========================================================
+   FINANCEIRO
+   ========================================================= */
 
+function resetTransactionForm() {
+    const form = $("transactionForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    if ($("transactionId")) {
+        $("transactionId").value = "";
+    }
+
+    setMessage("transactionFormMessage");
+}
+
+async function handleTransactionSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user) {
+        return;
+    }
+
+    const type =
+        $("transactionType")?.value || "expense";
+
+    const category =
+        $("transactionCategory")?.value.trim() || "";
+
+    const description =
+        $("transactionDescription")?.value.trim() ||
+        "";
+
+    const amount = Number(
+        $("transactionAmount")?.value || 0
+    );
+
+    const date =
+        $("transactionDate")?.value ||
+        new Date().toISOString().slice(0, 10);
+
+    const paymentMethod =
+        $("transactionPaymentMethod")?.value ||
+        "";
+
+    const notes =
+        $("transactionNotes")?.value.trim() || "";
+
+    if (!description || amount <= 0) {
+        setMessage(
+            "transactionFormMessage",
+            "Informe descrição e valor válido.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+        setMessage(
+            "transactionFormMessage",
+            "Salvando..."
+        );
+
+        const { error } = await supabaseClient
+            .from("financial_transactions")
+            .insert({
+                user_id: state.user.id,
+                transaction_type: type,
+                category,
+                description,
+                amount,
+                transaction_date: date,
+                payment_method: paymentMethod,
+                notes
+            });
+
+        if (error) {
+            throw error;
         }
 
+        setMessage(
+            "transactionFormMessage",
+            "Lançamento salvo.",
+            "success"
+        );
 
-        container.innerHTML =
-            this.saleItems
-                .map((item, index) => {
+        await loadFinancialTransactions();
+        await loadDashboard();
 
-                    const options =
-                        this.products
-                            .map((product) => `
+        setTimeout(() => {
+            closeModal("transactionModal");
+        }, 400);
+    } catch (error) {
+        console.error(error);
 
-                                <option
-                                    value="${product.id}"
+        setMessage(
+            "transactionFormMessage",
+            translateDatabaseError(error),
+            "error"
+        );
+    }
+}
+
+async function loadFinancialTransactions() {
+    const container = $("financeList");
+
+    if (!container || !state.user) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("financial_transactions")
+        .select("*")
+        .eq("user_id", state.user.id)
+        .order("transaction_date", {
+            ascending: false
+        })
+        .order("created_at", {
+            ascending: false
+        })
+        .limit(50);
+
+    if (error) {
+        console.error(
+            "Erro ao carregar financeiro:",
+            error
+        );
+
+        return;
+    }
+
+    state.financialTransactions = data || [];
+
+    renderFinancialTransactions();
+}
+
+function renderFinancialTransactions() {
+    const container = $("financeList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.financialTransactions.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Nenhum lançamento financeiro.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        state.financialTransactions
+            .map((transaction) => {
+                const isIncome =
+                    transaction.transaction_type ===
+                    "income";
+
+                return `
+                    <div class="finance-card">
+                        <div class="finance-card-header">
+                            <div>
+                                <div class="finance-description">
+                                    ${escapeHtml(
+                                        transaction.description
+                                    )}
+                                </div>
+
+                                <div class="finance-meta">
+                                    ${formatDate(
+                                        transaction.transaction_date
+                                    )}
+
                                     ${
-                                        product.id ===
-                                        item.product_id
-                                            ? "selected"
+                                        transaction.category
+                                            ? ` • ${escapeHtml(
+                                                  transaction.category
+                                              )}`
                                             : ""
                                     }
-                                >
-                                    ${this.escapeHtml(
-                                        product.name
-                                    )}
-                                </option>
-
-                            `)
-                            .join("");
-
-
-                    return `
-
-                        <div
-                            class="sale-item"
-                            data-sale-item="${index}"
-                        >
-
-                            <div class="form-group">
-
-                                <label>
-                                    Produto
-                                </label>
-
-                                <select
-                                    class="sale-product-select"
-                                    data-index="${index}"
-                                >
-
-                                    ${options}
-
-                                </select>
-
+                                </div>
                             </div>
 
+                            <div class="finance-amount ${
+                                isIncome
+                                    ? "income"
+                                    : "expense"
+                            }">
+                                ${
+                                    isIncome
+                                        ? "+"
+                                        : "-"
+                                }
 
-                            <div class="form-row">
-
-                                <div class="form-group">
-
-                                    <label>
-                                        Quantidade
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        class="sale-quantity-input"
-                                        data-index="${index}"
-                                        min="1"
-                                        step="1"
-                                        value="${item.quantity}"
-                                    >
-
-                                </div>
-
-
-                                <div class="form-group">
-
-                                    <label>
-                                        Valor
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        class="sale-price-input"
-                                        data-index="${index}"
-                                        min="0"
-                                        step="0.01"
-                                        value="${item.unit_price}"
-                                    >
-
-                                </div>
-
+                                ${formatCurrency(
+                                    transaction.amount
+                                )}
                             </div>
-
-
-                            <button
-                                type="button"
-                                class="secondary-button"
-                                data-remove-sale-item="${index}"
-                            >
-                                Remover
-                            </button>
-
                         </div>
+                    </div>
+                `;
+            })
+            .join("");
+}
 
-                    `;
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
+async function loadDashboard() {
+    if (!state.user) {
+        return;
+    }
+
+    try {
+        const [
+            productsResult,
+            salesResult,
+            financeResult
+        ] = await Promise.all([
+            supabaseClient
+                .from("products")
+                .select("id", {
+                    count: "exact",
+                    head: true
                 })
-                .join("");
+                .eq("user_id", state.user.id)
+                .eq("is_active", true),
 
+            supabaseClient
+                .from("sales")
+                .select("total")
+                .eq("user_id", state.user.id)
+                .eq("status", "completed"),
 
-        container
-            .querySelectorAll(
-                ".sale-product-select"
+            supabaseClient
+                .from("financial_transactions")
+                .select(
+                    "transaction_type, amount"
+                )
+                .eq("user_id", state.user.id)
+        ]);
+
+        const productCount =
+            productsResult.count || 0;
+
+        const sales =
+            salesResult.data || [];
+
+        const transactions =
+            financeResult.data || [];
+
+        const totalSales = sales.reduce(
+            (sum, sale) =>
+                sum + Number(sale.total || 0),
+            0
+        );
+
+        const income = transactions
+            .filter(
+                (item) =>
+                    item.transaction_type ===
+                    "income"
             )
-            .forEach((select) => {
-
-                select.addEventListener(
-                    "change",
-                    (event) => {
-
-                        const index =
-                            Number(
-                                event.target.dataset.index
-                            );
-
-
-                        const product =
-                            this.products.find(
-                                (item) =>
-                                    item.id ===
-                                    event.target.value
-                            );
-
-
-                        if (!product) {
-                            return;
-                        }
-
-
-                        this.saleItems[index].product_id =
-                            product.id;
-
-
-                        this.saleItems[index].unit_price =
-                            Number(
-                                product.sale_price || 0
-                            );
-
-
-                        this.renderSaleItems();
-
-                        this.calculateSaleTotal();
-
-                    }
-                );
-
-            });
-
-
-        container
-            .querySelectorAll(
-                ".sale-quantity-input"
-            )
-            .forEach((input) => {
-
-                input.addEventListener(
-                    "input",
-                    (event) => {
-
-                        const index =
-                            Number(
-                                event.target.dataset.index
-                            );
-
-
-                        this.saleItems[index].quantity =
-                            Math.max(
-                                1,
-                                parseInt(
-                                    event.target.value,
-                                    10
-                                ) || 1
-                            );
-
-
-                        this.calculateSaleTotal();
-
-                    }
-                );
-
-            });
-
-
-        container
-            .querySelectorAll(
-                ".sale-price-input"
-            )
-            .forEach((input) => {
-
-                input.addEventListener(
-                    "input",
-                    (event) => {
-
-                        const index =
-                            Number(
-                                event.target.dataset.index
-                            );
-
-
-                        this.saleItems[index].unit_price =
-                            Math.max(
-                                0,
-                                Number(
-                                    event.target.value
-                                ) || 0
-                            );
-
-
-                        this.calculateSaleTotal();
-
-                    }
-                );
-
-            });
-
-
-        container
-            .querySelectorAll(
-                "[data-remove-sale-item]"
-            )
-            .forEach((button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const index =
-                            Number(
-                                button.dataset
-                                    .removeSaleItem
-                            );
-
-
-                        this.saleItems.splice(
-                            index,
-                            1
-                        );
-
-
-                        this.renderSaleItems();
-
-                        this.calculateSaleTotal();
-
-                    }
-                );
-
-            });
-
-    },
-
-
-    calculateSaleTotal() {
-
-        const subtotal =
-            this.saleItems.reduce(
-                (total, item) =>
-                    total +
-                    (
-                        Number(item.quantity) *
-                        Number(item.unit_price)
-                    ),
+            .reduce(
+                (sum, item) =>
+                    sum + Number(item.amount || 0),
                 0
             );
 
-
-        const discount =
-            Number(
-                document.getElementById(
-                    "saleDiscount"
-                )?.value
-            ) || 0;
-
-
-        const total =
-            Math.max(
-                0,
-                subtotal - discount
+        const expenses = transactions
+            .filter(
+                (item) =>
+                    item.transaction_type ===
+                    "expense"
+            )
+            .reduce(
+                (sum, item) =>
+                    sum + Number(item.amount || 0),
+                0
             );
 
+        setDashboardValue(
+            [
+                "dashboardProducts",
+                "totalProducts"
+            ],
+            productCount
+        );
 
-        const element =
-            document.getElementById(
-                "saleTotal"
-            );
+        setDashboardValue(
+            [
+                "dashboardSales",
+                "totalSales"
+            ],
+            formatCurrency(totalSales)
+        );
 
+        setDashboardValue(
+            [
+                "dashboardIncome",
+                "totalIncome"
+            ],
+            formatCurrency(income)
+        );
+
+        setDashboardValue(
+            [
+                "dashboardExpenses",
+                "totalExpenses"
+            ],
+            formatCurrency(expenses)
+        );
+    } catch (error) {
+        console.error(
+            "Erro ao carregar dashboard:",
+            error
+        );
+    }
+}
+
+function setDashboardValue(ids, value) {
+    ids.forEach((id) => {
+        const element = $(id);
 
         if (element) {
-
-            element.textContent =
-                this.formatCurrency(total);
-
+            element.textContent = value;
         }
-
-
-        return {
-            subtotal,
-            discount,
-            total
-        };
-
-    },
-
-
-    async handleSaleSubmit(event) {
-
-        event.preventDefault();
-
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        if (!this.saleItems.length) {
-
-            alert(
-                "Adicione pelo menos um produto à venda."
-            );
-
-            return;
-
-        }
-
-
-        const button =
-            document.getElementById(
-                "saveSaleButton"
-            );
-
-
-        const message =
-            document.getElementById(
-                "saleFormMessage"
-            );
-
-
-        const paymentMethod =
-            document.getElementById(
-                "salePaymentMethod"
-            )?.value || null;
-
-
-        const notes =
-            document.getElementById(
-                "saleNotes"
-            )?.value.trim() || null;
-
-
-        const totals =
-            this.calculateSaleTotal();
-
-
-        button.disabled = true;
-
-        button.textContent =
-            "Salvando...";
-
-
-        try {
-
-            const {
-                data: sale,
-                error: saleError
-            } = await supabaseClient
-                .from("sales")
-                .insert({
-
-                    user_id:
-                        this.currentUser.id,
-
-                    subtotal:
-                        totals.subtotal,
-
-                    discount:
-                        totals.discount,
-
-                    total:
-                        totals.total,
-
-                    payment_method:
-                        paymentMethod,
-
-                    status:
-                        "completed",
-
-                    notes
-
-                })
-                .select()
-                .single();
-
-
-            if (saleError) {
-                throw saleError;
-            }
-
-
-            const saleItems =
-                this.saleItems.map((item) => {
-
-                    const product =
-                        this.products.find(
-                            (product) =>
-                                product.id ===
-                                item.product_id
-                        );
-
-
-                    return {
-
-                        user_id:
-                            this.currentUser.id,
-
-                        sale_id:
-                            sale.id,
-
-                        product_variant_id:
-                            null,
-
-                        product_name:
-                            product?.name ||
-                            "Produto",
-
-                        variant_description:
-                            null,
-
-                        quantity:
-                            Number(item.quantity),
-
-                        unit_price:
-                            Number(item.unit_price),
-
-                        unit_cost:
-                            Number(
-                                product?.cost_price || 0
-                            ),
-
-                        discount:
-                            0,
-
-                        total:
-                            Number(item.quantity) *
-                            Number(item.unit_price)
-
-                    };
-
-                });
-
-
-            /*
-             * A tabela sale_items exige product_variant_id.
-             * Como ainda não implementamos as variações,
-             * a criação dos itens será finalizada na etapa
-             * de variantes/estoque.
-             */
-
-            console.log(
-                "Venda criada:",
-                sale
-            );
-
-            console.log(
-                "Itens preparados:",
-                saleItems
-            );
-
-
-            this.showMessage(
-                message,
-                "Venda registrada. Os itens serão vinculados às variações quando o módulo de estoque estiver ativo.",
-                "success"
-            );
-
-
-            await this.loadSales();
-
-            await this.loadDashboard();
-
-
-            setTimeout(() => {
-
-                this.closeModal(
-                    "saleModal"
-                );
-
-            }, 800);
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao criar venda:",
-                error
-            );
-
-
-            this.showMessage(
-                message,
-                this.translateDatabaseError(error),
-                "error"
-            );
-
-
-        } finally {
-
-            button.disabled = false;
-
-            button.textContent =
-                "Finalizar venda";
-
-        }
-
-    },
-
-
-    async loadSales() {
-
-        const container =
-            document.getElementById(
-                "salesList"
-            );
-
-
-        if (!container || !this.currentUser) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("sales")
-                .select("*")
-                .eq("user_id", this.currentUser.id)
-                .order("sale_date", {
-                    ascending: false
-                })
-                .limit(50);
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (!data?.length) {
-
-                container.innerHTML = `
-
-                    <div class="empty-state">
-
-                        <div class="empty-state-icon">
-                            V
-                        </div>
-
-                        <strong>
-                            Nenhuma venda
-                        </strong>
-
-                        <p>
-                            As vendas registradas
-                            aparecerão aqui.
-                        </p>
-
-                    </div>
-
-                `;
-
-                return;
-
-            }
-
-
-            container.innerHTML =
-                data
-                    .map((sale) => `
-
-                        <article class="sale-card">
-
-                            <div>
-
-                                <strong>
-                                    Venda #${sale.sale_number}
-                                </strong>
-
-                                <span>
-                                    ${this.formatDateTime(
-                                        sale.sale_date
-                                    )}
-                                </span>
-
-                            </div>
-
-
-                            <strong>
-                                ${this.formatCurrency(
-                                    sale.total
-                                )}
-                            </strong>
-
-                        </article>
-
-                    `)
-                    .join("");
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar vendas:",
-                error
-            );
-
-        }
-
-    },
-
-
-    // =====================================================
-    // FINANCEIRO
-    // =====================================================
-
-    async handleTransactionSubmit(event) {
-
-        event.preventDefault();
-
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        const form =
-            event.currentTarget;
-
-
-        const button =
-            document.getElementById(
-                "saveTransactionButton"
-            );
-
-
-        const message =
-            document.getElementById(
-                "transactionFormMessage"
-            );
-
-
-        const formData =
-            new FormData(form);
-
-
-        const type =
-            formData
-                .get("transaction_type")
-                ?.toString();
-
-
-        const category =
-            formData
-                .get("category")
-                ?.toString()
-                .trim();
-
-
-        const description =
-            formData
-                .get("description")
-                ?.toString()
-                .trim();
-
-
-        const amount =
-            this.parseNumber(
-                formData.get("amount")
-            );
-
-
-        const transactionDate =
-            formData
-                .get("transaction_date")
-                ?.toString();
-
-
-        const paymentMethod =
-            formData
-                .get("payment_method")
-                ?.toString();
-
-
-        const notes =
-            formData
-                .get("notes")
-                ?.toString()
-                .trim();
-
-
-        if (!type) {
-
-            this.showMessage(
-                message,
-                "Selecione o tipo do lançamento.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (!description) {
-
-            this.showMessage(
-                message,
-                "Informe a descrição.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (amount === null || amount < 0) {
-
-            this.showMessage(
-                message,
-                "Informe um valor válido.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (!transactionDate) {
-
-            this.showMessage(
-                message,
-                "Informe a data.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        button.disabled = true;
-
-        button.textContent =
-            "Salvando...";
-
-
-        try {
-
-            const {
-                error
-            } = await supabaseClient
-                .from("financial_transactions")
-                .insert({
-
-                    user_id:
-                        this.currentUser.id,
-
-                    transaction_type:
-                        type,
-
-                    category:
-                        category || null,
-
-                    description,
-
-                    amount,
-
-                    transaction_date:
-                        transactionDate,
-
-                    payment_method:
-                        paymentMethod || null,
-
-                    notes:
-                        notes || null
-
-                });
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            this.showMessage(
-                message,
-                "Lançamento salvo com sucesso.",
-                "success"
-            );
-
-
-            await this.loadFinancialTransactions();
-
-            await this.loadDashboard();
-
-
-            setTimeout(() => {
-
-                this.closeModal(
-                    "transactionModal"
-                );
-
-            }, 500);
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao criar lançamento:",
-                error
-            );
-
-
-            this.showMessage(
-                message,
-                this.translateDatabaseError(error),
-                "error"
-            );
-
-
-        } finally {
-
-            button.disabled = false;
-
-            button.textContent =
-                "Salvar lançamento";
-
-        }
-
-    },
-
-
-    async loadFinancialTransactions() {
-
-        const container =
-            document.getElementById(
-                "financeList"
-            );
-
-
-        if (!container || !this.currentUser) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("financial_transactions")
-                .select("*")
-                .eq("user_id", this.currentUser.id)
-                .order("transaction_date", {
-                    ascending: false
-                })
-                .limit(100);
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            const transactions =
-                data || [];
-
-
-            if (!transactions.length) {
-
-                container.innerHTML = `
-
-                    <div class="empty-state">
-
-                        <div class="empty-state-icon">
-                            F
-                        </div>
-
-                        <strong>
-                            Nenhum lançamento
-                        </strong>
-
-                        <p>
-                            Receitas e despesas
-                            aparecerão aqui.
-                        </p>
-
-                    </div>
-
-                `;
-
-            } else {
-
-                container.innerHTML =
-                    transactions
-                        .map((transaction) => `
-
-                            <article class="finance-card">
-
-                                <div>
-
-                                    <strong>
-                                        ${this.escapeHtml(
-                                            transaction.description
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${this.escapeHtml(
-                                            transaction.category ||
-                                            "Sem categoria"
-                                        )}
-                                    </span>
-
-                                </div>
-
-
-                                <strong>
-                                    ${
-                                        transaction.transaction_type ===
-                                        "expense"
-                                            ? "-"
-                                            : "+"
-                                    }
-
-                                    ${this.formatCurrency(
-                                        transaction.amount
-                                    )}
-                                </strong>
-
-                            </article>
-
-                        `)
-                        .join("");
-
-            }
-
-
-            this.updateFinanceMetrics(
-                transactions
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar financeiro:",
-                error
-            );
-
-        }
-
-    },
-
-
-    updateFinanceMetrics(transactions) {
-
-        const income =
-            transactions
-                .filter(
-                    (item) =>
-                        item.transaction_type ===
-                        "income"
-                )
-                .reduce(
-                    (total, item) =>
-                        total +
-                        Number(item.amount || 0),
-                    0
-                );
-
-
-        const expenses =
-            transactions
-                .filter(
-                    (item) =>
-                        item.transaction_type ===
-                        "expense"
-                )
-                .reduce(
-                    (total, item) =>
-                        total +
-                        Number(item.amount || 0),
-                    0
-                );
-
-
-        const balance =
-            income - expenses;
-
-
-        const incomeElement =
-            document.getElementById(
-                "financeIncome"
-            );
-
-
-        const expensesElement =
-            document.getElementById(
-                "financeExpenses"
-            );
-
-
-        const balanceElement =
-            document.getElementById(
-                "financeBalance"
-            );
-
-
-        if (incomeElement) {
-
-            incomeElement.textContent =
-                this.formatCurrency(
-                    income
-                );
-
-        }
-
-
-        if (expensesElement) {
-
-            expensesElement.textContent =
-                this.formatCurrency(
-                    expenses
-                );
-
-        }
-
-
-        if (balanceElement) {
-
-            balanceElement.textContent =
-                this.formatCurrency(
-                    balance
-                );
-
-        }
-
-    },
-
-
-    resetTransactionForm() {
-
-        const form =
-            document.getElementById(
-                "transactionForm"
-            );
-
-
-        if (!form) {
-            return;
-        }
-
-
-        form.reset();
-
-
-        this.setDefaultTransactionDate();
-
-
-        const message =
-            document.getElementById(
-                "transactionFormMessage"
-            );
-
-
-        if (message) {
-
-            message.textContent = "";
-
-            message.className =
-                "form-message";
-
-        }
-
-    },
-
-
-    setDefaultTransactionDate() {
-
-        const input =
-            document.getElementById(
-                "transactionDate"
-            );
-
-
-        if (!input) {
-            return;
-        }
-
-
-        const now =
-            new Date();
-
-
-        const year =
-            now.getFullYear();
-
-
-        const month =
-            String(
-                now.getMonth() + 1
-            ).padStart(2, "0");
-
-
-        const day =
-            String(
-                now.getDate()
-            ).padStart(2, "0");
-
-
-        input.value =
-            `${year}-${month}-${day}`;
-
-    },
-
-
-    // =====================================================
-    // DASHBOARD
-    // =====================================================
-
-    async loadDashboard() {
-
-        if (!this.currentUser) {
-            return;
-        }
-
-
-        try {
-
-            const today =
-                new Date();
-
-
-            const year =
-                today.getFullYear();
-
-
-            const month =
-                String(
-                    today.getMonth() + 1
-                ).padStart(2, "0");
-
-
-            const day =
-                String(
-                    today.getDate()
-                ).padStart(2, "0");
-
-
-            const startOfDay =
-                `${year}-${month}-${day}T00:00:00`;
-
-
-            const endOfDay =
-                `${year}-${month}-${day}T23:59:59`;
-
-
-            // VENDAS
-            const {
-                data: sales
-            } = await supabaseClient
-                .from("sales")
-                .select("total")
-                .eq("user_id", this.currentUser.id)
-                .gte("sale_date", startOfDay)
-                .lte("sale_date", endOfDay)
-                .neq("status", "cancelled");
-
-
-            const salesTotal =
-                (sales || [])
-                    .reduce(
-                        (total, sale) =>
-                            total +
-                            Number(
-                                sale.total || 0
-                            ),
-                        0
-                    );
-
-
-            const metricSales =
-                document.getElementById(
-                    "metricSales"
-                );
-
-
-            const metricOrders =
-                document.getElementById(
-                    "metricOrders"
-                );
-
-
-            if (metricSales) {
-
-                metricSales.textContent =
-                    this.formatCurrency(
-                        salesTotal
-                    );
-
-            }
-
-
-            if (metricOrders) {
-
-                metricOrders.textContent =
-                    String(
-                        sales?.length || 0
-                    );
-
-            }
-
-
-            // DESPESAS
-            const {
-                data: expenses
-            } = await supabaseClient
-                .from("financial_transactions")
-                .select("amount")
-                .eq("user_id", this.currentUser.id)
-                .eq(
-                    "transaction_type",
-                    "expense"
-                )
-                .eq(
-                    "transaction_date",
-                    `${year}-${month}-${day}`
-                );
-
-
-            const expenseTotal =
-                (expenses || [])
-                    .reduce(
-                        (total, item) =>
-                            total +
-                            Number(
-                                item.amount || 0
-                            ),
-                        0
-                    );
-
-
-            const metricExpenses =
-                document.getElementById(
-                    "metricExpenses"
-                );
-
-
-            if (metricExpenses) {
-
-                metricExpenses.textContent =
-                    this.formatCurrency(
-                        expenseTotal
-                    );
-
-            }
-
-
-            // ESTOQUE
-            const lowStock =
-                this.products.filter(
-                    (product) =>
-                        Number(
-                            product.minimum_stock || 0
-                        ) > 0
-                ).length;
-
-
-            const metricLowStock =
-                document.getElementById(
-                    "metricLowStock"
-                );
-
-
-            if (metricLowStock) {
-
-                metricLowStock.textContent =
-                    String(lowStock);
-
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Erro ao carregar dashboard:",
-                error
-            );
-
-        }
-
-    },
-
-
-    // =====================================================
-    // RESET FORMULÁRIO CATEGORIA
-    // =====================================================
-
-    resetCategoryForm() {
-
-        const form =
-            document.getElementById(
-                "categoryForm"
-            );
-
-
-        if (!form) {
-            return;
-        }
-
-
-        form.reset();
-
-
-        const active =
-            document.getElementById(
-                "categoryActive"
-            );
-
-
-        if (active) {
-            active.checked = true;
-        }
-
-
-        const message =
-            document.getElementById(
-                "categoryFormMessage"
-            );
-
-
-        if (message) {
-
-            message.textContent = "";
-
-            message.className =
-                "form-message";
-
-        }
-
-    },
-
-
-    // =====================================================
-    // UTILITÁRIOS
-    // =====================================================
-
-    parseNumber(value) {
-
-        if (
-            value === null ||
-            value === undefined ||
-            value === ""
-        ) {
-            return null;
-        }
-
-
-        const normalized =
-            String(value)
-                .replace(",", ".")
-                .trim();
-
-
-        const number =
-            Number(normalized);
-
-
-        return Number.isFinite(number)
-            ? number
-            : null;
-
-    },
-
-
-    formatCurrency(value) {
-
-        const number =
-            Number(value || 0);
-
-
-        return number.toLocaleString(
-            "pt-BR",
-            {
-                style: "currency",
-                currency: "BRL"
-            }
-        );
-
-    },
-
-
-    formatDateTime(value) {
-
-        if (!value) {
-            return "";
-        }
-
-
-        const date =
-            new Date(value);
-
-
-        if (Number.isNaN(date.getTime())) {
-            return "";
-        }
-
-
-        return date.toLocaleString(
-            "pt-BR",
-            {
-                dateStyle: "short",
-                timeStyle: "short"
-            }
-        );
-
-    },
-
-
-    showMessage(
-        element,
-        message,
-        type = ""
-    ) {
-
-        if (!element) {
-            return;
-        }
-
-
-        element.textContent =
-            message;
-
-
-        element.className =
-            `form-message ${type}`;
-
-    },
-
-
-    translateAuthError(error) {
-
-        const message =
-            error?.message?.toLowerCase() || "";
-
-
-        if (
-            message.includes(
-                "invalid login credentials"
-            )
-        ) {
-
-            return "E-mail ou senha incorretos.";
-
-        }
-
-
-        if (
-            message.includes(
-                "email not confirmed"
-            )
-        ) {
-
-            return "O e-mail ainda não foi confirmado.";
-
-        }
-
-
-        return (
-            error?.message ||
-            "Não foi possível entrar."
-        );
-
-    },
-
-
-    translateDatabaseError(error) {
-
-        const message =
-            error?.message || "";
-
-
-        if (
-            message.includes(
-                "duplicate key"
-            )
-        ) {
-
-            return "Já existe um registro com esses dados.";
-
-        }
-
-
-        if (
-            message.includes(
-                "row-level security"
-            )
-        ) {
-
-            return "Acesso bloqueado pelas regras de segurança do banco.";
-
-        }
-
-
-        if (
-            message.includes(
-                "violates foreign key"
-            )
-        ) {
-
-            return "Existe uma informação relacionada que não é válida.";
-
-        }
-
-
-        return (
-            message ||
-            "Não foi possível salvar os dados."
-        );
-
-    },
-
-
-    escapeHtml(value) {
-
-        return String(value ?? "")
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
-
-    }
-
-};
-
-
-// =========================================================
-// INICIAR APLICAÇÃO
-// =========================================================
+    });
+}
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+
+function setupEvents() {
+    $("loginForm")?.addEventListener(
+        "submit",
+        handleLogin
+    );
+
+    $("logoutButton")?.addEventListener(
+        "click",
+        handleLogout
+    );
+
+    $("newCategoryButton")?.addEventListener(
+        "click",
+        () => openModal("categoryModal")
+    );
+
+    $("newColorButton")?.addEventListener(
+        "click",
+        () => openModal("colorModal")
+    );
+
+    $("newSizeButton")?.addEventListener(
+        "click",
+        () => openModal("sizeModal")
+    );
+
+    $("newProductButton")?.addEventListener(
+        "click",
+        () => openModal("productModal")
+    );
+
+    $("newSaleButton")?.addEventListener(
+        "click",
+        () => openModal("saleModal")
+    );
+
+    $("newTransactionButton")?.addEventListener(
+        "click",
+        () => openModal("transactionModal")
+    );
+
+    $("categoryForm")?.addEventListener(
+        "submit",
+        handleCategorySubmit
+    );
+
+    $("colorForm")?.addEventListener(
+        "submit",
+        handleColorSubmit
+    );
+
+    $("sizeForm")?.addEventListener(
+        "submit",
+        handleSizeSubmit
+    );
+
+    $("productForm")?.addEventListener(
+        "submit",
+        handleProductSubmit
+    );
+
+    $("saleForm")?.addEventListener(
+        "submit",
+        handleSaleSubmit
+    );
+
+    $("transactionForm")?.addEventListener(
+        "submit",
+        handleTransactionSubmit
+    );
+
+    $("colorHex")?.addEventListener(
+        "input",
+        updateColorPreview
+    );
+
+    $("colorHexText")?.addEventListener(
+        "input",
+        updateColorFromText
+    );
+
+    setupNavigation();
+    setupModalCloseButtons();
+}
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+
+async function initializeApp() {
+    console.log("Inicializando MabijuFit...");
+
+    await Promise.all([
+        loadCategories(),
+        loadColors(),
+        loadSizes(),
+        loadProducts(),
+        loadStock(),
+        loadSales(),
+        loadFinancialTransactions(),
+        loadDashboard()
+    ]);
+
+    showSection("dashboardSection");
+
+    console.log("MabijuFit inicializado.");
+}
+
+/* =========================================================
+   START
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    async () => {
+        setupEvents();
+        await checkSession();
+    }
+);
 
-        App.init();
+supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+        if (event === "SIGNED_OUT") {
+            state.user = null;
 
+            hideElement("appScreen");
+            showElement("loginScreen");
+
+            return;
+        }
+
+        if (
+            event === "SIGNED_IN" &&
+            session?.user
+        ) {
+            state.user = session.user;
+
+            hideElement("loginScreen");
+            showElement("appScreen");
+
+            await initializeApp();
+        }
     }
 );
