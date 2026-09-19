@@ -3,6 +3,7 @@
    ========================================================= */
 
 :root {
+
     --pink-50: #fff8fb;
     --pink-100: #fcecf3;
     --pink-200: #f7d7e4;
@@ -15,6 +16,7 @@
 
     --white: #ffffff;
     --black: #1f1b1d;
+
     --gray-600: #6f686b;
     --gray-400: #aaa2a6;
 
@@ -43,12 +45,15 @@
     padding: 0;
 }
 
+
 html {
     font-size: 16px;
     scroll-behavior: smooth;
 }
 
+
 body {
+
     min-height: 100vh;
     min-height: 100dvh;
 
@@ -72,7 +77,24 @@ body {
         sans-serif;
 
     -webkit-font-smoothing: antialiased;
+
     text-rendering: optimizeLegibility;
+}
+
+
+button,
+input {
+    font: inherit;
+}
+
+
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+[hidden] {
+    display: none !important;
 }
 
 
@@ -81,6 +103,7 @@ body {
    ========================================================= */
 
 #app {
+
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -88,75 +111,39 @@ body {
 
 
 /* =========================================================
-   HEADER
+   LOGIN
    ========================================================= */
 
-.app-header {
+.login-page {
+
     width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
 
-    padding:
-        calc(env(safe-area-inset-top) + 18px)
-        20px
-        18px;
-
-    background: rgba(255, 255, 255, 0.88);
-
-    border-bottom: 1px solid var(--border);
-
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.brand {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
 
-.brand-name {
-    font-size: 1.45rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-
-    color: var(--black);
-}
-
-.brand-subtitle {
-    font-size: 0.78rem;
-    color: var(--gray-600);
-}
-
-
-/* =========================================================
-   CONTENT
-   ========================================================= */
-
-.app-content {
-    width: 100%;
-    max-width: 600px;
-
-    margin: 0 auto;
-
-    padding:
-        28px 20px
-        calc(40px + env(safe-area-inset-bottom));
-}
-
-
-/* =========================================================
-   WELCOME CARD
-   ========================================================= */
-
-.welcome-card {
-    display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
 
-    text-align: center;
+    padding:
+        calc(24px + env(safe-area-inset-top))
+        18px
+        calc(24px + env(safe-area-inset-bottom));
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--pink-100) 0%,
+            var(--background) 48%,
+            var(--white) 100%
+        );
+}
+
+
+.login-card {
+
+    width: 100%;
+    max-width: 460px;
 
     padding: 34px 24px;
 
@@ -164,92 +151,148 @@ body {
 
     border: 1px solid var(--border);
 
-    border-radius: var(--radius-lg);
-
-    box-shadow: var(--shadow-soft);
-}
-
-
-/* =========================================================
-   LOGO TEMPORÁRIO
-   ========================================================= */
-
-.welcome-logo {
-    width: 82px;
-    height: 82px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 22px;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--pink-200),
-            var(--pink-400)
-        );
-
-    color: var(--white);
-
-    font-family:
-        Georgia,
-        "Times New Roman",
-        serif;
-
-    font-size: 2.4rem;
-    font-weight: 600;
+    border-radius: 28px;
 
     box-shadow:
-        0 10px 28px rgba(201, 111, 148, 0.25);
+        0 12px 40px rgba(150, 90, 115, 0.10);
+
+    text-align: center;
 }
 
 
-/* =========================================================
-   TEXTOS
-   ========================================================= */
+.login-logo {
 
-.welcome-card h1 {
-    margin-bottom: 10px;
+    display: flex;
+
+    justify-content: center;
+
+    margin-bottom: 20px;
+}
+
+
+.login-logo img {
+
+    width: 150px;
+    height: 150px;
+
+    object-fit: contain;
+
+    border-radius: 50%;
+}
+
+
+.login-header {
+
+    margin-bottom: 30px;
+}
+
+
+.login-header h1 {
+
+    margin-bottom: 6px;
 
     font-family:
         Georgia,
         "Times New Roman",
         serif;
 
-    font-size: 1.7rem;
+    font-size: 2rem;
     font-weight: 600;
 
-    line-height: 1.2;
-
-    color: var(--black);
+    letter-spacing: -0.5px;
 }
 
-.welcome-card p {
-    max-width: 300px;
 
-    margin-bottom: 26px;
+.login-header p {
 
     color: var(--gray-600);
 
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-size: 1rem;
 }
 
 
-/* =========================================================
-   BOTÃO
-   ========================================================= */
+.login-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+    text-align: left;
+}
+
+
+.form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-group label {
+
+    color: var(--black);
+
+    font-size: 0.88rem;
+
+    font-weight: 650;
+}
+
+
+.form-group input {
+
+    width: 100%;
+
+    min-height: 56px;
+
+    padding: 0 16px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 16px;
+
+    background: var(--white);
+
+    color: var(--black);
+
+    outline: none;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.form-group input::placeholder {
+
+    color: var(--gray-400);
+}
+
+
+.form-group input:focus {
+
+    border-color: var(--pink-400);
+
+    box-shadow:
+        0 0 0 4px rgba(223, 145, 177, 0.12);
+}
+
 
 .primary-button {
+
     width: 100%;
-    min-height: 52px;
+
+    min-height: 56px;
+
+    margin-top: 4px;
 
     border: 0;
-    border-radius: 14px;
+
+    border-radius: 16px;
 
     background:
         linear-gradient(
@@ -261,7 +304,8 @@ body {
     color: var(--white);
 
     font-size: 1rem;
-    font-weight: 600;
+
+    font-weight: 700;
 
     cursor: pointer;
 
@@ -274,259 +318,40 @@ body {
         opacity var(--transition);
 }
 
+
 .primary-button:active {
+
     transform: scale(0.98);
 }
 
-.primary-button:hover {
-    box-shadow:
-        0 10px 24px rgba(201, 111, 148, 0.32);
+
+.primary-button:disabled {
+
+    opacity: 0.65;
+
+    cursor: wait;
 }
 
-.primary-button:focus-visible {
-    outline: 3px solid var(--gold-light);
-    outline-offset: 3px;
-}
-
-
-/* =========================================================
-   DESKTOP / TELAS MAIORES
-   ========================================================= */
-
-@media (min-width: 768px) {
-
-    .app-header {
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-
-    .app-content {
-        padding-top: 60px;
-    }
-
-    .welcome-card {
-        padding: 50px 40px;
-    }
-
-    .primary-button {
-        max-width: 280px;
-    }
-}
-
-
-/* =========================================================
-   REDUÇÃO DE ANIMAÇÕES
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-    }
-}
-
-/* =========================================================
-   LOGIN — MABIJUFIT
-   ========================================================= */
-
-.login-page {
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding:
-        30px 20px
-        calc(30px + env(safe-area-inset-bottom));
-
-    background:
-        radial-gradient(
-            circle at top,
-            var(--pink-100) 0%,
-            var(--background) 48%,
-            var(--white) 100%
-        );
-}
-
-
-.login-card {
-    width: 100%;
-    max-width: 430px;
-
-    padding: 36px 26px 28px;
-
-    background: rgba(255, 255, 255, 0.94);
-
-    border: 1px solid var(--border);
-    border-radius: 28px;
-
-    box-shadow:
-        0 20px 60px rgba(150, 90, 115, 0.14);
-}
-
-
-/* =========================================================
-   LOGO
-   ========================================================= */
-
-.login-logo {
-    width: 112px;
-    height: 112px;
-
-    margin: 0 auto 22px;
-
-    border-radius: 50%;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 12px 30px rgba(201, 111, 148, 0.22);
-}
-
-.login-logo img {
-    width: 100%;
-    height: 100%;
-
-    display: block;
-
-    object-fit: cover;
-}
-
-
-/* =========================================================
-   CABEÇALHO
-   ========================================================= */
-
-.login-header {
-    text-align: center;
-
-    margin-bottom: 30px;
-}
-
-.login-header h1 {
-    margin-bottom: 6px;
-
-    font-family:
-        Georgia,
-        "Times New Roman",
-        serif;
-
-    font-size: 2rem;
-    font-weight: 600;
-
-    letter-spacing: -0.5px;
-
-    color: var(--black);
-}
-
-.login-header p {
-    color: var(--gray-600);
-
-    font-size: 0.92rem;
-}
-
-
-/* =========================================================
-   FORMULÁRIO
-   ========================================================= */
-
-.login-form {
-    width: 100%;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-
-    gap: 8px;
-
-    margin-bottom: 18px;
-}
-
-.form-group label {
-    color: var(--black);
-
-    font-size: 0.88rem;
-    font-weight: 600;
-}
-
-.form-group input {
-    width: 100%;
-    min-height: 52px;
-
-    padding: 0 16px;
-
-    border: 1px solid var(--border);
-    border-radius: 14px;
-
-    background: var(--white);
-
-    color: var(--black);
-
-    font-size: 1rem;
-
-    outline: none;
-
-    transition:
-        border-color var(--transition),
-        box-shadow var(--transition);
-}
-
-.form-group input::placeholder {
-    color: var(--gray-400);
-}
-
-.form-group input:focus {
-    border-color: var(--pink-400);
-
-    box-shadow:
-        0 0 0 4px rgba(223, 145, 177, 0.12);
-}
-
-
-/* =========================================================
-   BOTÃO DE LOGIN
-   ========================================================= */
-
-.login-form .primary-button {
-    width: 100%;
-
-    margin-top: 8px;
-}
-
-
-/* =========================================================
-   MENSAGEM
-   ========================================================= */
 
 .login-message {
-    min-height: 22px;
 
-    margin-top: 14px;
+    min-height: 20px;
 
-    text-align: center;
+    margin-top: -4px;
 
     color: var(--gray-600);
 
-    font-size: 0.86rem;
+    font-size: 0.84rem;
+
+    text-align: center;
 }
 
 
-/* =========================================================
-   RODAPÉ
-   ========================================================= */
-
 .login-footer {
-    display: flex;
-    flex-direction: column;
 
-    align-items: center;
+    display: flex;
+
+    flex-direction: column;
 
     gap: 3px;
 
@@ -534,34 +359,23 @@ body {
 
     color: var(--gray-400);
 
-    font-size: 0.75rem;
+    font-size: 0.78rem;
 }
 
 
 /* =========================================================
-   DESKTOP
-   ========================================================= */
-
-@media (min-width: 768px) {
-
-    .login-page {
-        padding-top: 60px;
-        padding-bottom: 60px;
-    }
-
-    .login-card {
-        padding: 44px 38px 32px;
-    }
-}
-
-/* =========================================================
-   DASHBOARD
+   APLICAÇÃO
    ========================================================= */
 
 .app-screen {
+
     width: 100%;
+
     min-height: 100vh;
     min-height: 100dvh;
+
+    padding-bottom:
+        calc(82px + env(safe-area-inset-bottom));
 
     background:
         linear-gradient(
@@ -570,18 +384,19 @@ body {
             var(--background) 38%,
             var(--white) 100%
         );
-
-    padding-bottom: calc(82px + env(safe-area-inset-bottom));
 }
 
 
 /* =========================================================
-   HEADER DO DASHBOARD
+   HEADER PRINCIPAL
    ========================================================= */
 
 .dashboard-header {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     padding:
@@ -589,7 +404,8 @@ body {
         20px
         20px;
 
-    background: rgba(255, 255, 255, 0.92);
+    background:
+        rgba(255, 255, 255, 0.94);
 
     border-bottom: 1px solid var(--border);
 
@@ -597,11 +413,15 @@ body {
     -webkit-backdrop-filter: blur(14px);
 
     position: sticky;
+
     top: 0;
+
     z-index: 20;
 }
 
+
 .dashboard-greeting {
+
     display: block;
 
     margin-bottom: 3px;
@@ -611,60 +431,84 @@ body {
     font-size: 0.82rem;
 }
 
+
 .dashboard-header h1 {
+
     font-family:
         Georgia,
         "Times New Roman",
         serif;
 
     font-size: 1.45rem;
-    font-weight: 600;
 
-    color: var(--black);
+    font-weight: 600;
 }
 
 
-/* =========================================================
-   BOTÃO SAIR
-   ========================================================= */
-
 .icon-button {
-    min-height: 40px;
 
-    padding: 0 14px;
+    min-height: 42px;
+
+    padding: 0 15px;
 
     border: 1px solid var(--border);
-    border-radius: 12px;
+
+    border-radius: 13px;
 
     background: var(--white);
 
     color: var(--gray-600);
 
     font-size: 0.82rem;
-    font-weight: 600;
+
+    font-weight: 650;
 
     cursor: pointer;
 }
 
 
 /* =========================================================
-   CONTEÚDO
+   TELAS DOS MÓDULOS
+   ========================================================= */
+
+.module-screen {
+
+    width: 100%;
+
+    min-height: calc(
+        100vh - 82px
+    );
+
+    min-height: calc(
+        100dvh - 82px
+    );
+}
+
+
+/* =========================================================
+   DASHBOARD
    ========================================================= */
 
 .dashboard-content {
+
     width: 100%;
+
     max-width: 700px;
 
     margin: 0 auto;
 
-    padding: 26px 20px;
+    padding: 28px 20px;
 }
 
+
 .dashboard-title {
+
     margin-bottom: 20px;
 }
 
+
 .dashboard-title span {
+
     display: block;
 
     margin-bottom: 4px;
@@ -672,19 +516,24 @@ body {
     color: var(--pink-500);
 
     font-size: 0.78rem;
+
     font-weight: 700;
 
     text-transform: uppercase;
+
     letter-spacing: 0.8px;
 }
 
+
 .dashboard-title h2 {
+
     font-family:
         Georgia,
         "Times New Roman",
         serif;
 
     font-size: 1.65rem;
+
     font-weight: 600;
 }
 
@@ -694,19 +543,24 @@ body {
    ========================================================= */
 
 .metrics-grid {
+
     display: grid;
 
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
     gap: 12px;
 
     margin-bottom: 30px;
 }
 
+
 .metric-card {
+
     min-height: 132px;
 
     display: flex;
+
     flex-direction: column;
 
     justify-content: center;
@@ -716,33 +570,42 @@ body {
     background: var(--white);
 
     border: 1px solid var(--border);
+
     border-radius: 18px;
 
     box-shadow:
         0 8px 24px rgba(150, 90, 115, 0.07);
 }
 
+
 .metric-label {
+
     margin-bottom: 8px;
 
     color: var(--gray-600);
 
     font-size: 0.78rem;
+
     font-weight: 600;
 }
 
+
 .metric-value {
+
     margin-bottom: 5px;
 
     color: var(--black);
 
     font-size: 1.3rem;
+
     font-weight: 700;
 
     letter-spacing: -0.3px;
 }
 
+
 .metric-card small {
+
     color: var(--gray-400);
 
     font-size: 0.72rem;
@@ -754,15 +617,21 @@ body {
    ========================================================= */
 
 .dashboard-section {
+
     margin-bottom: 30px;
 }
 
+
 .section-heading {
+
     margin-bottom: 14px;
 }
 
+
 .section-heading h2 {
+
     font-size: 1.05rem;
+
     font-weight: 700;
 }
 
@@ -772,20 +641,26 @@ body {
    ========================================================= */
 
 .quick-actions {
+
     display: grid;
 
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
     gap: 10px;
 }
 
+
 .quick-action {
+
     min-height: 94px;
 
     display: flex;
+
     flex-direction: column;
 
     align-items: center;
+
     justify-content: center;
 
     gap: 8px;
@@ -793,6 +668,7 @@ body {
     padding: 10px 6px;
 
     border: 1px solid var(--border);
+
     border-radius: 16px;
 
     background: var(--white);
@@ -800,6 +676,7 @@ body {
     color: var(--black);
 
     font-size: 0.72rem;
+
     font-weight: 600;
 
     cursor: pointer;
@@ -808,11 +685,14 @@ body {
         0 6px 18px rgba(150, 90, 115, 0.06);
 }
 
+
 .quick-action-icon {
+
     width: 38px;
     height: 38px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -828,6 +708,7 @@ body {
         serif;
 
     font-size: 1.1rem;
+
     font-weight: 700;
 }
 
@@ -837,7 +718,9 @@ body {
    ========================================================= */
 
 .empty-state {
+
     display: flex;
+
     flex-direction: column;
 
     align-items: center;
@@ -849,14 +732,18 @@ body {
     background: var(--white);
 
     border: 1px solid var(--border);
+
     border-radius: 20px;
 }
 
+
 .empty-state-icon {
+
     width: 48px;
     height: 48px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -876,19 +763,238 @@ body {
     font-size: 1.3rem;
 }
 
+
 .empty-state strong {
+
     margin-bottom: 5px;
 
     font-size: 0.92rem;
 }
 
+
 .empty-state p {
-    max-width: 260px;
+
+    max-width: 280px;
 
     color: var(--gray-600);
 
     font-size: 0.78rem;
+
     line-height: 1.45;
+}
+
+
+/* =========================================================
+   CABEÇALHO DOS MÓDULOS
+   ========================================================= */
+
+.module-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding:
+        28px 20px
+        18px;
+
+    background:
+        rgba(255, 255, 255, 0.94);
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.module-eyebrow {
+
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--pink-500);
+
+    font-size: 0.72rem;
+
+    font-weight: 700;
+
+    letter-spacing: 0.8px;
+}
+
+
+.module-header h1 {
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 1.7rem;
+
+    font-weight: 600;
+}
+
+
+.module-add-button {
+
+    min-height: 44px;
+
+    padding: 0 16px;
+
+    border: 0;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--pink-400),
+            var(--pink-500)
+        );
+
+    color: var(--white);
+
+    font-size: 0.84rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 18px rgba(201, 111, 148, 0.22);
+}
+
+
+/* =========================================================
+   CONTEÚDO DOS MÓDULOS
+   ========================================================= */
+
+.module-content {
+
+    width: 100%;
+
+    max-width: 700px;
+
+    margin: 0 auto;
+
+    padding: 20px;
+}
+
+
+/* =========================================================
+   BUSCA
+   ========================================================= */
+
+.search-box {
+
+    margin-bottom: 18px;
+}
+
+
+.search-box input {
+
+    width: 100%;
+
+    min-height: 52px;
+
+    padding:
+        0 16px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 15px;
+
+    background: var(--white);
+
+    color: var(--black);
+
+    outline: none;
+
+    box-shadow:
+        0 6px 18px rgba(150, 90, 115, 0.05);
+}
+
+
+.search-box input::placeholder {
+
+    color: var(--gray-400);
+}
+
+
+.search-box input:focus {
+
+    border-color: var(--pink-400);
+
+    box-shadow:
+        0 0 0 4px rgba(223, 145, 177, 0.12);
+}
+
+
+/* =========================================================
+   LISTA DE PRODUTOS
+   ========================================================= */
+
+.products-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   TELAS TEMPORÁRIAS
+   ========================================================= */
+
+.placeholder-screen {
+
+    min-height:
+        calc(100vh - 82px);
+
+    min-height:
+        calc(100dvh - 82px);
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 30px;
+
+    text-align: center;
+}
+
+
+.placeholder-screen h1 {
+
+    margin-bottom: 10px;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 1.8rem;
+}
+
+
+.placeholder-screen p {
+
+    max-width: 300px;
+
+    color: var(--gray-600);
+
+    font-size: 0.9rem;
+
+    line-height: 1.5;
 }
 
 
@@ -897,6 +1003,7 @@ body {
    ========================================================= */
 
 .bottom-navigation {
+
     position: fixed;
 
     left: 0;
@@ -907,13 +1014,19 @@ body {
 
     display: grid;
 
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns:
+        repeat(5, 1fr);
 
     padding:
-        8px 8px
-        calc(8px + env(safe-area-inset-bottom));
+        8px
+        8px
+        calc(
+            8px +
+            env(safe-area-inset-bottom)
+        );
 
-    background: rgba(255, 255, 255, 0.96);
+    background:
+        rgba(255, 255, 255, 0.96);
 
     border-top: 1px solid var(--border);
 
@@ -924,13 +1037,17 @@ body {
     -webkit-backdrop-filter: blur(14px);
 }
 
+
 .nav-item {
+
     min-height: 58px;
 
     display: flex;
+
     flex-direction: column;
 
     align-items: center;
+
     justify-content: center;
 
     gap: 4px;
@@ -942,16 +1059,20 @@ body {
     color: var(--gray-400);
 
     font-size: 0.65rem;
+
     font-weight: 600;
 
     cursor: pointer;
 }
 
+
 .nav-icon {
+
     width: 28px;
     height: 28px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -965,51 +1086,90 @@ body {
     font-size: 0.9rem;
 }
 
+
 .nav-item.active {
+
     color: var(--pink-500);
 }
 
+
 .nav-item.active .nav-icon {
+
     background: var(--pink-100);
 }
 
 
 /* =========================================================
-   DESKTOP
+   DESKTOP / TELAS MAIORES
    ========================================================= */
 
 @media (min-width: 768px) {
 
+    .login-card {
+
+        padding: 44px 40px;
+    }
+
+
     .dashboard-content {
+
         padding-top: 40px;
     }
 
+
     .metrics-grid {
+
         grid-template-columns:
             repeat(4, minmax(0, 1fr));
     }
 
+
     .quick-actions {
+
         max-width: 500px;
     }
 
+
     .bottom-navigation {
+
         left: 50%;
+
         right: auto;
+
         width: min(700px, 100%);
 
-        transform: translateX(-50%);
+        transform:
+            translateX(-50%);
 
         border-left: 1px solid var(--border);
+
         border-right: 1px solid var(--border);
 
-        border-radius: 18px 18px 0 0;
+        border-radius:
+            18px 18px 0 0;
+    }
+
+
+    .module-header {
+
+        padding-left: 32px;
+        padding-right: 32px;
     }
 }
+
+
 /* =========================================================
-   CONTROLE DE ELEMENTOS OCULTOS
+   ACESSIBILIDADE / REDUÇÃO DE MOVIMENTO
    ========================================================= */
 
-[hidden] {
-    display: none !important;
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+
+        scroll-behavior: auto !important;
+
+        transition: none !important;
+    }
 }
