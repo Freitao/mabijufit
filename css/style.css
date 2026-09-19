@@ -2204,3 +2204,397 @@ textarea:disabled {
 .w-full {
     width: 100% !important;
 }
+/* =========================================================
+   MABIJUFIT — AJUSTE DOS CARDS
+   ========================================================= */
+
+
+/* =========================================================
+   CATEGORIAS
+   ========================================================= */
+
+.category-card {
+    min-height: 72px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 13px 14px;
+}
+
+.category-card-info {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.category-card-info strong {
+    color: var(--black);
+
+    font-size: 15px;
+    font-weight: 800;
+
+    line-height: 1.2;
+}
+
+.category-card-info span {
+    color: var(--gray-500);
+
+    font-size: 12px;
+
+    line-height: 1.35;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.category-card-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   PRODUTOS
+   ========================================================= */
+
+.product-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 15px;
+}
+
+.product-card-info {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.product-card-info strong {
+    color: var(--black);
+
+    font-size: 15px;
+    font-weight: 800;
+
+    line-height: 1.25;
+}
+
+.product-card-info span {
+    color: var(--gray-500);
+
+    font-size: 11px;
+}
+
+.product-card-info small {
+    color: var(--pink-600);
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.product-card-price {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 3px;
+}
+
+.product-card-price strong {
+    color: var(--pink-600);
+
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.product-card-price small {
+    color: var(--gray-500);
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   CORES
+   ========================================================= */
+
+.color-card {
+    min-height: 68px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 11px 12px;
+}
+
+.color-card-info {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+.color-card-swatch {
+    width: 42px;
+    height: 42px;
+
+    min-width: 42px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(0, 0, 0, 0.08);
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(255, 255, 255, 0.45),
+        0 2px 6px
+        rgba(0, 0, 0, 0.07);
+}
+
+.color-card-text {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.color-card-name {
+    color: var(--black);
+
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.color-card-code {
+    color: var(--gray-500);
+
+    font-size: 10px;
+
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+}
+
+.color-card-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   TAMANHOS
+   ========================================================= */
+
+.size-card {
+    min-height: 68px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 11px 12px;
+}
+
+.size-card-info {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+.size-card-info > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.size-badge {
+    width: 42px;
+    height: 42px;
+
+    min-width: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--pink-100);
+    color: var(--pink-600);
+
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.size-card-name {
+    color: var(--black);
+
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.size-card-order {
+    color: var(--gray-500);
+
+    font-size: 10px;
+}
+
+.size-card-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   BOTÕES DOS CARDS
+   ========================================================= */
+
+.category-card-actions button,
+.color-card-actions button,
+.size-card-actions button {
+    width: 36px;
+    height: 36px;
+
+    min-width: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: var(--gray-100);
+
+    color: var(--gray-700);
+
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+.category-card-actions button:hover,
+.color-card-actions button:hover,
+.size-card-actions button:hover {
+    background: var(--pink-100);
+
+    color: var(--pink-600);
+}
+
+.category-card-actions .danger:hover,
+.color-card-actions .danger:hover,
+.size-card-actions .danger:hover {
+    background: #fde8ed;
+
+    color: #c44563;
+}
+
+
+/* =========================================================
+   CELULAR
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .category-card,
+    .product-card,
+    .color-card,
+    .size-card {
+        border-radius: 16px;
+    }
+
+    .category-card {
+        padding: 12px;
+    }
+
+    .category-card-info strong,
+    .product-card-info strong {
+        font-size: 14px;
+    }
+
+    .product-card {
+        padding: 13px;
+    }
+
+    .product-card-price strong {
+        font-size: 14px;
+    }
+
+    .color-card,
+    .size-card {
+        padding: 10px 11px;
+    }
+
+    .category-card-actions button,
+    .color-card-actions button,
+    .size-card-actions button {
+        width: 34px;
+        height: 34px;
+
+        min-width: 34px;
+    }
+}
