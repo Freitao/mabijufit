@@ -2,24 +2,23 @@
 <html lang="pt-BR">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        content="width=device-width, initial-scale=1.0"
     >
 
     <meta
         name="theme-color"
-        content="#d982a1"
+        content="#d47799"
     >
 
     <meta
         name="description"
-        content="MabijuFit — Gestão inteligente para sua loja"
+        content="MabijuFit - Gestão inteligente da sua loja"
     >
-
-    <title>MabijuFit — Gestão</title>
 
     <link
         rel="manifest"
@@ -36,175 +35,174 @@
         rel="stylesheet"
         href="css/style.css"
     >
+
+    <title>MabijuFit</title>
+
 </head>
 
 
 <body>
 
+<div id="app">
+
+
     <!-- =====================================================
-         APP ROOT
+         LOGIN
          ===================================================== -->
 
-    <div id="app">
+    <main
+        id="loginScreen"
+        class="login-page"
+    >
 
+        <div class="login-card">
 
-        <!-- =================================================
-             LOGIN
-             ================================================= -->
+            <div class="login-logo">
 
-        <main
-            id="loginScreen"
-            class="login-page"
-        >
-
-            <section class="login-card">
-
-                <div class="login-logo">
-                    <img
-                        src="assets/icons/icon-192.png"
-                        alt="MabijuFit"
-                    >
-                </div>
-
-
-                <div class="login-header">
-
-                    <h1>MabijuFit</h1>
-
-                    <p>Gestão da sua loja</p>
-
-                </div>
-
-
-                <form
-                    id="loginForm"
-                    class="login-form"
+                <img
+                    src="assets/icons/icon-192.png"
+                    alt="MabijuFit"
                 >
 
-                    <div class="form-group">
-
-                        <label for="email">
-                            E-mail
-                        </label>
-
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            autocomplete="email"
-                            placeholder="seu@email.com"
-                            required
-                        >
-
-                    </div>
+            </div>
 
 
-                    <div class="form-group">
-
-                        <label for="password">
-                            Senha
-                        </label>
-
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            autocomplete="current-password"
-                            placeholder="Sua senha"
-                            required
-                        >
-
-                    </div>
+            <h1>
+                MabijuFit
+            </h1>
 
 
-                    <button
-                        type="submit"
-                        id="loginButton"
-                        class="primary-button"
+            <p class="login-subtitle">
+                Gestão da sua loja
+            </p>
+
+
+            <form id="loginForm">
+
+                <div class="form-group">
+
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <input
+                        id="email"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="seu@email.com"
+                        required
                     >
-                        Entrar
-                    </button>
-
-
-                    <div
-                        id="loginMessage"
-                        class="login-message"
-                    ></div>
-
-                </form>
-
-
-                <div class="login-footer">
-
-                    <span>MabijuFit</span>
-
-                    <span>Gestão inteligente</span>
 
                 </div>
 
-            </section>
 
-        </main>
+                <div class="form-group">
 
+                    <label for="password">
+                        Senha
+                    </label>
 
-
-        <!-- =================================================
-             APLICAÇÃO
-             ================================================= -->
-
-        <main
-            id="appScreen"
-            class="app-screen"
-            hidden
-        >
-
-
-            <!-- =============================================
-                 HEADER
-                 ============================================= -->
-
-            <header class="dashboard-header">
-
-                <div>
-
-                    <span class="dashboard-greeting">
-                        Olá,
-                    </span>
-
-                    <h1 id="userName">
-                        MabijuFit
-                    </h1>
+                    <input
+                        id="password"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="••••••••"
+                        required
+                    >
 
                 </div>
 
 
                 <button
-                    type="button"
-                    id="logoutButton"
-                    class="icon-button"
+                    id="loginButton"
+                    type="submit"
+                    class="primary-button"
                 >
-                    Sair
+                    Entrar
                 </button>
 
-            </header>
 
+                <div
+                    id="loginMessage"
+                    class="form-message"
+                ></div>
+
+            </form>
+
+
+            <div class="login-footer">
+                MabijuFit&nbsp; Gestão inteligente
+            </div>
+
+        </div>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         APLICAÇÃO
+         ===================================================== -->
+
+    <main
+        id="appScreen"
+        class="app-screen"
+        hidden
+    >
+
+
+        <!-- =================================================
+             CABEÇALHO
+             ================================================= -->
+
+        <header class="app-header">
+
+            <div>
+
+                <span class="app-greeting">
+                    Olá,
+                </span>
+
+                <strong id="userName">
+                    MabijuFit
+                </strong>
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                type="button"
+                class="logout-button"
+            >
+                Sair
+            </button>
+
+        </header>
+
+
+
+        <!-- =================================================
+             CONTEÚDO
+             ================================================= -->
+
+        <div class="app-content">
 
 
             <!-- =============================================
-                 HOME
+                 INÍCIO
                  ============================================= -->
 
             <section
                 id="homeScreen"
-                class="module-screen"
+                class="app-section"
             >
 
-                <div class="dashboard-content">
+                <div class="section-heading">
 
+                    <div>
 
-                    <div class="dashboard-title">
-
-                        <span>
+                        <span class="section-eyebrow">
                             VISÃO GERAL
                         </span>
 
@@ -214,218 +212,192 @@
 
                     </div>
 
-
-                    <!-- MÉTRICAS -->
-
-                    <div class="metrics-grid">
+                </div>
 
 
-                        <article class="metric-card">
+                <div class="metrics-grid">
 
-                            <span class="metric-label">
-                                Vendas
+
+                    <article class="metric-card">
+
+                        <span>
+                            Vendas
+                        </span>
+
+                        <strong id="metricSales">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Pedidos
+                        </span>
+
+                        <strong id="metricOrders">
+                            0
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Estoque baixo
+                        </span>
+
+                        <strong id="metricLowStock">
+                            0
+                        </strong>
+
+                        <small>
+                            Produtos
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Despesas
+                        </span>
+
+                        <strong id="metricExpenses">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+                </div>
+
+
+
+                <div class="section-block">
+
+                    <h3>
+                        Acessos rápidos
+                    </h3>
+
+
+                    <div class="quick-actions">
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="products"
+                        >
+
+                            <span>
+                                P
                             </span>
 
-                            <strong
-                                id="metricSales"
-                                class="metric-value"
-                            >
-                                R$ 0,00
-                            </strong>
-
-                            <small>
-                                Hoje
-                            </small>
-
-                        </article>
-
-
-                        <article class="metric-card">
-
-                            <span class="metric-label">
-                                Pedidos
-                            </span>
-
-                            <strong
-                                id="metricOrders"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
-
-                            <small>
-                                Hoje
-                            </small>
-
-                        </article>
-
-
-                        <article class="metric-card">
-
-                            <span class="metric-label">
-                                Estoque baixo
-                            </span>
-
-                            <strong
-                                id="metricLowStock"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
-
-                            <small>
+                            <strong>
                                 Produtos
-                            </small>
-
-                        </article>
-
-
-                        <article class="metric-card">
-
-                            <span class="metric-label">
-                                Despesas
-                            </span>
-
-                            <strong
-                                id="metricExpenses"
-                                class="metric-value"
-                            >
-                                R$ 0,00
                             </strong>
 
-                            <small>
-                                Hoje
-                            </small>
+                        </button>
 
-                        </article>
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="stock"
+                        >
+
+                            <span>
+                                E
+                            </span>
+
+                            <strong>
+                                Estoque
+                            </strong>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="sales"
+                        >
+
+                            <span>
+                                V
+                            </span>
+
+                            <strong>
+                                Vendas
+                            </strong>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="finance"
+                        >
+
+                            <span>
+                                F
+                            </span>
+
+                            <strong>
+                                Financeiro
+                            </strong>
+
+                        </button>
+
 
                     </div>
 
+                </div>
 
 
-                    <!-- ACESSOS RÁPIDOS -->
 
-                    <section class="dashboard-section">
+                <div class="section-block">
 
-                        <div class="section-heading">
+                    <h3>
+                        Atividade recente
+                    </h3>
 
-                            <h2>
-                                Acessos rápidos
-                            </h2>
 
+                    <div
+                        id="recentActivity"
+                        class="empty-state"
+                    >
+
+                        <div class="empty-state-icon">
+                            M
                         </div>
 
+                        <strong>
+                            Nenhuma atividade ainda
+                        </strong>
 
-                        <div class="quick-actions">
+                        <p>
+                            As vendas e movimentações aparecerão aqui.
+                        </p>
 
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-section="products"
-                            >
-
-                                <span class="quick-action-icon">
-                                    P
-                                </span>
-
-                                <span>
-                                    Produtos
-                                </span>
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-section="stock"
-                            >
-
-                                <span class="quick-action-icon">
-                                    E
-                                </span>
-
-                                <span>
-                                    Estoque
-                                </span>
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-section="sales"
-                            >
-
-                                <span class="quick-action-icon">
-                                    V
-                                </span>
-
-                                <span>
-                                    Vendas
-                                </span>
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-section="finance"
-                            >
-
-                                <span class="quick-action-icon">
-                                    F
-                                </span>
-
-                                <span>
-                                    Financeiro
-                                </span>
-
-                            </button>
-
-
-                        </div>
-
-                    </section>
-
-
-
-                    <!-- ATIVIDADE RECENTE -->
-
-                    <section class="dashboard-section">
-
-                        <div class="section-heading">
-
-                            <h2>
-                                Atividade recente
-                            </h2>
-
-                        </div>
-
-
-                        <div
-                            id="recentActivity"
-                            class="empty-state"
-                        >
-
-                            <div class="empty-state-icon">
-                                M
-                            </div>
-
-                            <strong>
-                                Nenhuma atividade ainda
-                            </strong>
-
-                            <p>
-                                As vendas e movimentações aparecerão aqui.
-                            </p>
-
-                        </div>
-
-                    </section>
+                    </div>
 
                 </div>
 
@@ -439,29 +411,30 @@
 
             <section
                 id="productsScreen"
-                class="module-screen"
+                class="app-section"
                 hidden
             >
 
-                <div class="module-header">
+
+                <div class="section-heading">
 
                     <div>
 
-                        <span class="module-eyebrow">
+                        <span class="section-eyebrow">
                             CATÁLOGO
                         </span>
 
-                        <h1>
+                        <h2>
                             Produtos
-                        </h1>
+                        </h2>
 
                     </div>
 
 
                     <button
-                        type="button"
                         id="newProductButton"
-                        class="module-add-button"
+                        type="button"
+                        class="primary-button small"
                     >
                         + Novo
                     </button>
@@ -469,142 +442,140 @@
                 </div>
 
 
-                <div class="module-content">
+                <input
+                    id="productSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar produto..."
+                >
 
 
-                    <div class="search-box">
 
-                        <input
-                            type="search"
-                            id="productSearch"
-                            placeholder="Buscar produto..."
-                            autocomplete="off"
+                <div
+                    id="productsList"
+                    class="cards-list"
+                ></div>
+
+
+
+                <!-- =========================================
+                     CATEGORIAS
+                     ========================================= -->
+
+                <div class="section-block">
+
+                    <div class="subsection-heading">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                ORGANIZAÇÃO
+                            </span>
+
+                            <h3>
+                                Categorias
+                            </h3>
+
+                        </div>
+
+
+                        <button
+                            id="newCategoryButton"
+                            type="button"
+                            class="secondary-button"
                         >
+                            + Categoria
+                        </button>
 
                     </div>
 
 
                     <div
-                        id="productsList"
-                        class="products-list"
+                        id="categoriesList"
+                        class="cards-list"
                     ></div>
 
+                </div>
 
 
-                    <!-- CATEGORIAS -->
 
-                    <section class="categories-section">
+                <!-- =========================================
+                     CORES
+                     ========================================= -->
 
-                        <div class="module-header">
+                <div class="section-block">
 
-                            <div>
+                    <div class="subsection-heading">
 
-                                <span class="module-eyebrow">
-                                    ORGANIZAÇÃO
-                                </span>
+                        <div>
 
-                                <h1>
-                                    Categorias
-                                </h1>
+                            <span class="section-eyebrow">
+                                VARIAÇÕES
+                            </span>
 
-                            </div>
-
-
-                            <button
-                                type="button"
-                                id="newCategoryButton"
-                                class="module-add-button secondary-add-button"
-                            >
-                                + Categoria
-                            </button>
+                            <h3>
+                                Cores
+                            </h3>
 
                         </div>
 
 
-                        <div
-                            id="categoriesList"
-                            class="categories-list"
-                        ></div>
+                        <button
+                            id="newColorButton"
+                            type="button"
+                            class="secondary-button"
+                        >
+                            + Cor
+                        </button>
 
-                    </section>
-
-
-
-                    <!-- CORES -->
-
-                    <section class="categories-section">
-
-                        <div class="module-header">
-
-                            <div>
-
-                                <span class="module-eyebrow">
-                                    VARIAÇÕES
-                                </span>
-
-                                <h1>
-                                    Cores
-                                </h1>
-
-                            </div>
+                    </div>
 
 
-                            <button
-                                type="button"
-                                id="newColorButton"
-                                class="module-add-button secondary-add-button"
-                            >
-                                + Cor
-                            </button>
+                    <div
+                        id="colorsList"
+                        class="cards-list"
+                    ></div>
 
-                        </div>
-
-
-                        <div
-                            id="colorsList"
-                            class="categories-list"
-                        ></div>
-
-                    </section>
+                </div>
 
 
 
-                    <!-- TAMANHOS -->
+                <!-- =========================================
+                     TAMANHOS
+                     ========================================= -->
 
-                    <section class="categories-section">
+                <div class="section-block">
 
-                        <div class="module-header">
+                    <div class="subsection-heading">
 
-                            <div>
+                        <div>
 
-                                <span class="module-eyebrow">
-                                    VARIAÇÕES
-                                </span>
+                            <span class="section-eyebrow">
+                                VARIAÇÕES
+                            </span>
 
-                                <h1>
-                                    Tamanhos
-                                </h1>
-
-                            </div>
-
-
-                            <button
-                                type="button"
-                                id="newSizeButton"
-                                class="module-add-button secondary-add-button"
-                            >
-                                + Tamanho
-                            </button>
+                            <h3>
+                                Tamanhos
+                            </h3>
 
                         </div>
 
 
-                        <div
-                            id="sizesList"
-                            class="categories-list"
-                        ></div>
+                        <button
+                            id="newSizeButton"
+                            type="button"
+                            class="secondary-button"
+                        >
+                            + Tamanho
+                        </button>
 
-                    </section>
+                    </div>
+
+
+                    <div
+                        id="sizesList"
+                        class="cards-list"
+                    ></div>
 
                 </div>
 
@@ -618,112 +589,96 @@
 
             <section
                 id="stockScreen"
-                class="module-screen"
+                class="app-section"
                 hidden
             >
 
-                <div class="module-header">
+
+                <div class="section-heading">
 
                     <div>
 
-                        <span class="module-eyebrow">
+                        <span class="section-eyebrow">
                             CONTROLE
                         </span>
 
-                        <h1>
+                        <h2>
                             Estoque
-                        </h1>
+                        </h2>
 
                     </div>
 
                 </div>
 
 
-                <div class="module-content">
+                <div class="metrics-grid">
 
 
-                    <div class="metrics-grid">
+                    <article class="metric-card">
 
-                        <article class="metric-card">
+                        <span>
+                            Total
+                        </span>
 
-                            <span class="metric-label">
-                                Total
-                            </span>
+                        <strong id="stockTotal">
+                            0
+                        </strong>
 
-                            <strong
-                                id="stockTotal"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
+                        <small>
+                            Unidades
+                        </small>
 
-                            <small>
-                                Unidades
-                            </small>
-
-                        </article>
+                    </article>
 
 
-                        <article class="metric-card">
+                    <article class="metric-card">
 
-                            <span class="metric-label">
-                                Baixo
-                            </span>
+                        <span>
+                            Baixo
+                        </span>
 
-                            <strong
-                                id="stockLow"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
+                        <strong id="stockLow">
+                            0
+                        </strong>
 
-                            <small>
-                                Variações
-                            </small>
+                        <small>
+                            Variações
+                        </small>
 
-                        </article>
+                    </article>
 
 
-                        <article class="metric-card">
+                    <article class="metric-card">
 
-                            <span class="metric-label">
-                                Zerado
-                            </span>
+                        <span>
+                            Zerado
+                        </span>
 
-                            <strong
-                                id="stockZero"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
+                        <strong id="stockZero">
+                            0
+                        </strong>
 
-                            <small>
-                                Variações
-                            </small>
+                        <small>
+                            Variações
+                        </small>
 
-                        </article>
-
-                    </div>
-
-
-                    <div class="search-box">
-
-                        <input
-                            type="search"
-                            id="stockSearch"
-                            placeholder="Buscar no estoque..."
-                            autocomplete="off"
-                        >
-
-                    </div>
-
-
-                    <div
-                        id="stockList"
-                        class="stock-list"
-                    ></div>
+                    </article>
 
                 </div>
+
+
+                <input
+                    id="stockSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar no estoque..."
+                >
+
+
+                <div
+                    id="stockList"
+                    class="cards-list"
+                ></div>
 
             </section>
 
@@ -735,29 +690,30 @@
 
             <section
                 id="salesScreen"
-                class="module-screen"
+                class="app-section"
                 hidden
             >
 
-                <div class="module-header">
+
+                <div class="section-heading">
 
                     <div>
 
-                        <span class="module-eyebrow">
+                        <span class="section-eyebrow">
                             COMERCIAL
                         </span>
 
-                        <h1>
+                        <h2>
                             Vendas
-                        </h1>
+                        </h2>
 
                     </div>
 
 
                     <button
-                        type="button"
                         id="newSaleButton"
-                        class="module-add-button"
+                        type="button"
+                        class="primary-button small"
                     >
                         + Venda
                     </button>
@@ -765,71 +721,57 @@
                 </div>
 
 
-                <div class="module-content">
+                <div class="metrics-grid">
 
 
-                    <div class="metrics-grid">
+                    <article class="metric-card">
 
-                        <article class="metric-card">
+                        <span>
+                            Hoje
+                        </span>
 
-                            <span class="metric-label">
-                                Hoje
-                            </span>
+                        <strong id="salesToday">
+                            R$ 0,00
+                        </strong>
 
-                            <strong
-                                id="salesToday"
-                                class="metric-value"
-                            >
-                                R$ 0,00
-                            </strong>
+                        <small>
+                            Vendas
+                        </small>
 
-                            <small>
-                                Vendas
-                            </small>
-
-                        </article>
+                    </article>
 
 
-                        <article class="metric-card">
+                    <article class="metric-card">
 
-                            <span class="metric-label">
-                                Pedidos
-                            </span>
+                        <span>
+                            Pedidos
+                        </span>
 
-                            <strong
-                                id="salesOrdersToday"
-                                class="metric-value"
-                            >
-                                0
-                            </strong>
+                        <strong id="salesOrdersToday">
+                            0
+                        </strong>
 
-                            <small>
-                                Hoje
-                            </small>
+                        <small>
+                            Hoje
+                        </small>
 
-                        </article>
-
-                    </div>
-
-
-                    <div class="search-box">
-
-                        <input
-                            type="search"
-                            id="salesSearch"
-                            placeholder="Buscar venda..."
-                            autocomplete="off"
-                        >
-
-                    </div>
-
-
-                    <div
-                        id="salesList"
-                        class="sales-list"
-                    ></div>
+                    </article>
 
                 </div>
+
+
+                <input
+                    id="salesSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar venda..."
+                >
+
+
+                <div
+                    id="salesList"
+                    class="cards-list"
+                ></div>
 
             </section>
 
@@ -841,29 +783,30 @@
 
             <section
                 id="financeScreen"
-                class="module-screen"
+                class="app-section"
                 hidden
             >
 
-                <div class="module-header">
+
+                <div class="section-heading">
 
                     <div>
 
-                        <span class="module-eyebrow">
+                        <span class="section-eyebrow">
                             FINANCEIRO
                         </span>
 
-                        <h1>
+                        <h2>
                             Financeiro
-                        </h1>
+                        </h2>
 
                     </div>
 
 
                     <button
-                        type="button"
                         id="newTransactionButton"
-                        class="module-add-button"
+                        type="button"
+                        class="primary-button small"
                     >
                         + Lançamento
                     </button>
@@ -871,1475 +814,1354 @@
                 </div>
 
 
-                <div class="module-content">
+                <div class="metrics-grid">
 
 
-                    <div class="metrics-grid">
+                    <article class="metric-card">
 
-                        <article class="metric-card">
+                        <span>
+                            Receitas
+                        </span>
 
-                            <span class="metric-label">
-                                Receitas
-                            </span>
+                        <strong id="financeIncome">
+                            R$ 0,00
+                        </strong>
 
-                            <strong
-                                id="financeIncome"
-                                class="metric-value finance-income"
-                            >
-                                R$ 0,00
-                            </strong>
+                        <small>
+                            Período
+                        </small>
 
-                            <small>
-                                Período
-                            </small>
-
-                        </article>
+                    </article>
 
 
-                        <article class="metric-card">
+                    <article class="metric-card">
 
-                            <span class="metric-label">
-                                Despesas
-                            </span>
+                        <span>
+                            Despesas
+                        </span>
 
-                            <strong
-                                id="financeExpenses"
-                                class="metric-value finance-expense"
-                            >
-                                R$ 0,00
-                            </strong>
+                        <strong id="financeExpenses">
+                            R$ 0,00
+                        </strong>
 
-                            <small>
-                                Período
-                            </small>
+                        <small>
+                            Período
+                        </small>
 
-                        </article>
+                    </article>
 
 
-                        <article class="metric-card">
+                    <article class="metric-card">
 
-                            <span class="metric-label">
-                                Resultado
-                            </span>
+                        <span>
+                            Resultado
+                        </span>
 
-                            <strong
-                                id="financeBalance"
-                                class="metric-value finance-balance"
-                            >
-                                R$ 0,00
-                            </strong>
+                        <strong id="financeBalance">
+                            R$ 0,00
+                        </strong>
 
-                            <small>
-                                Período
-                            </small>
+                        <small>
+                            Período
+                        </small>
 
-                        </article>
+                    </article>
+
+                </div>
+
+
+                <input
+                    id="financeSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar lançamento..."
+                >
+
+
+                <div
+                    id="financeList"
+                    class="cards-list"
+                ></div>
+
+            </section>
+
+
+        </div>
+
+
+
+        <!-- =================================================
+             NAVEGAÇÃO INFERIOR
+             ================================================= -->
+
+        <nav class="bottom-navigation">
+
+
+            <button
+                type="button"
+                class="nav-item active"
+                data-section="home"
+            >
+
+                <span>
+                    I
+                </span>
+
+                <small>
+                    Início
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="products"
+            >
+
+                <span>
+                    P
+                </span>
+
+                <small>
+                    Produtos
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="stock"
+            >
+
+                <span>
+                    E
+                </span>
+
+                <small>
+                    Estoque
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="sales"
+            >
+
+                <span>
+                    V
+                </span>
+
+                <small>
+                    Vendas
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="finance"
+            >
+
+                <span>
+                    F
+                </span>
+
+                <small>
+                    Financeiro
+                </small>
+
+            </button>
+
+
+        </nav>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         MODAL — PRODUTO
+         ===================================================== -->
+
+    <div
+        id="productModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        CATÁLOGO
+                    </span>
+
+                    <h2>
+                        Novo produto
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="productModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="productForm">
+
+
+                <input
+                    id="productId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="productName">
+                        Nome do produto
+                    </label>
+
+                    <input
+                        id="productName"
+                        type="text"
+                        placeholder="Ex.: Legging Power"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productSku">
+                        SKU
+                    </label>
+
+                    <input
+                        id="productSku"
+                        type="text"
+                        placeholder="Ex.: LEG-001"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productCategory">
+                        Categoria
+                    </label>
+
+                    <select id="productCategory">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productDescription">
+                        Descrição
+                    </label>
+
+                    <textarea
+                        id="productDescription"
+                        rows="4"
+                        placeholder="Descrição do produto"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="productCostPrice">
+                            Preço de custo
+                        </label>
+
+                        <input
+                            id="productCostPrice"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0,00"
+                        >
 
                     </div>
 
 
-                    <div class="search-box">
+                    <div class="form-group">
+
+                        <label for="productSalePrice">
+                            Preço de venda
+                        </label>
 
                         <input
-                            type="search"
-                            id="financeSearch"
-                            placeholder="Buscar lançamento..."
-                            autocomplete="off"
+                            id="productSalePrice"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0,00"
+                            required
                         >
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productMinimumStock">
+                        Estoque mínimo
+                    </label>
+
+                    <input
+                        id="productMinimumStock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        inputmode="numeric"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <label
+                    class="checkbox-label"
+                >
+
+                    <input
+                        id="productActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Produto ativo
+                    </span>
+
+                </label>
+
+
+
+                <!-- =========================================
+                     CORES
+                     ========================================= -->
+
+                <div class="variation-section">
+
+                    <div class="variation-heading">
+
+                        <div>
+
+                            <h3>
+                                Cores disponíveis
+                            </h3>
+
+                            <p>
+                                Selecione as cores que esse produto possui.
+                            </p>
+
+                        </div>
 
                     </div>
 
 
                     <div
-                        id="financeList"
-                        class="finance-list"
+                        id="productColors"
+                        class="variation-options"
                     ></div>
 
                 </div>
 
-            </section>
 
 
+                <!-- =========================================
+                     TAMANHOS
+                     ========================================= -->
 
-            <!-- =============================================
-                 NAVEGAÇÃO INFERIOR
-                 ============================================= -->
+                <div class="variation-section">
 
-            <nav class="bottom-navigation">
-
-
-                <button
-                    type="button"
-                    class="nav-item active"
-                    data-section="home"
-                >
-
-                    <span class="nav-icon">
-                        I
-                    </span>
-
-                    <span>
-                        Início
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="nav-item"
-                    data-section="products"
-                >
-
-                    <span class="nav-icon">
-                        P
-                    </span>
-
-                    <span>
-                        Produtos
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="nav-item"
-                    data-section="stock"
-                >
-
-                    <span class="nav-icon">
-                        E
-                    </span>
-
-                    <span>
-                        Estoque
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="nav-item"
-                    data-section="sales"
-                >
-
-                    <span class="nav-icon">
-                        V
-                    </span>
-
-                    <span>
-                        Vendas
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="nav-item"
-                    data-section="finance"
-                >
-
-                    <span class="nav-icon">
-                        F
-                    </span>
-
-                    <span>
-                        Financeiro
-                    </span>
-
-                </button>
-
-
-            </nav>
-
-
-
-            <!-- =============================================
-                 MODAL — PRODUTO
-                 ============================================= -->
-
-            <div
-                id="productModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="productModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-
-                    <div class="modal-header">
+                    <div class="variation-heading">
 
                         <div>
-
-                            <span class="module-eyebrow">
-                                CATÁLOGO
-                            </span>
-
-                            <h2>
-                                Novo produto
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="productModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-
-                    <form
-                        id="productForm"
-                        class="modal-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            id="productId"
-                        >
-
-
-                        <!-- DADOS DO PRODUTO -->
-
-                        <div class="form-section">
-
-                            <div class="form-group">
-
-                                <label for="productName">
-                                    Nome do produto
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="productName"
-                                    placeholder="Ex.: Legging Power"
-                                    required
-                                >
-
-                            </div>
-
-
-                            <div class="form-row">
-
-                                <div class="form-group">
-
-                                    <label for="productSku">
-                                        SKU
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="productSku"
-                                        placeholder="Ex.: LEG-001"
-                                    >
-
-                                </div>
-
-
-                                <div class="form-group">
-
-                                    <label for="productCategory">
-                                        Categoria
-                                    </label>
-
-                                    <select id="productCategory">
-
-                                        <option value="">
-                                            Selecione
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="productDescription">
-                                    Descrição
-                                </label>
-
-                                <textarea
-                                    id="productDescription"
-                                    placeholder="Descrição do produto"
-                                ></textarea>
-
-                            </div>
-
-
-                            <div class="form-row">
-
-                                <div class="form-group">
-
-                                    <label for="productCostPrice">
-                                        Preço de custo
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        id="productCostPrice"
-                                        min="0"
-                                        step="0.01"
-                                        inputmode="decimal"
-                                        placeholder="0,00"
-                                    >
-
-                                </div>
-
-
-                                <div class="form-group">
-
-                                    <label for="productSalePrice">
-                                        Preço de venda
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        id="productSalePrice"
-                                        min="0"
-                                        step="0.01"
-                                        inputmode="decimal"
-                                        placeholder="0,00"
-                                        required
-                                    >
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="productMinimumStock">
-                                    Estoque mínimo
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="productMinimumStock"
-                                    min="0"
-                                    step="1"
-                                    inputmode="numeric"
-                                    value="0"
-                                >
-
-                            </div>
-
-
-                            <label class="checkbox-field">
-
-                                <input
-                                    type="checkbox"
-                                    id="productActive"
-                                    checked
-                                >
-
-                                <span>
-                                    Produto ativo
-                                </span>
-
-                            </label>
-
-                        </div>
-
-
-
-                        <!-- =================================
-                             CORES
-                             ================================= -->
-
-                        <div class="form-section">
-
-                            <div>
-
-                                <h3>
-                                    Cores disponíveis
-                                </h3>
-
-                                <p
-                                    class="text-muted"
-                                    style="margin-top: 4px; font-size: 12px;"
-                                >
-                                    Selecione as cores que esse produto possui.
-                                </p>
-
-                            </div>
-
-
-                            <div
-                                id="productColors"
-                                class="variation-options"
-                            >
-
-                                <div class="empty-state">
-
-                                    <strong>
-                                        Nenhuma cor cadastrada
-                                    </strong>
-
-                                    <p>
-                                        Cadastre cores primeiro em Produtos.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <!-- =================================
-                             TAMANHOS
-                             ================================= -->
-
-                        <div class="form-section">
-
-                            <div>
-
-                                <h3>
-                                    Tamanhos disponíveis
-                                </h3>
-
-                                <p
-                                    class="text-muted"
-                                    style="margin-top: 4px; font-size: 12px;"
-                                >
-                                    Selecione os tamanhos que esse produto possui.
-                                </p>
-
-                            </div>
-
-
-                            <div
-                                id="productSizes"
-                                class="variation-options"
-                            >
-
-                                <div class="empty-state">
-
-                                    <strong>
-                                        Nenhum tamanho cadastrado
-                                    </strong>
-
-                                    <p>
-                                        Cadastre tamanhos primeiro em Produtos.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <!-- =================================
-                             COMBINAÇÕES
-                             ================================= -->
-
-                        <div class="form-section">
-
-                            <div>
-
-                                <h3>
-                                    Variações geradas
-                                </h3>
-
-                                <p
-                                    class="text-muted"
-                                    style="margin-top: 4px; font-size: 12px;"
-                                >
-                                    As combinações de cor e tamanho serão criadas automaticamente.
-                                </p>
-
-                            </div>
-
-
-                            <div
-                                id="productVariantsPreview"
-                                class="variation-preview"
-                            >
-
-                                <div class="empty-state">
-
-                                    <strong>
-                                        Nenhuma variação selecionada
-                                    </strong>
-
-                                    <p>
-                                        Selecione pelo menos uma cor e um tamanho.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <div
-                            id="productFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="productModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Salvar produto
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 MODAL — CATEGORIA
-                 ============================================= -->
-
-            <div
-                id="categoryModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="categoryModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-                    <div class="modal-header">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                ORGANIZAÇÃO
-                            </span>
-
-                            <h2>
-                                Nova categoria
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="categoryModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <form
-                        id="categoryForm"
-                        class="modal-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            id="categoryId"
-                        >
-
-
-                        <div class="form-group">
-
-                            <label for="categoryName">
-                                Nome
-                            </label>
-
-                            <input
-                                type="text"
-                                id="categoryName"
-                                placeholder="Ex.: Leggings"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="categoryDescription">
-                                Descrição
-                            </label>
-
-                            <textarea
-                                id="categoryDescription"
-                                placeholder="Descrição da categoria"
-                            ></textarea>
-
-                        </div>
-
-
-                        <label class="checkbox-field">
-
-                            <input
-                                type="checkbox"
-                                id="categoryActive"
-                                checked
-                            >
-
-                            <span>
-                                Categoria ativa
-                            </span>
-
-                        </label>
-
-
-                        <div
-                            id="categoryFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="categoryModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Salvar categoria
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 MODAL — COR
-                 ============================================= -->
-
-            <div
-                id="colorModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="colorModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-                    <div class="modal-header">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                VARIAÇÕES
-                            </span>
-
-                            <h2>
-                                Nova cor
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="colorModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <form
-                        id="colorForm"
-                        class="modal-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            id="colorId"
-                        >
-
-
-                        <div class="form-group">
-
-                            <label for="colorName">
-                                Nome da cor
-                            </label>
-
-                            <input
-                                type="text"
-                                id="colorName"
-                                placeholder="Ex.: Rosa"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="colorHex">
-                                Código da cor
-                            </label>
-
-                            <div class="color-input-row">
-
-                                <input
-                                    type="color"
-                                    id="colorHex"
-                                    value="#E8A0B8"
-                                >
-
-                                <input
-                                    type="text"
-                                    id="colorHexText"
-                                    value="#E8A0B8"
-                                    placeholder="#000000"
-                                    maxlength="7"
-                                >
-
-                            </div>
-
-
-                            <div class="color-preview-wrapper">
-
-                                <span
-                                    id="colorPreview"
-                                    class="color-preview"
-                                    style="background: #E8A0B8;"
-                                ></span>
-
-                                <span>
-                                    Pré-visualização
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <label class="checkbox-field">
-
-                            <input
-                                type="checkbox"
-                                id="colorActive"
-                                checked
-                            >
-
-                            <span>
-                                Cor ativa
-                            </span>
-
-                        </label>
-
-
-                        <div
-                            id="colorFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="colorModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Salvar cor
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 MODAL — TAMANHO
-                 ============================================= -->
-
-            <div
-                id="sizeModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="sizeModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-                    <div class="modal-header">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                VARIAÇÕES
-                            </span>
-
-                            <h2>
-                                Novo tamanho
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="sizeModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <form
-                        id="sizeForm"
-                        class="modal-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            id="sizeId"
-                        >
-
-
-                        <div class="form-group">
-
-                            <label for="sizeName">
-                                Tamanho
-                            </label>
-
-                            <input
-                                type="text"
-                                id="sizeName"
-                                placeholder="Ex.: M"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="sizeDisplayOrder">
-                                Ordem de exibição
-                            </label>
-
-                            <input
-                                type="number"
-                                id="sizeDisplayOrder"
-                                min="0"
-                                step="1"
-                                value="0"
-                            >
-
-                        </div>
-
-
-                        <label class="checkbox-field">
-
-                            <input
-                                type="checkbox"
-                                id="sizeActive"
-                                checked
-                            >
-
-                            <span>
-                                Tamanho ativo
-                            </span>
-
-                        </label>
-
-
-                        <div
-                            id="sizeFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="sizeModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Salvar tamanho
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 MODAL — VENDA
-                 ============================================= -->
-
-            <div
-                id="saleModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="saleModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-                    <div class="modal-header">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                COMERCIAL
-                            </span>
-
-                            <h2>
-                                Nova venda
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="saleModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <form
-                        id="saleForm"
-                        class="modal-form"
-                    >
-
-
-                        <div class="form-section">
 
                             <h3>
-                                Produtos
+                                Tamanhos disponíveis
                             </h3>
 
-
-                            <div
-                                id="saleItems"
-                                class="sale-items"
-                            ></div>
-
-
-                            <button
-                                type="button"
-                                id="addSaleItemButton"
-                                class="secondary-button"
-                            >
-                                + Adicionar produto
-                            </button>
+                            <p>
+                                Selecione os tamanhos que esse produto possui.
+                            </p>
 
                         </div>
-
-
-                        <div class="form-group">
-
-                            <label for="saleDiscount">
-                                Desconto
-                            </label>
-
-                            <input
-                                type="number"
-                                id="saleDiscount"
-                                min="0"
-                                step="0.01"
-                                inputmode="decimal"
-                                value="0"
-                                placeholder="0,00"
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="salePaymentMethod">
-                                Forma de pagamento
-                            </label>
-
-                            <select id="salePaymentMethod">
-
-                                <option value="">
-                                    Selecione
-                                </option>
-
-                                <option value="pix">
-                                    Pix
-                                </option>
-
-                                <option value="credit_card">
-                                    Cartão de crédito
-                                </option>
-
-                                <option value="debit_card">
-                                    Cartão de débito
-                                </option>
-
-                                <option value="cash">
-                                    Dinheiro
-                                </option>
-
-                                <option value="transfer">
-                                    Transferência
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="saleNotes">
-                                Observações
-                            </label>
-
-                            <textarea
-                                id="saleNotes"
-                                placeholder="Observações da venda"
-                            ></textarea>
-
-                        </div>
-
-
-                        <div class="sale-total">
-
-                            <span>
-                                Total
-                            </span>
-
-                            <strong id="saleTotal">
-                                R$ 0,00
-                            </strong>
-
-                        </div>
-
-
-                        <div
-                            id="saleFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="saleModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Registrar venda
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 MODAL — FINANCEIRO
-                 ============================================= -->
-
-            <div
-                id="transactionModal"
-                class="modal"
-                hidden
-            >
-
-                <div
-                    class="modal-overlay"
-                    data-close-modal="transactionModal"
-                ></div>
-
-
-                <section class="modal-card">
-
-                    <div class="modal-header">
-
-                        <div>
-
-                            <span class="module-eyebrow">
-                                FINANCEIRO
-                            </span>
-
-                            <h2>
-                                Novo lançamento
-                            </h2>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="modal-close"
-                            data-close-modal="transactionModal"
-                            aria-label="Fechar"
-                        >
-                            ×
-                        </button>
 
                     </div>
 
 
-                    <form
-                        id="transactionForm"
-                        class="modal-form"
+                    <div
+                        id="productSizes"
+                        class="variation-options"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     VARIAÇÕES GERADAS
+                     ========================================= -->
+
+                <div class="variation-section">
+
+                    <div class="variation-heading">
+
+                        <div>
+
+                            <h3>
+                                Variações geradas
+                            </h3>
+
+                            <p>
+                                As combinações de cor e tamanho serão criadas automaticamente.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="productVariantsPreview"
+                        class="variation-preview"
+                    ></div>
+
+                </div>
+
+
+
+                <div
+                    id="productFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="productModal"
                     >
+                        Cancelar
+                    </button>
 
 
-                        <div class="form-group">
-
-                            <label for="transactionType">
-                                Tipo
-                            </label>
-
-                            <select
-                                id="transactionType"
-                                required
-                            >
-
-                                <option value="">
-                                    Selecione
-                                </option>
-
-                                <option value="income">
-                                    Receita
-                                </option>
-
-                                <option value="expense">
-                                    Despesa
-                                </option>
-
-                            </select>
-
-                        </div>
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar produto
+                    </button>
 
 
-                        <div class="form-group">
-
-                            <label for="transactionCategory">
-                                Categoria
-                            </label>
-
-                            <input
-                                type="text"
-                                id="transactionCategory"
-                                placeholder="Ex.: Fornecedores"
-                            >
-
-                        </div>
+                </div>
 
 
-                        <div class="form-group">
+            </form>
 
-                            <label for="transactionDescription">
-                                Descrição
-                            </label>
-
-                            <input
-                                type="text"
-                                id="transactionDescription"
-                                placeholder="Descrição do lançamento"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="transactionAmount">
-                                Valor
-                            </label>
-
-                            <input
-                                type="number"
-                                id="transactionAmount"
-                                min="0"
-                                step="0.01"
-                                inputmode="decimal"
-                                placeholder="0,00"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="transactionDate">
-                                Data
-                            </label>
-
-                            <input
-                                type="date"
-                                id="transactionDate"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="transactionPaymentMethod">
-                                Forma de pagamento
-                            </label>
-
-                            <select id="transactionPaymentMethod">
-
-                                <option value="">
-                                    Selecione
-                                </option>
-
-                                <option value="pix">
-                                    Pix
-                                </option>
-
-                                <option value="credit_card">
-                                    Cartão de crédito
-                                </option>
-
-                                <option value="debit_card">
-                                    Cartão de débito
-                                </option>
-
-                                <option value="cash">
-                                    Dinheiro
-                                </option>
-
-                                <option value="transfer">
-                                    Transferência
-                                </option>
-
-                                <option value="bank_slip">
-                                    Boleto
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="transactionNotes">
-                                Observações
-                            </label>
-
-                            <textarea
-                                id="transactionNotes"
-                                placeholder="Observações"
-                            ></textarea>
-
-                        </div>
-
-
-                        <div
-                            id="transactionFormMessage"
-                            class="form-message"
-                        ></div>
-
-
-                        <div class="modal-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-button modal-close"
-                                data-close-modal="transactionModal"
-                            >
-                                Cancelar
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                class="primary-button"
-                            >
-                                Salvar lançamento
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
-
-            </div>
-
-
-        </main>
+        </div>
 
     </div>
 
 
 
     <!-- =====================================================
-         SUPABASE
+         MODAL — CATEGORIA
          ===================================================== -->
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    ></script>
+    <div
+        id="categoryModal"
+        class="modal"
+        hidden
+    >
 
-    <script src="js/supabase.js"></script>
+        <div class="modal-content">
 
-    <script src="js/app.js"></script>
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        ORGANIZAÇÃO
+                    </span>
+
+                    <h2>
+                        Categoria
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="categoryModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="categoryForm">
+
+                <input
+                    id="categoryId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="categoryName">
+                        Nome
+                    </label>
+
+                    <input
+                        id="categoryName"
+                        type="text"
+                        placeholder="Ex.: Leggings"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="categoryDescription">
+                        Descrição
+                    </label>
+
+                    <textarea
+                        id="categoryDescription"
+                        rows="4"
+                        placeholder="Descrição da categoria"
+                    ></textarea>
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="categoryActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Categoria ativa
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="categoryFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="categoryModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
 
 
     <!-- =====================================================
-         SERVICE WORKER
+         MODAL — COR
          ===================================================== -->
 
-    <script>
+    <div
+        id="colorModal"
+        class="modal"
+        hidden
+    >
 
-        if ("serviceWorker" in navigator) {
+        <div class="modal-content">
 
-            window.addEventListener(
-                "load",
-                () => {
+            <div class="modal-header">
 
-                    navigator.serviceWorker
-                        .register("./service-worker.js")
-                        .catch(
-                            error => {
-                                console.error(
-                                    "Erro ao registrar Service Worker:",
-                                    error
-                                );
-                            }
-                        );
+                <div>
 
-                }
+                    <span class="section-eyebrow">
+                        VARIAÇÕES
+                    </span>
+
+                    <h2>
+                        Cor
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="colorModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="colorForm">
+
+                <input
+                    id="colorId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="colorName">
+                        Nome da cor
+                    </label>
+
+                    <input
+                        id="colorName"
+                        type="text"
+                        placeholder="Ex.: Rosa"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Cor
+                    </label>
+
+
+                    <div class="color-input-row">
+
+                        <input
+                            id="colorHex"
+                            type="color"
+                            value="#E8A0B8"
+                        >
+
+
+                        <input
+                            id="colorHexText"
+                            type="text"
+                            value="#E8A0B8"
+                            maxlength="7"
+                            placeholder="#E8A0B8"
+                        >
+
+                    </div>
+
+
+                    <div class="color-preview-wrapper">
+
+                        <span>
+                            Pré-visualização
+                        </span>
+
+                        <span
+                            id="colorPreview"
+                            class="color-preview"
+                            style="background:#E8A0B8;"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="colorActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Cor ativa
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="colorFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="colorModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — TAMANHO
+         ===================================================== -->
+
+    <div
+        id="sizeModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        VARIAÇÕES
+                    </span>
+
+                    <h2>
+                        Tamanho
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="sizeModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="sizeForm">
+
+                <input
+                    id="sizeId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="sizeName">
+                        Tamanho
+                    </label>
+
+                    <input
+                        id="sizeName"
+                        type="text"
+                        placeholder="Ex.: M"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="sizeDisplayOrder">
+                        Ordem de exibição
+                    </label>
+
+                    <input
+                        id="sizeDisplayOrder"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="sizeActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Tamanho ativo
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="sizeFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="sizeModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — VENDA
+         ===================================================== -->
+
+    <div
+        id="saleModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        COMERCIAL
+                    </span>
+
+                    <h2>
+                        Nova venda
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="saleModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="saleForm">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Produtos
+                    </label>
+
+                    <div
+                        id="saleItems"
+                        class="sale-items"
+                    ></div>
+
+                </div>
+
+
+                <button
+                    id="addSaleItemButton"
+                    type="button"
+                    class="secondary-button"
+                >
+                    + Adicionar produto
+                </button>
+
+
+                <div class="form-group">
+
+                    <label for="saleDiscount">
+                        Desconto
+                    </label>
+
+                    <input
+                        id="saleDiscount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="salePaymentMethod">
+                        Forma de pagamento
+                    </label>
+
+                    <select id="salePaymentMethod">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="Dinheiro">
+                            Dinheiro
+                        </option>
+
+                        <option value="Pix">
+                            Pix
+                        </option>
+
+                        <option value="Cartão de débito">
+                            Cartão de débito
+                        </option>
+
+                        <option value="Cartão de crédito">
+                            Cartão de crédito
+                        </option>
+
+                        <option value="Transferência">
+                            Transferência
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="saleNotes">
+                        Observações
+                    </label>
+
+                    <textarea
+                        id="saleNotes"
+                        rows="3"
+                        placeholder="Observações da venda"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="sale-total-box">
+
+                    <span>
+                        Total
+                    </span>
+
+                    <strong id="saleTotal">
+                        R$ 0,00
+                    </strong>
+
+                </div>
+
+
+                <div
+                    id="saleFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="saleModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Registrar venda
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — FINANCEIRO
+         ===================================================== -->
+
+    <div
+        id="transactionModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        FINANCEIRO
+                    </span>
+
+                    <h2>
+                        Lançamento
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="transactionModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="transactionForm">
+
+
+                <div class="form-group">
+
+                    <label for="transactionType">
+                        Tipo
+                    </label>
+
+                    <select id="transactionType" required>
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="income">
+                            Receita
+                        </option>
+
+                        <option value="expense">
+                            Despesa
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionCategory">
+                        Categoria
+                    </label>
+
+                    <input
+                        id="transactionCategory"
+                        type="text"
+                        placeholder="Ex.: Fornecedores"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionDescription">
+                        Descrição
+                    </label>
+
+                    <input
+                        id="transactionDescription"
+                        type="text"
+                        placeholder="Ex.: Compra de mercadorias"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionAmount">
+                        Valor
+                    </label>
+
+                    <input
+                        id="transactionAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0,00"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionDate">
+                        Data
+                    </label>
+
+                    <input
+                        id="transactionDate"
+                        type="date"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionPaymentMethod">
+                        Forma de pagamento
+                    </label>
+
+                    <select id="transactionPaymentMethod">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="Dinheiro">
+                            Dinheiro
+                        </option>
+
+                        <option value="Pix">
+                            Pix
+                        </option>
+
+                        <option value="Cartão de débito">
+                            Cartão de débito
+                        </option>
+
+                        <option value="Cartão de crédito">
+                            Cartão de crédito
+                        </option>
+
+                        <option value="Transferência">
+                            Transferência
+                        </option>
+
+                        <option value="Boleto">
+                            Boleto
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionNotes">
+                        Observações
+                    </label>
+
+                    <textarea
+                        id="transactionNotes"
+                        rows="3"
+                        placeholder="Observações"
+                    ></textarea>
+
+                </div>
+
+
+                <div
+                    id="transactionFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="transactionModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar lançamento
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     SUPABASE
+     ===================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/app.js"></script>
+
+
+<!-- =====================================================
+     SERVICE WORKER
+     ===================================================== -->
+
+<script>
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            navigator.serviceWorker.register(
+                "service-worker.js"
+            ).catch(
+                error =>
+                    console.error(
+                        "Erro no Service Worker:",
+                        error
+                    )
             );
 
         }
+    );
 
-    </script>
+}
+
+</script>
+
 
 </body>
 
