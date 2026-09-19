@@ -1,6 +1,7 @@
 // =========================================================
 // MABIJUFIT — APP.JS
 // Versão consolidada
+// Produtos + Fotos + Estoque + Vendas + Financeiro
 // =========================================================
 
 "use strict";
@@ -21,15 +22,16 @@ let variantsCache = [];
 let salesCache = [];
 let financeCache = [];
 
-// Variações que estão sendo cadastradas no produto atual.
+let productImagesCache = {};
 let productVariationsDraft = [];
-
-// Fotos que estão sendo cadastradas no produto atual.
 let productPhotosDraft = [];
-
-// Object URLs utilizados somente para pré-visualização.
-// Devem ser revogados quando deixarem de ser necessários.
 let productPhotoPreviewUrls = [];
+
+let editingProductId = null;
+
+let saleDraft = [];
+let saleProductPickerOpen = false;
+let saleVariantSelectionProductId = null;
 
 
 // =========================================================
@@ -56,6 +58,7 @@ function $(id) {
 
 
 function escapeHtml(value) {
+
     if (value === null || value === undefined) {
         return "";
     }
@@ -70,7 +73,9 @@ function escapeHtml(value) {
 
 
 function formatCurrency(value) {
-    const number = Number(value || 0);
+
+    const number =
+        Number(value || 0);
 
     return number.toLocaleString("pt-BR", {
         style: "currency",
@@ -80,33 +85,54 @@ function formatCurrency(value) {
 
 
 function todayISO() {
-    const date = new Date();
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const date =
+        new Date();
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(date.getMonth() + 1).padStart(2, "0");
+
+    const day =
+        String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 }
 
 
-function showMessage(elementId, message, type = "error") {
-    const element = $(elementId);
+function showMessage(
+    elementId,
+    message,
+    type = "error"
+) {
+
+    const element =
+        $(elementId);
 
     if (!element) {
         return;
     }
 
-    element.textContent = message || "";
-    element.className = `form-message ${type}`;
+    element.textContent =
+        message || "";
+
+    element.className =
+        `form-message ${type}`;
 
     if (!message) {
-        element.className = "form-message";
+        element.className =
+            "form-message";
     }
 }
 
 
-function setLoading(button, loading, text = "Salvando...") {
+function setLoading(
+    button,
+    loading,
+    text = "Salvando..."
+) {
 
     if (!button) {
         return;
@@ -118,7 +144,9 @@ function setLoading(button, loading, text = "Salvando...") {
             button.textContent;
 
         button.disabled = true;
-        button.textContent = text;
+
+        button.textContent =
+            text;
 
     } else {
 
@@ -134,7 +162,9 @@ function setLoading(button, loading, text = "Salvando...") {
 function getAuthErrorMessage(error) {
 
     const message =
-        String(error?.message || "").toLowerCase();
+        String(
+            error?.message || ""
+        ).toLowerCase();
 
     if (
         message.includes("invalid login credentials") ||
@@ -157,6 +187,52 @@ function getAuthErrorMessage(error) {
 
     return error?.message ||
         "Não foi possível entrar. Tente novamente.";
+}
+
+
+function getProductMainImage(productId) {
+
+    const images =
+        productImagesCache[productId] || [];
+
+    const primary =
+        images.find(
+            image => image.is_primary === true
+        );
+
+    return (
+        primary?.public_url ||
+        images[0]?.public_url ||
+        ""
+    );
+}
+
+
+function productImageHtml(
+    productId,
+    className = "product-thumbnail"
+) {
+
+    const image =
+        getProductMainImage(productId);
+
+    if (image) {
+
+        return `
+            <img
+                class="${className}"
+                src="${escapeHtml(image)}"
+                alt="Foto do produto"
+                loading="lazy"
+            >
+        `;
+    }
+
+    return `
+        <div class="${className} product-image-placeholder">
+            <span>📷</span>
+        </div>
+    `;
 }
 
 
@@ -215,9 +291,7 @@ function renderProductPhotoPreview() {
         return;
     }
 
-
     revokeProductPhotoPreviewUrls();
-
 
     if (!productPhotosDraft.length) {
 
@@ -226,76 +300,68 @@ function renderProductPhotoPreview() {
         return;
     }
 
-
     const fragment =
         document.createDocumentFragment();
 
+    productPhotosDraft.forEach(
+        (file, index) => {
 
-    productPhotosDraft.forEach((file, index) => {
+            const item =
+                document.createElement("div");
 
-        const item =
-            document.createElement("div");
+            item.className =
+                "product-photo-preview-item";
 
-        item.className =
-            "product-photo-preview-item";
+            const image =
+                document.createElement("img");
 
+            image.alt =
+                `Pré-visualização da foto ${index + 1}`;
 
-        const image =
-            document.createElement("img");
+            image.loading =
+                "lazy";
 
-        image.alt =
-            `Pré-visualização da foto ${index + 1}`;
+            const url =
+                URL.createObjectURL(file);
 
-        image.loading =
-            "lazy";
+            productPhotoPreviewUrls.push(url);
 
+            image.src =
+                url;
 
-        const url =
-            URL.createObjectURL(file);
+            const info =
+                document.createElement("div");
 
-        productPhotoPreviewUrls.push(url);
+            info.className =
+                "product-photo-preview-info";
 
-        image.src = url;
+            const name =
+                document.createElement("span");
 
+            name.className =
+                "product-photo-preview-name";
 
-        const info =
-            document.createElement("div");
+            name.textContent =
+                file.name ||
+                `Foto ${index + 1}`;
 
-        info.className =
-            "product-photo-preview-info";
+            const order =
+                document.createElement("small");
 
+            order.textContent =
+                index === 0
+                    ? "Foto principal"
+                    : `Foto ${index + 1}`;
 
-        const name =
-            document.createElement("span");
+            info.appendChild(name);
+            info.appendChild(order);
 
-        name.className =
-            "product-photo-preview-name";
+            item.appendChild(image);
+            item.appendChild(info);
 
-        name.textContent =
-            file.name || `Foto ${index + 1}`;
-
-
-        const order =
-            document.createElement("small");
-
-        order.textContent =
-            index === 0
-                ? "Foto principal"
-                : `Foto ${index + 1}`;
-
-
-        info.appendChild(name);
-        info.appendChild(order);
-
-
-        item.appendChild(image);
-        item.appendChild(info);
-
-
-        fragment.appendChild(item);
-
-    });
-
+            fragment.appendChild(item);
+        }
+    );
 
     container.innerHTML = "";
 
@@ -310,14 +376,12 @@ function handleProductPhotoSelection(event) {
             event.target.files || []
         );
 
-
     if (!files.length) {
 
         clearProductPhotosDraft();
 
         return;
     }
-
 
     const invalidFiles =
         files.filter(
@@ -326,7 +390,6 @@ function handleProductPhotoSelection(event) {
                 !file.type.startsWith("image/")
         );
 
-
     const validFiles =
         files.filter(
             file =>
@@ -334,13 +397,10 @@ function handleProductPhotoSelection(event) {
                 file.type.startsWith("image/")
         );
 
-
     productPhotosDraft =
         validFiles;
 
-
     renderProductPhotoPreview();
-
 
     if (invalidFiles.length) {
 
@@ -351,7 +411,6 @@ function handleProductPhotoSelection(event) {
 
         return;
     }
-
 
     showMessage(
         "productFormMessage",
@@ -365,12 +424,6 @@ function handleProductPhotoSelection(event) {
 
 async function loadImageForOptimization(file) {
 
-    /*
-     * Primeiro tenta utilizar createImageBitmap quando disponível.
-     *
-     * imageOrientation: "from-image" ajuda a respeitar a orientação
-     * registrada pelo aparelho quando o navegador oferece suporte.
-     */
     if (
         typeof createImageBitmap ===
         "function"
@@ -382,7 +435,8 @@ async function loadImageForOptimization(file) {
                 await createImageBitmap(
                     file,
                     {
-                        imageOrientation: "from-image"
+                        imageOrientation:
+                            "from-image"
                     }
                 );
 
@@ -395,7 +449,7 @@ async function loadImageForOptimization(file) {
                     try {
                         bitmap.close();
                     } catch (error) {
-                        // Não interromper o processamento.
+                        // Não interromper.
                     }
 
                 }
@@ -410,16 +464,8 @@ async function loadImageForOptimization(file) {
         }
     }
 
-
-    /*
-     * Fallback utilizando HTMLImageElement.
-     *
-     * Se o navegador não conseguir decodificar o formato,
-     * especialmente alguns HEIC/HEIF, esta etapa poderá falhar.
-     */
     const objectUrl =
         URL.createObjectURL(file);
-
 
     try {
 
@@ -430,10 +476,8 @@ async function loadImageForOptimization(file) {
                     const img =
                         new Image();
 
-
                     img.onload =
                         () => resolve(img);
-
 
                     img.onerror =
                         () => reject(
@@ -442,12 +486,10 @@ async function loadImageForOptimization(file) {
                             )
                         );
 
-
                     img.src =
                         objectUrl;
                 }
             );
-
 
         return {
             source: image,
@@ -463,7 +505,10 @@ async function loadImageForOptimization(file) {
 }
 
 
-function canvasToBlob(canvas, quality) {
+function canvasToBlob(
+    canvas,
+    quality
+) {
 
     return new Promise(
         (resolve, reject) => {
@@ -483,12 +528,10 @@ function canvasToBlob(canvas, quality) {
                     }
 
                     resolve(blob);
-
                 },
                 "image/jpeg",
                 quality
             );
-
         }
     );
 }
@@ -497,9 +540,10 @@ function canvasToBlob(canvas, quality) {
 async function optimizeProductImage(file) {
 
     if (!file) {
-        throw new Error("Arquivo de imagem inválido.");
+        throw new Error(
+            "Arquivo de imagem inválido."
+        );
     }
-
 
     if (
         !file.type ||
@@ -510,10 +554,8 @@ async function optimizeProductImage(file) {
         );
     }
 
-
     const image =
         await loadImageForOptimization(file);
-
 
     try {
 
@@ -523,57 +565,15 @@ async function optimizeProductImage(file) {
         const originalHeight =
             Number(image.height || 0);
 
-
         if (
             !originalWidth ||
             !originalHeight
         ) {
-
             throw new Error(
                 "Não foi possível identificar as dimensões da imagem."
             );
         }
 
-
-        /*
-         * Primeira dimensão alvo.
-         * A maior dimensão fica em aproximadamente 1600 px.
-         */
-        const initialScale =
-            Math.min(
-                1,
-                PRODUCT_IMAGE_MAX_DIMENSION /
-                Math.max(
-                    originalWidth,
-                    originalHeight
-                )
-            );
-
-
-        let dimensions = {
-            width: Math.max(
-                1,
-                Math.round(
-                    originalWidth *
-                    initialScale
-                )
-            ),
-            height: Math.max(
-                1,
-                Math.round(
-                    originalHeight *
-                    initialScale
-                )
-            )
-        };
-
-
-        /*
-         * Tentativas progressivas.
-         *
-         * Primeiro reduz somente a qualidade.
-         * Caso ainda não seja suficiente, reduz também a dimensão.
-         */
         const qualityAttempts = [
             PRODUCT_IMAGE_INITIAL_QUALITY,
             0.76,
@@ -587,7 +587,6 @@ async function optimizeProductImage(file) {
             0.28
         ];
 
-
         const dimensionAttempts = [
             1600,
             1400,
@@ -597,10 +596,7 @@ async function optimizeProductImage(file) {
             800
         ];
 
-
         let lastBlob = null;
-        let lastDimensions = dimensions;
-
 
         for (
             let dimensionIndex = 0;
@@ -609,8 +605,9 @@ async function optimizeProductImage(file) {
         ) {
 
             const maxDimension =
-                dimensionAttempts[dimensionIndex];
-
+                dimensionAttempts[
+                    dimensionIndex
+                ];
 
             const scale =
                 Math.min(
@@ -622,8 +619,7 @@ async function optimizeProductImage(file) {
                     )
                 );
 
-
-            dimensions = {
+            const dimensions = {
                 width: Math.max(
                     1,
                     Math.round(
@@ -640,17 +636,16 @@ async function optimizeProductImage(file) {
                 )
             };
 
-
             const canvas =
-                document.createElement("canvas");
-
+                document.createElement(
+                    "canvas"
+                );
 
             canvas.width =
                 dimensions.width;
 
             canvas.height =
                 dimensions.height;
-
 
             const context =
                 canvas.getContext(
@@ -660,7 +655,6 @@ async function optimizeProductImage(file) {
                     }
                 );
 
-
             if (!context) {
 
                 throw new Error(
@@ -668,16 +662,11 @@ async function optimizeProductImage(file) {
                 );
             }
 
-
-            /*
-             * Configurações simples para evitar artefatos desnecessários.
-             */
             context.imageSmoothingEnabled =
                 true;
 
             context.imageSmoothingQuality =
                 "high";
-
 
             context.drawImage(
                 image.source,
@@ -687,7 +676,6 @@ async function optimizeProductImage(file) {
                 dimensions.height
             );
 
-
             for (
                 let qualityIndex = 0;
                 qualityIndex < qualityAttempts.length;
@@ -695,8 +683,9 @@ async function optimizeProductImage(file) {
             ) {
 
                 const quality =
-                    qualityAttempts[qualityIndex];
-
+                    qualityAttempts[
+                        qualityIndex
+                    ];
 
                 const blob =
                     await canvasToBlob(
@@ -704,13 +693,8 @@ async function optimizeProductImage(file) {
                         quality
                     );
 
-
                 lastBlob =
                     blob;
-
-                lastDimensions =
-                    dimensions;
-
 
                 if (
                     blob.size <=
@@ -723,7 +707,8 @@ async function optimizeProductImage(file) {
                             file.name
                         ),
                         {
-                            type: "image/jpeg",
+                            type:
+                                "image/jpeg",
                             lastModified:
                                 Date.now()
                         }
@@ -732,11 +717,6 @@ async function optimizeProductImage(file) {
             }
         }
 
-
-        /*
-         * Se chegou aqui, todas as tentativas razoáveis
-         * ficaram acima do limite.
-         */
         if (
             lastBlob &&
             lastBlob.size <=
@@ -749,13 +729,13 @@ async function optimizeProductImage(file) {
                     file.name
                 ),
                 {
-                    type: "image/jpeg",
+                    type:
+                        "image/jpeg",
                     lastModified:
                         Date.now()
                 }
             );
         }
-
 
         throw new Error(
             "Não foi possível reduzir esta imagem para menos de 8 MB."
@@ -770,11 +750,14 @@ async function optimizeProductImage(file) {
 }
 
 
-function createOptimizedImageName(originalName) {
+function createOptimizedImageName(
+    originalName
+) {
 
     const baseName =
         String(
-            originalName || "produto"
+            originalName ||
+            "produto"
         )
         .replace(
             /\.[^/.]+$/,
@@ -789,11 +772,9 @@ function createOptimizedImageName(originalName) {
             ""
         );
 
-
     const safeBaseName =
         baseName ||
         "produto";
-
 
     return `${safeBaseName}-${Date.now()}-${Math.random()
         .toString(36)
@@ -813,7 +794,6 @@ function createProductImageStoragePath(
             `foto-${index + 1}`
         );
 
-
     return [
         currentUser.id,
         "products",
@@ -823,8 +803,77 @@ function createProductImageStoragePath(
 }
 
 
+async function loadProductImages(
+    productIds
+) {
+
+    productImagesCache = {};
+
+    if (
+        !currentUser ||
+        !productIds.length
+    ) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("product_images")
+        .select(`
+            id,
+            product_id,
+            storage_path,
+            public_url,
+            is_primary,
+            display_order
+        `)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
+        .in(
+            "product_id",
+            productIds
+        )
+        .order(
+            "display_order"
+        );
+
+    if (error) {
+
+        console.error(
+            "Erro ao carregar fotos dos produtos:",
+            error
+        );
+
+        return;
+    }
+
+    (data || []).forEach(image => {
+
+        if (
+            !productImagesCache[
+                image.product_id
+            ]
+        ) {
+
+            productImagesCache[
+                image.product_id
+            ] = [];
+        }
+
+        productImagesCache[
+            image.product_id
+        ].push(image);
+    });
+}
+
+
 async function uploadProductImages(
-    productId
+    productId,
+    options = {}
 ) {
 
     if (
@@ -837,7 +886,6 @@ async function uploadProductImages(
         };
     }
 
-
     if (!productPhotosDraft.length) {
 
         return {
@@ -846,10 +894,29 @@ async function uploadProductImages(
         };
     }
 
-
     const uploaded = [];
     const failed = [];
 
+    const existingImages =
+        options.existingImages || [];
+
+    const hasExistingPrimary =
+        existingImages.some(
+            image =>
+                image.is_primary === true
+        );
+
+    const existingMaxOrder =
+        existingImages.reduce(
+            (max, image) =>
+                Math.max(
+                    max,
+                    Number(
+                        image.display_order || 0
+                    )
+                ),
+            -1
+        );
 
     for (
         let index = 0;
@@ -860,7 +927,6 @@ async function uploadProductImages(
         const originalFile =
             productPhotosDraft[index];
 
-
         try {
 
             showMessage(
@@ -869,12 +935,10 @@ async function uploadProductImages(
                 "success"
             );
 
-
             const optimizedFile =
                 await optimizeProductImage(
                     originalFile
                 );
-
 
             if (
                 optimizedFile.size >
@@ -886,7 +950,6 @@ async function uploadProductImages(
                 );
             }
 
-
             const path =
                 createProductImageStoragePath(
                     productId,
@@ -894,13 +957,11 @@ async function uploadProductImages(
                     index
                 );
 
-
             showMessage(
                 "productFormMessage",
                 `Enviando foto ${index + 1} de ${productPhotosDraft.length}...`,
                 "success"
             );
-
 
             const {
                 error: uploadError
@@ -912,103 +973,111 @@ async function uploadProductImages(
                     optimizedFile,
                     {
                         upsert: false,
-                        contentType: "image/jpeg",
-                        cacheControl: "31536000"
+                        contentType:
+                            "image/jpeg",
+                        cacheControl:
+                            "31536000"
                     }
                 );
-
 
             if (uploadError) {
                 throw uploadError;
             }
 
-
             const {
                 data: publicUrlData
-            } = supabaseClient
-                .storage
-                .from("product-images")
-                .getPublicUrl(path);
-
+            } =
+                supabaseClient
+                    .storage
+                    .from(
+                        "product-images"
+                    )
+                    .getPublicUrl(path);
 
             const publicUrl =
                 publicUrlData?.publicUrl ||
                 "";
 
-
             if (!publicUrl) {
 
-                /*
-                 * O upload já aconteceu, portanto tenta remover
-                 * o arquivo caso a URL pública não esteja disponível.
-                 */
                 try {
 
                     await supabaseClient
                         .storage
-                        .from("product-images")
+                        .from(
+                            "product-images"
+                        )
                         .remove([path]);
 
                 } catch (cleanupError) {
 
                     console.error(
-                        "Erro ao limpar arquivo após falha de URL pública:",
+                        "Erro ao limpar arquivo:",
                         cleanupError
                     );
                 }
-
 
                 throw new Error(
                     "A imagem foi enviada, mas não foi possível obter sua URL pública."
                 );
             }
 
+            const isPrimary =
+                !hasExistingPrimary &&
+                index === 0;
+
+            const displayOrder =
+                existingMaxOrder +
+                index +
+                1;
 
             const {
                 error: imageInsertError
-            } = await supabaseClient
-                .from("product_images")
-                .insert({
-                    user_id: currentUser.id,
-                    product_id: productId,
-                    storage_path: path,
-                    public_url: publicUrl,
-                    is_primary: index === 0,
-                    display_order: index
-                });
-
+            } =
+                await supabaseClient
+                    .from("product_images")
+                    .insert({
+                        user_id:
+                            currentUser.id,
+                        product_id:
+                            productId,
+                        storage_path:
+                            path,
+                        public_url:
+                            publicUrl,
+                        is_primary:
+                            isPrimary,
+                        display_order:
+                            displayOrder
+                    });
 
             if (imageInsertError) {
 
-                /*
-                 * O arquivo foi enviado, mas o registro no banco falhou.
-                 * Tenta remover o arquivo para evitar lixo no Storage.
-                 */
                 try {
 
                     await supabaseClient
                         .storage
-                        .from("product-images")
+                        .from(
+                            "product-images"
+                        )
                         .remove([path]);
 
                 } catch (cleanupError) {
 
                     console.error(
-                        "Erro ao limpar imagem após falha no registro:",
+                        "Erro ao limpar imagem:",
                         cleanupError
                     );
                 }
 
-
                 throw imageInsertError;
             }
-
 
             uploaded.push({
                 path,
                 publicUrl,
-                displayOrder: index,
-                isPrimary: index === 0
+                displayOrder,
+                isPrimary
             });
 
         } catch (error) {
@@ -1018,7 +1087,6 @@ async function uploadProductImages(
                 error
             );
 
-
             failed.push({
                 index,
                 fileName:
@@ -1026,16 +1094,8 @@ async function uploadProductImages(
                     `Foto ${index + 1}`,
                 error
             });
-
-
-            /*
-             * Não interrompe as demais imagens.
-             * Uma foto problemática não deve impedir
-             * o processamento das próximas.
-             */
         }
     }
-
 
     return {
         uploaded,
@@ -1059,10 +1119,13 @@ const sectionMap = {
 
 function showSection(sectionName) {
 
-    Object.entries(sectionMap).forEach(
+    Object.entries(
+        sectionMap
+    ).forEach(
         ([name, elementId]) => {
 
-            const section = $(elementId);
+            const section =
+                $(elementId);
 
             if (!section) {
                 return;
@@ -1073,24 +1136,21 @@ function showSection(sectionName) {
         }
     );
 
-
     document
         .querySelectorAll(".nav-item")
         .forEach(button => {
 
             button.classList.toggle(
                 "active",
-                button.dataset.section === sectionName
+                button.dataset.section ===
+                sectionName
             );
-
         });
-
 
     window.scrollTo({
         top: 0,
         behavior: "smooth"
     });
-
 
     if (sectionName === "home") {
         loadDashboard();
@@ -1106,6 +1166,7 @@ function showSection(sectionName) {
 
     if (sectionName === "sales") {
         loadSales();
+        loadVariants();
     }
 
     if (sectionName === "finance") {
@@ -1123,22 +1184,27 @@ async function handleLogin(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    const emailInput = $("email");
-    const passwordInput = $("password");
-    const button = $("loginButton");
+    const emailInput =
+        $("email");
+
+    const passwordInput =
+        $("password");
+
+    const button =
+        $("loginButton");
 
     const email =
-        emailInput?.value.trim() || "";
+        emailInput?.value.trim() ||
+        "";
 
     const password =
-        passwordInput?.value || "";
-
+        passwordInput?.value ||
+        "";
 
     showMessage(
         "loginMessage",
         ""
     );
-
 
     if (!email || !password) {
 
@@ -1150,29 +1216,27 @@ async function handleLogin(event) {
         return;
     }
 
-
     setLoading(
         button,
         true,
         "Entrando..."
     );
 
-
     try {
 
         const {
             data,
             error
-        } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password
-        });
-
+        } =
+            await supabaseClient.auth
+                .signInWithPassword({
+                    email,
+                    password
+                });
 
         if (error) {
             throw error;
         }
-
 
         if (!data?.session) {
 
@@ -1184,10 +1248,8 @@ async function handleLogin(event) {
             return;
         }
 
-
         currentUser =
             data.user;
-
 
         await showApplication(
             data.user
@@ -1219,7 +1281,8 @@ async function handleLogout() {
 
     try {
 
-        await supabaseClient.auth.signOut();
+        await supabaseClient.auth
+            .signOut();
 
     } catch (error) {
 
@@ -1229,16 +1292,16 @@ async function handleLogout() {
         );
     }
 
-
     currentUser = null;
     appInitialized = false;
 
-
     clearProductPhotosDraft();
 
+    const appScreen =
+        $("appScreen");
 
-    const appScreen = $("appScreen");
-    const loginScreen = $("loginScreen");
+    const loginScreen =
+        $("loginScreen");
 
     if (appScreen) {
         appScreen.hidden = true;
@@ -1248,22 +1311,20 @@ async function handleLogout() {
         loginScreen.hidden = false;
     }
 
-
     showSection("home");
 }
 
 
 async function showApplication(user) {
 
-    currentUser = user;
-
+    currentUser =
+        user;
 
     const loginScreen =
         $("loginScreen");
 
     const appScreen =
         $("appScreen");
-
 
     if (loginScreen) {
         loginScreen.hidden = true;
@@ -1273,10 +1334,8 @@ async function showApplication(user) {
         appScreen.hidden = false;
     }
 
-
     const userName =
         $("userName");
-
 
     if (userName) {
 
@@ -1289,14 +1348,12 @@ async function showApplication(user) {
             "Usuário";
     }
 
-
     if (!appInitialized) {
 
         appInitialized = true;
 
         await loadInitialData();
     }
-
 
     showSection("home");
 }
@@ -1312,16 +1369,17 @@ async function loadCategories() {
         return;
     }
 
-
     const {
         data,
         error
     } = await supabaseClient
         .from("categories")
         .select("*")
-        .eq("user_id", currentUser.id)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
         .order("name");
-
 
     if (error) {
 
@@ -1333,10 +1391,8 @@ async function loadCategories() {
         return;
     }
 
-
     categoriesCache =
         data || [];
-
 
     renderCategories();
     populateCategorySelect();
@@ -1352,7 +1408,6 @@ function renderCategories() {
         return;
     }
 
-
     if (!categoriesCache.length) {
 
         container.innerHTML = `
@@ -1366,9 +1421,9 @@ function renderCategories() {
         return;
     }
 
-
     container.innerHTML =
-        categoriesCache.map(category => `
+        categoriesCache.map(
+            category => `
 
             <div class="category-card">
 
@@ -1380,7 +1435,8 @@ function renderCategories() {
 
                     <span>
                         ${escapeHtml(
-                            category.description || "Sem descrição"
+                            category.description ||
+                            "Sem descrição"
                         )}
                     </span>
 
@@ -1407,8 +1463,8 @@ function renderCategories() {
                 </div>
 
             </div>
-
-        `).join("");
+        `
+        ).join("");
 }
 
 
@@ -1421,6 +1477,8 @@ function populateCategorySelect() {
         return;
     }
 
+    const current =
+        select.value;
 
     select.innerHTML = `
         <option value="">
@@ -1428,13 +1486,17 @@ function populateCategorySelect() {
         </option>
     `;
 
-
     categoriesCache
-        .filter(category => category.is_active !== false)
+        .filter(
+            category =>
+                category.is_active !== false
+        )
         .forEach(category => {
 
             const option =
-                document.createElement("option");
+                document.createElement(
+                    "option"
+                );
 
             option.value =
                 category.id;
@@ -1444,10 +1506,23 @@ function populateCategorySelect() {
 
             select.appendChild(option);
         });
+
+    if (
+        [...select.options]
+            .some(
+                option =>
+                    option.value === current
+            )
+    ) {
+        select.value =
+            current;
+    }
 }
 
 
-function openCategoryModal(category = null) {
+function openCategoryModal(
+    category = null
+) {
 
     const form =
         $("categoryForm");
@@ -1456,9 +1531,7 @@ function openCategoryModal(category = null) {
         return;
     }
 
-
     form.reset();
-
 
     $("categoryId").value =
         category?.id || "";
@@ -1472,12 +1545,10 @@ function openCategoryModal(category = null) {
     $("categoryActive").checked =
         category?.is_active !== false;
 
-
     showMessage(
         "categoryFormMessage",
         ""
     );
-
 
     openModal("categoryModal");
 }
@@ -1491,7 +1562,6 @@ async function saveCategory(event) {
         return;
     }
 
-
     const id =
         $("categoryId").value.trim();
 
@@ -1504,7 +1574,6 @@ async function saveCategory(event) {
     const isActive =
         $("categoryActive").checked;
 
-
     if (!name) {
 
         showMessage(
@@ -1515,44 +1584,47 @@ async function saveCategory(event) {
         return;
     }
 
-
     const payload = {
         name,
         description,
         is_active: isActive
     };
 
-
     try {
 
         let query;
 
-
         if (id) {
 
-            query = await supabaseClient
-                .from("categories")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", currentUser.id);
+            query =
+                await supabaseClient
+                    .from("categories")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    );
 
         } else {
 
-            query = await supabaseClient
-                .from("categories")
-                .insert({
-                    ...payload,
-                    user_id: currentUser.id
-                });
+            query =
+                await supabaseClient
+                    .from("categories")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            currentUser.id
+                    });
         }
-
 
         if (query.error) {
             throw query.error;
         }
 
-
-        closeModal("categoryModal");
+        closeModal(
+            "categoryModal"
+        );
 
         await loadCategories();
 
@@ -1578,17 +1650,13 @@ async function deleteCategory(id) {
         return;
     }
 
-
-    const confirmed =
-        confirm(
+    if (
+        !confirm(
             "Excluir esta categoria?"
-        );
-
-
-    if (!confirmed) {
+        )
+    ) {
         return;
     }
-
 
     const {
         error
@@ -1596,8 +1664,10 @@ async function deleteCategory(id) {
         .from("categories")
         .delete()
         .eq("id", id)
-        .eq("user_id", currentUser.id);
-
+        .eq(
+            "user_id",
+            currentUser.id
+        );
 
     if (error) {
 
@@ -1613,7 +1683,6 @@ async function deleteCategory(id) {
         return;
     }
 
-
     await loadCategories();
 }
 
@@ -1628,16 +1697,17 @@ async function loadColors() {
         return;
     }
 
-
     const {
         data,
         error
     } = await supabaseClient
         .from("colors")
         .select("*")
-        .eq("user_id", currentUser.id)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
         .order("name");
-
 
     if (error) {
 
@@ -1649,10 +1719,8 @@ async function loadColors() {
         return;
     }
 
-
     colorsCache =
         data || [];
-
 
     renderColors();
     renderProductVariationOptions();
@@ -1668,7 +1736,6 @@ function renderColors() {
         return;
     }
 
-
     if (!colorsCache.length) {
 
         container.innerHTML = `
@@ -1682,15 +1749,15 @@ function renderColors() {
         return;
     }
 
-
     container.innerHTML =
-        colorsCache.map(color => {
+        colorsCache.map(
+            color => {
 
-            const hex =
-                color.hex_code || "#cccccc";
+                const hex =
+                    color.hex_code ||
+                    "#cccccc";
 
-
-            return `
+                return `
 
                 <div class="color-card">
 
@@ -1715,7 +1782,6 @@ function renderColors() {
 
                     </div>
 
-
                     <div class="color-card-actions">
 
                         <button
@@ -1737,10 +1803,9 @@ function renderColors() {
                     </div>
 
                 </div>
-
             `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
@@ -1756,7 +1821,6 @@ function syncColorPreview() {
     const preview =
         $("colorPreview");
 
-
     if (text) {
         text.value =
             color.toUpperCase();
@@ -1769,7 +1833,9 @@ function syncColorPreview() {
 }
 
 
-function openColorModal(color = null) {
+function openColorModal(
+    color = null
+) {
 
     const form =
         $("colorForm");
@@ -1778,9 +1844,7 @@ function openColorModal(color = null) {
         return;
     }
 
-
     form.reset();
-
 
     $("colorId").value =
         color?.id || "";
@@ -1789,23 +1853,22 @@ function openColorModal(color = null) {
         color?.name || "";
 
     $("colorHex").value =
-        color?.hex_code || "#E8A0B8";
+        color?.hex_code ||
+        "#E8A0B8";
 
     $("colorHexText").value =
-        color?.hex_code || "#E8A0B8";
+        color?.hex_code ||
+        "#E8A0B8";
 
     $("colorActive").checked =
         color?.is_active !== false;
 
-
     syncColorPreview();
-
 
     showMessage(
         "colorFormMessage",
         ""
     );
-
 
     openModal("colorModal");
 }
@@ -1819,7 +1882,6 @@ async function saveColor(event) {
         return;
     }
 
-
     const id =
         $("colorId").value.trim();
 
@@ -1832,7 +1894,6 @@ async function saveColor(event) {
     const isActive =
         $("colorActive").checked;
 
-
     if (!name) {
 
         showMessage(
@@ -1843,8 +1904,9 @@ async function saveColor(event) {
         return;
     }
 
-
-    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    if (
+        !/^#[0-9A-Fa-f]{6}$/.test(hex)
+    ) {
 
         showMessage(
             "colorFormMessage",
@@ -1854,44 +1916,49 @@ async function saveColor(event) {
         return;
     }
 
-
     const payload = {
         name,
-        hex_code: hex.toUpperCase(),
-        is_active: isActive
+        hex_code:
+            hex.toUpperCase(),
+        is_active:
+            isActive
     };
-
 
     try {
 
         let query;
 
-
         if (id) {
 
-            query = await supabaseClient
-                .from("colors")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", currentUser.id);
+            query =
+                await supabaseClient
+                    .from("colors")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    );
 
         } else {
 
-            query = await supabaseClient
-                .from("colors")
-                .insert({
-                    ...payload,
-                    user_id: currentUser.id
-                });
+            query =
+                await supabaseClient
+                    .from("colors")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            currentUser.id
+                    });
         }
-
 
         if (query.error) {
             throw query.error;
         }
 
-
-        closeModal("colorModal");
+        closeModal(
+            "colorModal"
+        );
 
         await loadColors();
 
@@ -1917,11 +1984,13 @@ async function deleteColor(id) {
         return;
     }
 
-
-    if (!confirm("Excluir esta cor?")) {
+    if (
+        !confirm(
+            "Excluir esta cor?"
+        )
+    ) {
         return;
     }
-
 
     const {
         error
@@ -1929,8 +1998,10 @@ async function deleteColor(id) {
         .from("colors")
         .delete()
         .eq("id", id)
-        .eq("user_id", currentUser.id);
-
+        .eq(
+            "user_id",
+            currentUser.id
+        );
 
     if (error) {
 
@@ -1946,7 +2017,6 @@ async function deleteColor(id) {
         return;
     }
 
-
     await loadColors();
 }
 
@@ -1961,17 +2031,18 @@ async function loadSizes() {
         return;
     }
 
-
     const {
         data,
         error
     } = await supabaseClient
         .from("sizes")
         .select("*")
-        .eq("user_id", currentUser.id)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
         .order("display_order")
         .order("name");
-
 
     if (error) {
 
@@ -1983,10 +2054,8 @@ async function loadSizes() {
         return;
     }
 
-
     sizesCache =
         data || [];
-
 
     renderSizes();
     renderProductVariationOptions();
@@ -2002,7 +2071,6 @@ function renderSizes() {
         return;
     }
 
-
     if (!sizesCache.length) {
 
         container.innerHTML = `
@@ -2016,9 +2084,9 @@ function renderSizes() {
         return;
     }
 
-
     container.innerHTML =
-        sizesCache.map(size => `
+        sizesCache.map(
+            size => `
 
             <div class="size-card">
 
@@ -2035,13 +2103,15 @@ function renderSizes() {
                         </strong>
 
                         <small class="size-card-order">
-                            Ordem: ${Number(size.display_order || 0)}
+                            Ordem:
+                            ${Number(
+                                size.display_order || 0
+                            )}
                         </small>
 
                     </div>
 
                 </div>
-
 
                 <div class="size-card-actions">
 
@@ -2064,12 +2134,14 @@ function renderSizes() {
                 </div>
 
             </div>
-
-        `).join("");
+        `
+        ).join("");
 }
 
 
-function openSizeModal(size = null) {
+function openSizeModal(
+    size = null
+) {
 
     const form =
         $("sizeForm");
@@ -2078,9 +2150,7 @@ function openSizeModal(size = null) {
         return;
     }
 
-
     form.reset();
-
 
     $("sizeId").value =
         size?.id || "";
@@ -2094,12 +2164,10 @@ function openSizeModal(size = null) {
     $("sizeActive").checked =
         size?.is_active !== false;
 
-
     showMessage(
         "sizeFormMessage",
         ""
     );
-
 
     openModal("sizeModal");
 }
@@ -2113,7 +2181,6 @@ async function saveSize(event) {
         return;
     }
 
-
     const id =
         $("sizeId").value.trim();
 
@@ -2122,12 +2189,12 @@ async function saveSize(event) {
 
     const displayOrder =
         Number(
-            $("sizeDisplayOrder").value || 0
+            $("sizeDisplayOrder").value ||
+            0
         );
 
     const isActive =
         $("sizeActive").checked;
-
 
     if (!name) {
 
@@ -2139,44 +2206,49 @@ async function saveSize(event) {
         return;
     }
 
-
     const payload = {
         name,
-        display_order: displayOrder,
-        is_active: isActive
+        display_order:
+            displayOrder,
+        is_active:
+            isActive
     };
-
 
     try {
 
         let query;
 
-
         if (id) {
 
-            query = await supabaseClient
-                .from("sizes")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", currentUser.id);
+            query =
+                await supabaseClient
+                    .from("sizes")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    );
 
         } else {
 
-            query = await supabaseClient
-                .from("sizes")
-                .insert({
-                    ...payload,
-                    user_id: currentUser.id
-                });
+            query =
+                await supabaseClient
+                    .from("sizes")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            currentUser.id
+                    });
         }
-
 
         if (query.error) {
             throw query.error;
         }
 
-
-        closeModal("sizeModal");
+        closeModal(
+            "sizeModal"
+        );
 
         await loadSizes();
 
@@ -2202,11 +2274,13 @@ async function deleteSize(id) {
         return;
     }
 
-
-    if (!confirm("Excluir este tamanho?")) {
+    if (
+        !confirm(
+            "Excluir este tamanho?"
+        )
+    ) {
         return;
     }
-
 
     const {
         error
@@ -2214,8 +2288,10 @@ async function deleteSize(id) {
         .from("sizes")
         .delete()
         .eq("id", id)
-        .eq("user_id", currentUser.id);
-
+        .eq(
+            "user_id",
+            currentUser.id
+        );
 
     if (error) {
 
@@ -2230,7 +2306,6 @@ async function deleteSize(id) {
 
         return;
     }
-
 
     await loadSizes();
 }
@@ -2248,22 +2323,28 @@ function renderProductVariationOptions() {
     const sizeSelect =
         $("productVariationSize");
 
-
     if (colorSelect) {
 
         const currentColor =
             colorSelect.value;
 
         colorSelect.innerHTML = `
-            <option value="">Selecione a cor</option>
+            <option value="">
+                Selecione a cor
+            </option>
         `;
 
         colorsCache
-            .filter(color => color.is_active !== false)
+            .filter(
+                color =>
+                    color.is_active !== false
+            )
             .forEach(color => {
 
                 const option =
-                    document.createElement("option");
+                    document.createElement(
+                        "option"
+                    );
 
                 option.value =
                     color.id;
@@ -2275,19 +2356,26 @@ function renderProductVariationOptions() {
                     color.name || "";
 
                 option.dataset.colorHex =
-                    color.hex_code || "#cccccc";
+                    color.hex_code ||
+                    "#cccccc";
 
-                colorSelect.appendChild(option);
+                colorSelect.appendChild(
+                    option
+                );
             });
 
-        if ([...colorSelect.options]
-            .some(option => option.value === currentColor)) {
-
+        if (
+            [...colorSelect.options]
+                .some(
+                    option =>
+                        option.value ===
+                        currentColor
+                )
+        ) {
             colorSelect.value =
                 currentColor;
         }
     }
-
 
     if (sizeSelect) {
 
@@ -2295,15 +2383,22 @@ function renderProductVariationOptions() {
             sizeSelect.value;
 
         sizeSelect.innerHTML = `
-            <option value="">Selecione o tamanho</option>
+            <option value="">
+                Selecione o tamanho
+            </option>
         `;
 
         sizesCache
-            .filter(size => size.is_active !== false)
+            .filter(
+                size =>
+                    size.is_active !== false
+            )
             .forEach(size => {
 
                 const option =
-                    document.createElement("option");
+                    document.createElement(
+                        "option"
+                    );
 
                 option.value =
                     size.id;
@@ -2314,12 +2409,19 @@ function renderProductVariationOptions() {
                 option.dataset.sizeName =
                     size.name || "";
 
-                sizeSelect.appendChild(option);
+                sizeSelect.appendChild(
+                    option
+                );
             });
 
-        if ([...sizeSelect.options]
-            .some(option => option.value === currentSize)) {
-
+        if (
+            [...sizeSelect.options]
+                .some(
+                    option =>
+                        option.value ===
+                        currentSize
+                )
+        ) {
             sizeSelect.value =
                 currentSize;
         }
@@ -2336,7 +2438,6 @@ function renderProductVariationsList() {
         return;
     }
 
-
     if (!productVariationsDraft.length) {
 
         container.innerHTML = `
@@ -2349,14 +2450,15 @@ function renderProductVariationsList() {
         return;
     }
 
-
     container.innerHTML =
-        productVariationsDraft.map((variation, index) => {
+        productVariationsDraft.map(
+            (variation, index) => {
 
-            const hex =
-                variation.colorHex || "#cccccc";
+                const hex =
+                    variation.colorHex ||
+                    "#cccccc";
 
-            return `
+                return `
 
                 <div
                     class="product-variant-draft-item"
@@ -2371,11 +2473,17 @@ function renderProductVariationsList() {
                         ></span>
 
                         <strong>
-                            ${escapeHtml(variation.colorName || "Sem cor")}
+                            ${escapeHtml(
+                                variation.colorName ||
+                                "Sem cor"
+                            )}
                         </strong>
 
                         <span class="product-variant-draft-size">
-                            ${escapeHtml(variation.sizeName || "Sem tamanho")}
+                            ${escapeHtml(
+                                variation.sizeName ||
+                                "Sem tamanho"
+                            )}
                         </span>
 
                     </div>
@@ -2383,24 +2491,26 @@ function renderProductVariationsList() {
                     <div class="product-variant-draft-actions">
 
                         <label class="product-variant-quantity-control">
+
                             <span>Qtd.</span>
+
                             <input
                                 type="number"
                                 min="0"
                                 step="1"
                                 inputmode="numeric"
-                                value="${Number(variation.quantity || 0)}"
+                                value="${Number(
+                                    variation.quantity || 0
+                                )}"
                                 data-variation-quantity="${index}"
-                                aria-label="Quantidade da variação ${escapeHtml(variation.colorName || "")} ${escapeHtml(variation.sizeName || "")}"
                             >
+
                         </label>
 
                         <button
                             type="button"
                             class="icon-button danger"
                             data-remove-variation="${index}"
-                            aria-label="Remover variação"
-                            title="Remover variação"
                         >
                             🗑
                         </button>
@@ -2408,10 +2518,9 @@ function renderProductVariationsList() {
                     </div>
 
                 </div>
-
             `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
@@ -2426,11 +2535,13 @@ function addProductVariation() {
     const quantityInput =
         $("productVariationQuantity");
 
-
-    if (!colorSelect || !sizeSelect || !quantityInput) {
+    if (
+        !colorSelect ||
+        !sizeSelect ||
+        !quantityInput
+    ) {
         return;
     }
-
 
     const colorId =
         colorSelect.value;
@@ -2439,8 +2550,9 @@ function addProductVariation() {
         sizeSelect.value;
 
     const quantity =
-        Number(quantityInput.value || 0);
-
+        Number(
+            quantityInput.value || 0
+        );
 
     if (!colorId) {
 
@@ -2450,9 +2562,9 @@ function addProductVariation() {
         );
 
         colorSelect.focus();
+
         return;
     }
-
 
     if (!sizeId) {
 
@@ -2462,11 +2574,14 @@ function addProductVariation() {
         );
 
         sizeSelect.focus();
+
         return;
     }
 
-
-    if (!Number.isInteger(quantity) || quantity < 0) {
+    if (
+        !Number.isInteger(quantity) ||
+        quantity < 0
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -2474,17 +2589,18 @@ function addProductVariation() {
         );
 
         quantityInput.focus();
+
         return;
     }
-
 
     const alreadyExists =
         productVariationsDraft.some(
             variation =>
-                variation.colorId === colorId &&
-                variation.sizeId === sizeId
+                variation.colorId ===
+                    colorId &&
+                variation.sizeId ===
+                    sizeId
         );
-
 
     if (alreadyExists) {
 
@@ -2496,31 +2612,48 @@ function addProductVariation() {
         return;
     }
 
-
     const color =
-        colorsCache.find(item => item.id === colorId);
+        colorsCache.find(
+            item =>
+                item.id === colorId
+        );
 
     const size =
-        sizesCache.find(item => item.id === sizeId);
-
+        sizesCache.find(
+            item =>
+                item.id === sizeId
+        );
 
     productVariationsDraft.push({
+        variantId: null,
         colorId,
-        colorName: color?.name || colorSelect.selectedOptions[0]?.textContent || "",
-        colorHex: color?.hex_code || colorSelect.selectedOptions[0]?.dataset.colorHex || "#cccccc",
+        colorName:
+            color?.name ||
+            colorSelect.selectedOptions[0]
+                ?.textContent ||
+            "",
+        colorHex:
+            color?.hex_code ||
+            "#cccccc",
         sizeId,
-        sizeName: size?.name || sizeSelect.selectedOptions[0]?.textContent || "",
+        sizeName:
+            size?.name ||
+            sizeSelect.selectedOptions[0]
+                ?.textContent ||
+            "",
         quantity
     });
 
-
     renderProductVariationsList();
 
+    quantityInput.value =
+        "1";
 
-    quantityInput.value = "1";
-    colorSelect.value = "";
-    sizeSelect.value = "";
+    colorSelect.value =
+        "";
 
+    sizeSelect.value =
+        "";
 
     showMessage(
         "productFormMessage",
@@ -2530,44 +2663,49 @@ function addProductVariation() {
 }
 
 
-function removeProductVariation(index) {
+function removeProductVariation(
+    index
+) {
 
     const numericIndex =
         Number(index);
 
-
     if (
         !Number.isInteger(numericIndex) ||
         numericIndex < 0 ||
-        numericIndex >= productVariationsDraft.length
+        numericIndex >=
+            productVariationsDraft.length
     ) {
         return;
     }
-
 
     productVariationsDraft.splice(
         numericIndex,
         1
     );
 
-
     renderProductVariationsList();
 }
 
 
-function updateProductVariationQuantity(index, value) {
+function updateProductVariationQuantity(
+    index,
+    value
+) {
 
     const numericIndex =
         Number(index);
 
-    if (!productVariationsDraft[numericIndex]) {
+    if (
+        !productVariationsDraft[
+            numericIndex
+        ]
+    ) {
         return;
     }
 
-
     const quantity =
         Number(value);
-
 
     if (
         !Number.isInteger(quantity) ||
@@ -2576,8 +2714,9 @@ function updateProductVariationQuantity(index, value) {
         return;
     }
 
-
-    productVariationsDraft[numericIndex].quantity =
+    productVariationsDraft[
+        numericIndex
+    ].quantity =
         quantity;
 }
 
@@ -2586,16 +2725,20 @@ function generateBatchVariations() {
 
     const activeColors =
         colorsCache.filter(
-            color => color.is_active !== false
+            color =>
+                color.is_active !== false
         );
 
     const activeSizes =
         sizesCache.filter(
-            size => size.is_active !== false
+            size =>
+                size.is_active !== false
         );
 
-
-    if (!activeColors.length || !activeSizes.length) {
+    if (
+        !activeColors.length ||
+        !activeSizes.length
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -2605,22 +2748,18 @@ function generateBatchVariations() {
         return;
     }
 
-
     const quantityValue =
         prompt(
             "Qual quantidade deve ser aplicada às novas combinações?",
             "1"
         );
 
-
     if (quantityValue === null) {
         return;
     }
 
-
     const quantity =
         Number(quantityValue);
-
 
     if (
         !Number.isInteger(quantity) ||
@@ -2635,45 +2774,50 @@ function generateBatchVariations() {
         return;
     }
 
-
     let added = 0;
 
+    activeColors.forEach(
+        color => {
 
-    activeColors.forEach(color => {
+            activeSizes.forEach(
+                size => {
 
-        activeSizes.forEach(size => {
+                    const exists =
+                        productVariationsDraft.some(
+                            variation =>
+                                variation.colorId ===
+                                    color.id &&
+                                variation.sizeId ===
+                                    size.id
+                        );
 
-            const exists =
-                productVariationsDraft.some(
-                    variation =>
-                        variation.colorId === color.id &&
-                        variation.sizeId === size.id
-                );
+                    if (exists) {
+                        return;
+                    }
 
+                    productVariationsDraft.push({
+                        variantId: null,
+                        colorId:
+                            color.id,
+                        colorName:
+                            color.name || "",
+                        colorHex:
+                            color.hex_code ||
+                            "#cccccc",
+                        sizeId:
+                            size.id,
+                        sizeName:
+                            size.name || "",
+                        quantity
+                    });
 
-            if (exists) {
-                return;
-            }
-
-
-            productVariationsDraft.push({
-                colorId: color.id,
-                colorName: color.name || "",
-                colorHex: color.hex_code || "#cccccc",
-                sizeId: size.id,
-                sizeName: size.name || "",
-                quantity
-            });
-
-
-            added += 1;
-        });
-
-    });
-
+                    added += 1;
+                }
+            );
+        }
+    );
 
     renderProductVariationsList();
-
 
     showMessage(
         "productFormMessage",
@@ -2695,7 +2839,6 @@ async function loadProducts() {
         return;
     }
 
-
     const {
         data,
         error
@@ -2708,9 +2851,11 @@ async function loadProducts() {
                 name
             )
         `)
-        .eq("user_id", currentUser.id)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
         .order("name");
-
 
     if (error) {
 
@@ -2722,82 +2867,106 @@ async function loadProducts() {
         return;
     }
 
-
     productsCache =
         data || [];
 
+    await loadProductImages(
+        productsCache.map(
+            product => product.id
+        )
+    );
 
     renderProducts();
 }
 
 
+function renderProductCard(
+    product
+) {
+
+    return `
+
+        <div class="product-card">
+
+            ${productImageHtml(
+                product.id
+            )}
+
+            <div class="product-card-info">
+
+                <strong>
+                    ${escapeHtml(
+                        product.name
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        product.sku ||
+                        "Sem SKU"
+                    )}
+                </span>
+
+                <small>
+                    ${escapeHtml(
+                        product.categories?.name ||
+                        "Sem categoria"
+                    )}
+                </small>
+
+            </div>
+
+            <div class="product-card-price">
+
+                <strong>
+                    ${formatCurrency(
+                        product.sale_price
+                    )}
+                </strong>
+
+                <small>
+                    Custo:
+                    ${formatCurrency(
+                        product.cost_price
+                    )}
+                </small>
+
+            </div>
+
+            <div class="product-card-actions">
+
+                <button
+                    type="button"
+                    class="icon-button"
+                    data-edit-product="${product.id}"
+                    title="Editar produto"
+                    aria-label="Editar produto"
+                >
+                    ✏️
+                </button>
+
+                <button
+                    type="button"
+                    class="icon-button danger"
+                    data-delete-product="${product.id}"
+                    title="Excluir produto"
+                    aria-label="Excluir produto"
+                >
+                    🗑️
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
 function renderProducts() {
 
-    const container =
-        $("productsList");
-
-    if (!container) {
-        return;
-    }
-
-
-    if (!productsCache.length) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">P</div>
-                <strong>Nenhum produto cadastrado</strong>
-                <p>Cadastre seu primeiro produto para começar a controlar o estoque.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        productsCache.map(product => `
-
-            <div class="product-card">
-
-                <div class="product-card-info">
-
-                    <strong>
-                        ${escapeHtml(product.name)}
-                    </strong>
-
-                    <span>
-                        ${escapeHtml(product.sku || "Sem SKU")}
-                    </span>
-
-                    <small>
-                        ${
-                            escapeHtml(
-                                product.categories?.name ||
-                                "Sem categoria"
-                            )
-                        }
-                    </small>
-
-                </div>
-
-
-                <div class="product-card-price">
-
-                    <strong>
-                        ${formatCurrency(product.sale_price)}
-                    </strong>
-
-                    <small>
-                        Custo:
-                        ${formatCurrency(product.cost_price)}
-                    </small>
-
-                </div>
-
-            </div>
-
-        `).join("");
+    renderProductCollection(
+        productsCache
+    );
 }
 
 
@@ -2810,52 +2979,295 @@ function resetProductForm() {
         return;
     }
 
-
-    /*
-     * Limpa primeiro os recursos das fotos,
-     * incluindo Object URLs.
-     */
     clearProductPhotosDraft();
-
 
     form.reset();
 
+    $("productId").value =
+        "";
 
-    $("productId").value = "";
+    $("productMinimumStock").value =
+        "0";
 
-    $("productMinimumStock").value = "0";
+    $("productActive").checked =
+        true;
 
-    $("productActive").checked = true;
+    productVariationsDraft =
+        [];
 
+    editingProductId =
+        null;
 
-    productVariationsDraft = [];
+    const title =
+        document.querySelector(
+            "#productModal [data-modal-title]"
+        );
 
+    if (title) {
+        title.textContent =
+            "Novo produto";
+    }
 
     const photoPreview =
         $("productPhotoPreview");
 
     if (photoPreview) {
-        photoPreview.innerHTML = "";
+        photoPreview.innerHTML =
+            "";
     }
-
 
     showMessage(
         "productFormMessage",
         ""
     );
 
-
     renderProductVariationOptions();
     renderProductVariationsList();
     populateCategorySelect();
+
+    const existingPhotos =
+        $("productExistingPhotos");
+
+    if (existingPhotos) {
+        existingPhotos.innerHTML =
+            "";
+    }
 }
 
 
-function openProductModal() {
+async function loadProductForEdit(
+    product
+) {
 
     resetProductForm();
 
-    openModal("productModal");
+    editingProductId =
+        product.id;
+
+    $("productId").value =
+        product.id;
+
+    $("productName").value =
+        product.name || "";
+
+    $("productSku").value =
+        product.sku || "";
+
+    $("productCategory").value =
+        product.category_id || "";
+
+    $("productDescription").value =
+        product.description || "";
+
+    $("productCostPrice").value =
+        product.cost_price ?? 0;
+
+    $("productSalePrice").value =
+        product.sale_price ?? 0;
+
+    $("productMinimumStock").value =
+        product.minimum_stock ?? 0;
+
+    $("productActive").checked =
+        product.is_active !== false;
+
+    const {
+        data: variants,
+        error
+    } = await supabaseClient
+        .from("product_variants")
+        .select(`
+            id,
+            product_id,
+            color_id,
+            size_id,
+            stock_quantity,
+            minimum_stock,
+            is_active,
+            colors (
+                id,
+                name,
+                hex_code
+            ),
+            sizes (
+                id,
+                name
+            )
+        `)
+        .eq(
+            "user_id",
+            currentUser.id
+        )
+        .eq(
+            "product_id",
+            product.id
+        );
+
+    if (error) {
+        throw error;
+    }
+
+    productVariationsDraft =
+        (variants || []).map(
+            variant => ({
+                variantId:
+                    variant.id,
+                colorId:
+                    variant.color_id,
+                colorName:
+                    variant.colors?.name ||
+                    "Sem cor",
+                colorHex:
+                    variant.colors?.hex_code ||
+                    "#cccccc",
+                sizeId:
+                    variant.size_id,
+                sizeName:
+                    variant.sizes?.name ||
+                    "Sem tamanho",
+                quantity:
+                    Number(
+                        variant.stock_quantity ||
+                        0
+                    )
+            })
+        );
+
+    renderProductVariationOptions();
+    renderProductVariationsList();
+
+    const images =
+        productImagesCache[
+            product.id
+        ] || [];
+
+    renderExistingProductPhotos(
+        images
+    );
+
+    const title =
+        document.querySelector(
+            "#productModal [data-modal-title]"
+        );
+
+    if (title) {
+        title.textContent =
+            "Editar produto";
+    }
+
+    openModal(
+        "productModal"
+    );
+}
+
+
+function renderExistingProductPhotos(
+    images
+) {
+
+    let container =
+        $("productExistingPhotos");
+
+    if (!container) {
+
+        const preview =
+            $("productPhotoPreview");
+
+        if (!preview) {
+            return;
+        }
+
+        container =
+            document.createElement(
+                "div"
+            );
+
+        container.id =
+            "productExistingPhotos";
+
+        container.className =
+            "product-existing-photos";
+
+        preview.parentNode.insertBefore(
+            container,
+            preview
+        );
+    }
+
+    if (!images.length) {
+
+        container.innerHTML =
+            "";
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="product-existing-photos-title">
+            Fotos atuais
+        </div>
+
+        <div class="product-existing-photos-grid">
+
+            ${images.map(
+                (image, index) => `
+
+                <div class="product-existing-photo">
+
+                    <img
+                        src="${escapeHtml(
+                            image.public_url
+                        )}"
+                        alt="Foto atual do produto"
+                        loading="lazy"
+                    >
+
+                    <small>
+                        ${
+                            image.is_primary
+                                ? "Principal"
+                                : `Foto ${index + 1}`
+                        }
+                    </small>
+
+                </div>
+            `
+            ).join("")}
+
+        </div>
+    `;
+}
+
+
+function openProductModal(
+    product = null
+) {
+
+    if (product) {
+
+        loadProductForEdit(
+            product
+        ).catch(error => {
+
+            console.error(
+                "Erro ao abrir produto para edição:",
+                error
+            );
+
+            alert(
+                "Não foi possível carregar os dados do produto."
+            );
+        });
+
+        return;
+    }
+
+    resetProductForm();
+
+    openModal(
+        "productModal"
+    );
 }
 
 
@@ -2867,10 +3279,11 @@ async function saveProduct(event) {
         return;
     }
 
-
     const button =
         event.submitter;
 
+    const id =
+        $("productId").value.trim();
 
     const name =
         $("productName").value.trim();
@@ -2879,29 +3292,32 @@ async function saveProduct(event) {
         $("productSku").value.trim();
 
     const categoryId =
-        $("productCategory").value || null;
+        $("productCategory").value ||
+        null;
 
     const description =
         $("productDescription").value.trim();
 
     const costPrice =
         Number(
-            $("productCostPrice").value || 0
+            $("productCostPrice").value ||
+            0
         );
 
     const salePrice =
         Number(
-            $("productSalePrice").value || 0
+            $("productSalePrice").value ||
+            0
         );
 
     const minimumStock =
         Number(
-            $("productMinimumStock").value || 0
+            $("productMinimumStock").value ||
+            0
         );
 
     const isActive =
         $("productActive").checked;
-
 
     if (!name) {
 
@@ -2913,8 +3329,10 @@ async function saveProduct(event) {
         return;
     }
 
-
-    if (salePrice < 0 || costPrice < 0) {
+    if (
+        salePrice < 0 ||
+        costPrice < 0
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -2924,8 +3342,12 @@ async function saveProduct(event) {
         return;
     }
 
-
-    if (!Number.isInteger(minimumStock) || minimumStock < 0) {
+    if (
+        !Number.isInteger(
+            minimumStock
+        ) ||
+        minimumStock < 0
+    ) {
 
         showMessage(
             "productFormMessage",
@@ -2935,132 +3357,297 @@ async function saveProduct(event) {
         return;
     }
 
-
     setLoading(
         button,
         true,
         "Salvando..."
     );
 
+    let createdProductId =
+        null;
 
-    let createdProductId = null;
-    let productAndVariantsCreated = false;
-
+    let productAndVariantsCreated =
+        false;
 
     try {
 
-        // =============================================
-        // CRIA O PRODUTO
-        // =============================================
+        const payload = {
+            category_id:
+                categoryId,
+            name,
+            sku:
+                sku || null,
+            description:
+                description || null,
+            cost_price:
+                costPrice,
+            sale_price:
+                salePrice,
+            minimum_stock:
+                minimumStock,
+            is_active:
+                isActive
+        };
 
-        const {
-            data: product,
-            error: productError
-        } = await supabaseClient
-            .from("products")
-            .insert({
-                user_id: currentUser.id,
-                category_id: categoryId,
-                name,
-                sku: sku || null,
-                description: description || null,
-                cost_price: costPrice,
-                sale_price: salePrice,
-                minimum_stock: minimumStock,
-                is_active: isActive
-            })
-            .select()
-            .single();
+        let product;
 
+        // =================================================
+        // CRIAÇÃO
+        // =================================================
 
-        if (productError) {
-            throw productError;
-        }
-
-
-        createdProductId =
-            product.id;
-
-
-        // =============================================
-        // CRIA SOMENTE AS VARIAÇÕES ADICIONADAS
-        // PELO USUÁRIO
-        // =============================================
-
-        if (productVariationsDraft.length) {
-
-            const variants =
-                productVariationsDraft.map(variation => ({
-                    user_id: currentUser.id,
-                    product_id: product.id,
-                    color_id: variation.colorId,
-                    size_id: variation.sizeId,
-                    stock_quantity: Number(variation.quantity || 0),
-                    minimum_stock: minimumStock,
-                    is_active: true
-                }));
-
+        if (!id) {
 
             const {
-                error: variantsError
-            } = await supabaseClient
-                .from("product_variants")
-                .insert(variants);
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("products")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            currentUser.id
+                    })
+                    .select()
+                    .single();
 
-
-            if (variantsError) {
-
-                console.error(
-                    "Erro ao criar variações:",
-                    variantsError
-                );
-
-                throw new Error(
-                    "Não foi possível criar as variações do produto. O produto será desfeito."
-                );
+            if (error) {
+                throw error;
             }
+
+            product =
+                data;
+
+            createdProductId =
+                product.id;
+
+            if (
+                productVariationsDraft.length
+            ) {
+
+                const variants =
+                    productVariationsDraft
+                        .map(
+                            variation => ({
+                                user_id:
+                                    currentUser.id,
+                                product_id:
+                                    product.id,
+                                color_id:
+                                    variation.colorId,
+                                size_id:
+                                    variation.sizeId,
+                                stock_quantity:
+                                    Number(
+                                        variation.quantity ||
+                                        0
+                                    ),
+                                minimum_stock:
+                                    minimumStock,
+                                is_active:
+                                    true
+                            })
+                        );
+
+                const {
+                    error:
+                        variantsError
+                } =
+                    await supabaseClient
+                        .from(
+                            "product_variants"
+                        )
+                        .insert(
+                            variants
+                        );
+
+                if (variantsError) {
+
+                    console.error(
+                        "Erro ao criar variações:",
+                        variantsError
+                    );
+
+                    throw new Error(
+                        "Não foi possível criar as variações do produto. O produto será desfeito."
+                    );
+                }
+            }
+
+            productAndVariantsCreated =
+                true;
+
+        } else {
+
+            // =================================================
+            // EDIÇÃO DO PRODUTO
+            // =================================================
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("products")
+                    .update(payload)
+                    .eq(
+                        "id",
+                        id
+                    )
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    )
+                    .select()
+                    .single();
+
+            if (error) {
+                throw error;
+            }
+
+            product =
+                data;
+
+            createdProductId =
+                id;
+
+            // Atualiza as variações existentes.
+            for (
+                const variation
+                of productVariationsDraft
+            ) {
+
+                if (variation.variantId) {
+
+                    const {
+                        error:
+                            variantUpdateError
+                    } =
+                        await supabaseClient
+                            .from(
+                                "product_variants"
+                            )
+                            .update({
+                                color_id:
+                                    variation.colorId,
+                                size_id:
+                                    variation.sizeId,
+                                stock_quantity:
+                                    Number(
+                                        variation.quantity ||
+                                        0
+                                    ),
+                                minimum_stock:
+                                    minimumStock
+                            })
+                            .eq(
+                                "id",
+                                variation.variantId
+                            )
+                            .eq(
+                                "user_id",
+                                currentUser.id
+                            )
+                            .eq(
+                                "product_id",
+                                id
+                            );
+
+                    if (
+                        variantUpdateError
+                    ) {
+                        throw variantUpdateError;
+                    }
+
+                } else {
+
+                    const {
+                        error:
+                            newVariantError
+                    } =
+                        await supabaseClient
+                            .from(
+                                "product_variants"
+                            )
+                            .insert({
+                                user_id:
+                                    currentUser.id,
+                                product_id:
+                                    id,
+                                color_id:
+                                    variation.colorId,
+                                size_id:
+                                    variation.sizeId,
+                                stock_quantity:
+                                    Number(
+                                        variation.quantity ||
+                                        0
+                                    ),
+                                minimum_stock:
+                                    minimumStock,
+                                is_active:
+                                    true
+                            });
+
+                    if (newVariantError) {
+                        throw newVariantError;
+                    }
+                }
+            }
+
+            /*
+             * Não removemos automaticamente variações existentes
+             * que não estejam no draft. Isso evita apagar uma
+             * variação que possa estar vinculada ao histórico de vendas.
+             *
+             * O usuário pode continuar editando quantidades,
+             * cores/tamanhos e adicionando novas combinações.
+             */
+
+            productAndVariantsCreated =
+                true;
         }
 
-
-        /*
-         * Neste ponto produto + variações foram criados
-         * com sucesso.
-         *
-         * A partir daqui, falha em fotos NÃO deve remover
-         * o produto nem suas variações.
-         */
-        productAndVariantsCreated = true;
-
-
-        // =============================================
+        // =================================================
         // FOTOS
-        // =============================================
+        // =================================================
 
         let photoResult = {
             uploaded: [],
             failed: []
         };
 
-
-        if (productPhotosDraft.length) {
+        if (
+            productPhotosDraft.length
+        ) {
 
             photoResult =
                 await uploadProductImages(
-                    product.id
+                    product.id,
+                    {
+                        existingImages:
+                            productImagesCache[
+                                product.id
+                            ] || []
+                    }
                 );
         }
 
-
-        // =============================================
+        // =================================================
         // FINALIZAÇÃO
-        // =============================================
+        // =================================================
 
-        closeModal("productModal");
+        closeModal(
+            "productModal"
+        );
 
-        productVariationsDraft = [];
+        productVariationsDraft =
+            [];
 
         clearProductPhotosDraft();
 
+        editingProductId =
+            null;
 
         await loadProducts();
 
@@ -3068,37 +3655,22 @@ async function saveProduct(event) {
 
         await loadDashboard();
 
-
-        /*
-         * Se alguma foto falhou, o produto continua salvo.
-         * Apenas informamos o usuário sobre as imagens que
-         * não conseguiram ser processadas/enviadas.
-         */
-        if (photoResult.failed.length) {
+        if (
+            photoResult.failed.length
+        ) {
 
             const failedNames =
                 photoResult.failed
-                    .map(item => item.fileName)
+                    .map(
+                        item =>
+                            item.fileName
+                    )
                     .join(", ");
 
-
             alert(
-                `Produto salvo com sucesso, mas ${photoResult.failed.length} foto(s) não puderam ser processadas ou enviadas.\n\n` +
-                `Foto(s): ${failedNames}`
-            );
-
-        } else if (photoResult.uploaded.length) {
-
-            /*
-             * Não é necessário alertar em caso de sucesso total.
-             * O produto já foi atualizado normalmente.
-             */
-
-            console.log(
-                `Produto criado com ${photoResult.uploaded.length} foto(s).`
+                `Produto salvo com sucesso, mas ${photoResult.failed.length} foto(s) não puderam ser processadas ou enviadas.\n\nFoto(s): ${failedNames}`
             );
         }
-
 
     } catch (error) {
 
@@ -3107,36 +3679,35 @@ async function saveProduct(event) {
             error
         );
 
-
-        /*
-         * SOMENTE desfaz o produto quando o erro aconteceu
-         * antes de produto + variações estarem concluídos.
-         *
-         * Erros de fotos não entram neste rollback.
-         */
         if (
             createdProductId &&
             !productAndVariantsCreated
         ) {
 
             const {
-                error: cleanupError
-            } = await supabaseClient
-                .from("products")
-                .delete()
-                .eq("id", createdProductId)
-                .eq("user_id", currentUser.id);
-
+                error:
+                    cleanupError
+            } =
+                await supabaseClient
+                    .from("products")
+                    .delete()
+                    .eq(
+                        "id",
+                        createdProductId
+                    )
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    );
 
             if (cleanupError) {
 
                 console.error(
-                    "Erro ao desfazer produto após falha:",
+                    "Erro ao desfazer produto:",
                     cleanupError
                 );
             }
         }
-
 
         showMessage(
             "productFormMessage",
@@ -3154,6 +3725,134 @@ async function saveProduct(event) {
 }
 
 
+async function deleteProduct(
+    productId
+) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    const product =
+        productsCache.find(
+            item =>
+                item.id === productId
+        );
+
+    if (!product) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            `Excluir o produto "${product.name}"?\n\nEssa operação respeitará os vínculos existentes no banco de dados.`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const {
+            data: images,
+            error:
+                imagesError
+        } =
+            await supabaseClient
+                .from("product_images")
+                .select(
+                    "storage_path"
+                )
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "product_id",
+                    productId
+                );
+
+        if (imagesError) {
+            throw imagesError;
+        }
+
+        /*
+         * O produto é excluído primeiro.
+         * Se houver relações que impeçam a exclusão,
+         * o Supabase retornará o erro e não prosseguimos
+         * com limpeza do Storage.
+         */
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("products")
+                .delete()
+                .eq(
+                    "id",
+                    productId
+                )
+                .eq(
+                    "user_id",
+                    currentUser.id
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        const paths =
+            (images || [])
+                .map(
+                    image =>
+                        image.storage_path
+                )
+                .filter(Boolean);
+
+        if (paths.length) {
+
+            const {
+                error:
+                    storageError
+            } =
+                await supabaseClient
+                    .storage
+                    .from(
+                        "product-images"
+                    )
+                    .remove(paths);
+
+            if (storageError) {
+
+                console.error(
+                    "Produto excluído, mas houve erro ao limpar fotos do Storage:",
+                    storageError
+                );
+            }
+        }
+
+        await loadProducts();
+
+        await loadStock();
+
+        await loadDashboard();
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao excluir produto:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Não foi possível excluir o produto. Ele pode possuir registros vinculados ao histórico."
+        );
+    }
+}
+
+
 // =========================================================
 // ESTOQUE
 // =========================================================
@@ -3164,32 +3863,35 @@ async function loadVariants() {
         return;
     }
 
-
     const {
         data,
         error
-    } = await supabaseClient
-        .from("product_variants")
-        .select(`
-            *,
-            products (
-                id,
-                name,
-                sale_price,
-                minimum_stock
-            ),
-            colors (
-                id,
-                name,
-                hex_code
-            ),
-            sizes (
-                id,
-                name
-            )
-        `)
-        .eq("user_id", currentUser.id);
-
+    } =
+        await supabaseClient
+            .from("product_variants")
+            .select(`
+                *,
+                products (
+                    id,
+                    name,
+                    sale_price,
+                    cost_price,
+                    minimum_stock
+                ),
+                colors (
+                    id,
+                    name,
+                    hex_code
+                ),
+                sizes (
+                    id,
+                    name
+                )
+            `)
+            .eq(
+                "user_id",
+                currentUser.id
+            );
 
     if (error) {
 
@@ -3198,14 +3900,32 @@ async function loadVariants() {
             error
         );
 
-        variantsCache = [];
+        variantsCache =
+            [];
 
         return;
     }
 
-
     variantsCache =
         data || [];
+
+    const productIds =
+        [
+            ...new Set(
+                variantsCache
+                    .map(
+                        variant =>
+                            variant.products?.id
+                    )
+                    .filter(Boolean)
+            )
+        ];
+
+    if (productIds.length) {
+        await loadProductImages(
+            productIds
+        );
+    }
 }
 
 
@@ -3213,46 +3933,50 @@ async function loadStock() {
 
     await loadVariants();
 
-
     const total =
         variantsCache.reduce(
             (sum, variant) =>
-                sum + Number(
-                    variant.stock_quantity || 0
+                sum +
+                Number(
+                    variant.stock_quantity ||
+                    0
                 ),
             0
         );
 
-
     const low =
-        variantsCache.filter(variant => {
+        variantsCache.filter(
+            variant => {
 
-            const stock =
-                Number(
-                    variant.stock_quantity || 0
+                const stock =
+                    Number(
+                        variant.stock_quantity ||
+                        0
+                    );
+
+                const minimum =
+                    Number(
+                        variant.minimum_stock ??
+                        variant.products
+                            ?.minimum_stock ??
+                        0
+                    );
+
+                return (
+                    stock > 0 &&
+                    stock <= minimum
                 );
-
-            const minimum =
-                Number(
-                    variant.minimum_stock ??
-                    variant.products?.minimum_stock ??
-                    0
-                );
-
-            return stock > 0 &&
-                stock <= minimum;
-
-        }).length;
-
+            }
+        ).length;
 
     const zero =
         variantsCache.filter(
             variant =>
                 Number(
-                    variant.stock_quantity || 0
+                    variant.stock_quantity ||
+                    0
                 ) === 0
         ).length;
-
 
     if ($("stockTotal")) {
         $("stockTotal").textContent =
@@ -3269,115 +3993,1139 @@ async function loadStock() {
             zero;
     }
 
-
     renderStock();
+}
+
+
+function renderStockCard(
+    variant
+) {
+
+    const productId =
+        variant.products?.id;
+
+    const productName =
+        variant.products?.name ||
+        "Produto";
+
+    const colorName =
+        variant.colors?.name ||
+        "Sem cor";
+
+    const sizeName =
+        variant.sizes?.name ||
+        "Sem tamanho";
+
+    const stock =
+        Number(
+            variant.stock_quantity ||
+            0
+        );
+
+    const minimum =
+        Number(
+            variant.minimum_stock ??
+            variant.products
+                ?.minimum_stock ??
+            0
+        );
+
+    let status =
+        "normal";
+
+    if (stock === 0) {
+        status = "zero";
+    } else if (stock <= minimum) {
+        status = "low";
+    }
+
+    return `
+
+        <div class="stock-card">
+
+            ${productImageHtml(
+                productId
+            )}
+
+            <div class="stock-card-info">
+
+                <strong>
+                    ${escapeHtml(
+                        productName
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        colorName
+                    )}
+                    /
+                    ${escapeHtml(
+                        sizeName
+                    )}
+                </span>
+
+                <small>
+                    Mínimo:
+                    ${minimum}
+                </small>
+
+            </div>
+
+            <div
+                class="stock-card-quantity ${status}"
+            >
+
+                <strong>
+                    ${stock}
+                </strong>
+
+                <small>
+                    unidades
+                </small>
+
+            </div>
+
+        </div>
+    `;
 }
 
 
 function renderStock() {
 
+    renderStockCollection(
+        variantsCache
+    );
+}
+
+
+// =========================================================
+// VENDAS — INTERFACE
+// =========================================================
+
+function ensureSaleModalUI() {
+
+    const modal =
+        $("saleModal");
+
+    if (!modal) {
+        return;
+    }
+
+    if (
+        $("saleManagementWorkspace")
+    ) {
+        return;
+    }
+
+    const wrapper =
+        document.createElement(
+            "div"
+        );
+
+    wrapper.id =
+        "saleManagementWorkspace";
+
+    wrapper.innerHTML = `
+
+        <div class="sale-management">
+
+            <div class="sale-management-header">
+
+                <div>
+
+                    <strong>
+                        Nova venda
+                    </strong>
+
+                    <p>
+                        Adicione os produtos vendidos e finalize o pagamento.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="sale-management-actions">
+
+                <button
+                    type="button"
+                    class="button"
+                    id="saleAddProductButton"
+                >
+                    + Adicionar produto
+                </button>
+
+            </div>
+
+            <div
+                id="saleProductPicker"
+                hidden
+            >
+
+                <div>
+
+                    <strong>
+                        Selecionar produto
+                    </strong>
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="saleClosePickerButton"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <input
+                    type="search"
+                    id="saleProductSearchInput"
+                    placeholder="Buscar produto..."
+                    autocomplete="off"
+                >
+
+                <div id="saleProductPickerList"></div>
+
+                <div
+                    id="saleVariantPicker"
+                    hidden
+                ></div>
+
+            </div>
+
+            <div>
+
+                <strong>
+                    Produtos da venda
+                </strong>
+
+                <div id="saleItemsList"></div>
+
+            </div>
+
+            <div class="sale-summary">
+
+                <div>
+                    <span>Subtotal</span>
+                    <strong id="saleSubtotalValue">
+                        R$ 0,00
+                    </strong>
+                </div>
+
+                <div>
+
+                    <label>
+                        Desconto
+                    </label>
+
+                    <input
+                        type="number"
+                        id="saleDiscountInput"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+
+                </div>
+
+                <div>
+
+                    <span>Total</span>
+
+                    <strong id="saleTotalValue">
+                        R$ 0,00
+                    </strong>
+
+                </div>
+
+            </div>
+
+            <div class="sale-payment">
+
+                <label>
+                    Forma de pagamento
+                </label>
+
+                <select id="salePaymentMethod">
+
+                    <option value="">
+                        Selecione
+                    </option>
+
+                    <option value="pix">
+                        PIX
+                    </option>
+
+                    <option value="credit_card">
+                        Cartão de crédito
+                    </option>
+
+                    <option value="debit_card">
+                        Cartão de débito
+                    </option>
+
+                    <option value="cash">
+                        Dinheiro
+                    </option>
+
+                    <option value="transfer">
+                        Transferência
+                    </option>
+
+                    <option value="other">
+                        Outro
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="sale-notes">
+
+                <label>
+                    Observações
+                </label>
+
+                <textarea
+                    id="saleNotesInput"
+                    rows="2"
+                    placeholder="Opcional"
+                ></textarea>
+
+            </div>
+
+            <div
+                id="saleFormMessage"
+                class="form-message"
+            ></div>
+
+            <div class="sale-management-footer">
+
+                <button
+                    type="button"
+                    class="button"
+                    data-close-modal="saleModal"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="button primary"
+                    id="saleRegisterButton"
+                >
+                    Registrar venda
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    const modalContent =
+        modal.querySelector(
+            ".modal-content"
+        );
+
+    const modalBody =
+        modal.querySelector(
+            ".modal-body"
+        );
+
+    if (modalBody) {
+        modalBody.appendChild(
+            wrapper
+        );
+    } else if (modalContent) {
+        modalContent.appendChild(
+            wrapper
+        );
+    } else {
+        modal.appendChild(
+            wrapper
+        );
+    }
+
+    $("saleAddProductButton")
+        ?.addEventListener(
+            "click",
+            toggleSaleProductPicker
+        );
+
+    $("saleClosePickerButton")
+        ?.addEventListener(
+            "click",
+            closeSaleProductPicker
+        );
+
+    $("saleProductSearchInput")
+        ?.addEventListener(
+            "input",
+            renderSaleProductPicker
+        );
+
+    $("saleDiscountInput")
+        ?.addEventListener(
+            "input",
+            renderSaleSummary
+        );
+
+    $("saleRegisterButton")
+        ?.addEventListener(
+            "click",
+            registerSale
+        );
+}
+
+
+function resetSaleDraft() {
+
+    saleDraft =
+        [];
+
+    saleProductPickerOpen =
+        false;
+
+    saleVariantSelectionProductId =
+        null;
+
+    ensureSaleModalUI();
+
+    const discount =
+        $("saleDiscountInput");
+
+    if (discount) {
+        discount.value =
+            "0";
+    }
+
+    const payment =
+        $("salePaymentMethod");
+
+    if (payment) {
+        payment.value =
+            "";
+    }
+
+    const notes =
+        $("saleNotesInput");
+
+    if (notes) {
+        notes.value =
+            "";
+    }
+
+    showMessage(
+        "saleFormMessage",
+        ""
+    );
+
+    closeSaleProductPicker();
+
+    renderSaleItems();
+
+    renderSaleSummary();
+}
+
+
+async function openNewSaleModal() {
+
+    ensureSaleModalUI();
+
+    resetSaleDraft();
+
+    if (
+        !variantsCache.length
+    ) {
+        await loadVariants();
+    }
+
+    openModal(
+        "saleModal"
+    );
+}
+
+
+function toggleSaleProductPicker() {
+
+    saleProductPickerOpen =
+        !saleProductPickerOpen;
+
+    saleVariantSelectionProductId =
+        null;
+
+    const picker =
+        $("saleProductPicker");
+
+    if (picker) {
+        picker.hidden =
+            !saleProductPickerOpen;
+    }
+
+    if (saleProductPickerOpen) {
+
+        const search =
+            $("saleProductSearchInput");
+
+        if (search) {
+            search.value =
+                "";
+            search.focus();
+        }
+
+        renderSaleProductPicker();
+    }
+}
+
+
+function closeSaleProductPicker() {
+
+    saleProductPickerOpen =
+        false;
+
+    saleVariantSelectionProductId =
+        null;
+
+    const picker =
+        $("saleProductPicker");
+
+    if (picker) {
+        picker.hidden =
+            true;
+    }
+}
+
+
+function renderSaleProductPicker() {
+
     const container =
-        $("stockList");
+        $("saleProductPickerList");
 
     if (!container) {
         return;
     }
 
+    const search =
+        (
+            $("saleProductSearchInput")
+                ?.value ||
+            ""
+        )
+        .toLowerCase()
+        .trim();
 
-    if (!variantsCache.length) {
+    const productsWithStock =
+        productsCache.filter(
+            product => {
+
+                const variants =
+                    variantsCache.filter(
+                        variant =>
+                            variant.product_id ===
+                            product.id
+                    );
+
+                const available =
+                    variants.some(
+                        variant =>
+                            Number(
+                                variant.stock_quantity ||
+                                0
+                            ) > 0
+                    );
+
+                const text =
+                    [
+                        product.name,
+                        product.sku
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                return (
+                    available &&
+                    text.includes(search)
+                );
+            }
+        );
+
+    if (!productsWithStock.length) {
 
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">E</div>
-                <strong>Estoque vazio</strong>
-                <p>As variações dos produtos aparecerão aqui.</p>
+                <strong>Nenhum produto disponível</strong>
+                <p>Não existem produtos com estoque para adicionar.</p>
             </div>
         `;
 
         return;
     }
 
-
     container.innerHTML =
-        variantsCache.map(variant => {
+        productsWithStock.map(
+            product => {
 
-            const productName =
-                variant.products?.name ||
-                "Produto";
+                const variants =
+                    variantsCache.filter(
+                        variant =>
+                            variant.product_id ===
+                                product.id &&
+                            Number(
+                                variant.stock_quantity ||
+                                0
+                            ) > 0
+                    );
 
-            const colorName =
-                variant.colors?.name ||
-                "Sem cor";
+                const totalStock =
+                    variants.reduce(
+                        (
+                            sum,
+                            variant
+                        ) =>
+                            sum +
+                            Number(
+                                variant.stock_quantity ||
+                                0
+                            ),
+                        0
+                    );
 
-            const sizeName =
-                variant.sizes?.name ||
-                "Sem tamanho";
+                return `
 
-            const stock =
-                Number(
-                    variant.stock_quantity || 0
-                );
+                <button
+                    type="button"
+                    class="sale-product-picker-item"
+                    data-sale-select-product="${product.id}"
+                >
 
+                    ${productImageHtml(
+                        product.id,
+                        "sale-product-picker-image"
+                    )}
 
-            const minimum =
-                Number(
-                    variant.minimum_stock ??
-                    variant.products?.minimum_stock ??
-                    0
-                );
-
-
-            let status =
-                "normal";
-
-            if (stock === 0) {
-                status = "zero";
-            } else if (stock <= minimum) {
-                status = "low";
-            }
-
-
-            return `
-
-                <div class="stock-card">
-
-                    <div class="stock-card-info">
-
-                        <strong>
-                            ${escapeHtml(productName)}
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(colorName)}
-                            /
-                            ${escapeHtml(sizeName)}
-                        </span>
-
-                    </div>
-
-
-                    <div class="stock-card-quantity ${status}">
+                    <span>
 
                         <strong>
-                            ${stock}
+                            ${escapeHtml(
+                                product.name
+                            )}
                         </strong>
 
                         <small>
-                            unidades
+                            ${escapeHtml(
+                                product.sku ||
+                                "Sem SKU"
+                            )}
+                        </small>
+
+                        <small>
+                            Estoque:
+                            ${totalStock}
+                        </small>
+
+                    </span>
+
+                    <strong>
+                        ${formatCurrency(
+                            product.sale_price
+                        )}
+                    </strong>
+
+                </button>
+            `;
+            }
+        ).join("");
+}
+
+
+function renderSaleVariantPicker(
+    productId
+) {
+
+    const container =
+        $("saleVariantPicker");
+
+    if (!container) {
+        return;
+    }
+
+    const product =
+        productsCache.find(
+            item =>
+                item.id === productId
+        );
+
+    if (!product) {
+        container.hidden =
+            true;
+
+        return;
+    }
+
+    const variants =
+        variantsCache.filter(
+            variant =>
+                variant.product_id ===
+                    productId &&
+                Number(
+                    variant.stock_quantity ||
+                    0
+                ) > 0
+        );
+
+    if (!variants.length) {
+
+        container.hidden =
+            false;
+
+        container.innerHTML = `
+            <div class="empty-state compact">
+                <strong>Sem estoque disponível</strong>
+            </div>
+        `;
+
+        return;
+    }
+
+    container.hidden =
+        false;
+
+    container.innerHTML = `
+
+        <div>
+
+            <strong>
+                ${escapeHtml(
+                    product.name
+                )}
+            </strong>
+
+            <button
+                type="button"
+                class="icon-button"
+                data-sale-back-picker
+            >
+                Voltar
+            </button>
+
+        </div>
+
+        <div>
+
+            ${variants.map(
+                variant => `
+
+                <button
+                    type="button"
+                    class="sale-variant-picker-item"
+                    data-sale-select-variant="${variant.id}"
+                >
+
+                    <span>
+                        ${escapeHtml(
+                            variant.colors?.name ||
+                            "Sem cor"
+                        )}
+                        /
+                        ${escapeHtml(
+                            variant.sizes?.name ||
+                            "Sem tamanho"
+                        )}
+                    </span>
+
+                    <span>
+                        Estoque:
+                        ${Number(
+                            variant.stock_quantity ||
+                            0
+                        )}
+                    </span>
+
+                    <strong>
+                        ${formatCurrency(
+                            product.sale_price
+                        )}
+                    </strong>
+
+                </button>
+            `
+            ).join("")}
+
+        </div>
+    `;
+}
+
+
+function addSaleVariant(
+    variantId
+) {
+
+    const variant =
+        variantsCache.find(
+            item =>
+                item.id ===
+                variantId
+        );
+
+    if (!variant) {
+        return;
+    }
+
+    const product =
+        productsCache.find(
+            item =>
+                item.id ===
+                variant.product_id
+        );
+
+    if (!product) {
+        return;
+    }
+
+    const stock =
+        Number(
+            variant.stock_quantity ||
+            0
+        );
+
+    if (stock <= 0) {
+
+        showMessage(
+            "saleFormMessage",
+            "Esta variação está sem estoque."
+        );
+
+        return;
+    }
+
+    const existing =
+        saleDraft.find(
+            item =>
+                item.variantId ===
+                variantId
+        );
+
+    if (existing) {
+
+        if (
+            existing.quantity + 1 >
+            stock
+        ) {
+
+            showMessage(
+                "saleFormMessage",
+                "A quantidade solicitada ultrapassa o estoque disponível."
+            );
+
+            return;
+        }
+
+        existing.quantity +=
+            1;
+
+    } else {
+
+        saleDraft.push({
+            variantId:
+                variant.id,
+            productId:
+                product.id,
+            productName:
+                product.name,
+            productImage:
+                getProductMainImage(
+                    product.id
+                ),
+            variantDescription:
+                `${variant.colors?.name || "Sem cor"} / ${variant.sizes?.name || "Sem tamanho"}`,
+            colorName:
+                variant.colors?.name ||
+                "Sem cor",
+            sizeName:
+                variant.sizes?.name ||
+                "Sem tamanho",
+            quantity:
+                1,
+            stock,
+            unitPrice:
+                Number(
+                    product.sale_price ||
+                    0
+                ),
+            unitCost:
+                Number(
+                    product.cost_price ||
+                    0
+                )
+        });
+    }
+
+    closeSaleProductPicker();
+
+    renderSaleItems();
+
+    renderSaleSummary();
+
+    showMessage(
+        "saleFormMessage",
+        "Produto adicionado à venda.",
+        "success"
+    );
+}
+
+
+function renderSaleItems() {
+
+    const container =
+        $("saleItemsList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!saleDraft.length) {
+
+        container.innerHTML = `
+            <div class="empty-state compact">
+                <strong>Nenhum produto adicionado</strong>
+                <p>Use "+ Adicionar produto" para começar.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        saleDraft.map(
+            (item, index) => {
+
+                const subtotal =
+                    item.quantity *
+                    item.unitPrice;
+
+                return `
+
+                <div class="sale-draft-item">
+
+                    ${
+                        item.productImage
+                            ? `
+                            <img
+                                src="${escapeHtml(
+                                    item.productImage
+                                )}"
+                                alt="Produto"
+                                loading="lazy"
+                            >
+                            `
+                            : `
+                            <div>
+                                📷
+                            </div>
+                            `
+                    }
+
+                    <div>
+
+                        <strong>
+                            ${escapeHtml(
+                                item.productName
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                item.variantDescription
+                            )}
+                        </span>
+
+                        <small>
+                            ${formatCurrency(
+                                item.unitPrice
+                            )} cada
                         </small>
 
                     </div>
 
+                    <div>
+
+                        <button
+                            type="button"
+                            data-sale-decrease="${index}"
+                        >
+                            −
+                        </button>
+
+                        <input
+                            type="number"
+                            min="1"
+                            max="${item.stock}"
+                            step="1"
+                            value="${item.quantity}"
+                            data-sale-quantity="${index}"
+                        >
+
+                        <button
+                            type="button"
+                            data-sale-increase="${index}"
+                        >
+                            +
+                        </button>
+
+                    </div>
+
+                    <strong>
+                        ${formatCurrency(
+                            subtotal
+                        )}
+                    </strong>
+
+                    <button
+                        type="button"
+                        class="icon-button danger"
+                        data-sale-remove="${index}"
+                    >
+                        🗑️
+                    </button>
+
                 </div>
-
             `;
+            }
+        ).join("");
+}
 
-        }).join("");
+
+function updateSaleItemQuantity(
+    index,
+    value
+) {
+
+    const item =
+        saleDraft[index];
+
+    if (!item) {
+        return;
+    }
+
+    let quantity =
+        Number(value);
+
+    if (
+        !Number.isInteger(quantity)
+    ) {
+        return;
+    }
+
+    if (quantity < 1) {
+        quantity = 1;
+    }
+
+    if (
+        quantity >
+        item.stock
+    ) {
+
+        quantity =
+            item.stock;
+
+        showMessage(
+            "saleFormMessage",
+            `A quantidade máxima disponível é ${item.stock}.`
+        );
+    }
+
+    item.quantity =
+        quantity;
+
+    renderSaleItems();
+
+    renderSaleSummary();
+}
+
+
+function removeSaleItem(
+    index
+) {
+
+    if (
+        index < 0 ||
+        index >= saleDraft.length
+    ) {
+        return;
+    }
+
+    saleDraft.splice(
+        index,
+        1
+    );
+
+    renderSaleItems();
+
+    renderSaleSummary();
+}
+
+
+function renderSaleSummary() {
+
+    const subtotal =
+        saleDraft.reduce(
+            (sum, item) =>
+                sum +
+                (
+                    item.quantity *
+                    item.unitPrice
+                ),
+            0
+        );
+
+    const discount =
+        Math.max(
+            0,
+            Number(
+                $("saleDiscountInput")
+                    ?.value ||
+                0
+            )
+        );
+
+    const total =
+        Math.max(
+            0,
+            subtotal - discount
+        );
+
+    if ($("saleSubtotalValue")) {
+
+        $("saleSubtotalValue")
+            .textContent =
+            formatCurrency(
+                subtotal
+            );
+    }
+
+    if ($("saleTotalValue")) {
+
+        $("saleTotalValue")
+            .textContent =
+            formatCurrency(
+                total
+            );
+    }
+
+    return {
+        subtotal,
+        discount,
+        total
+    };
 }
 
 
 // =========================================================
-// VENDAS
+// VENDAS — BANCO
 // =========================================================
 
 async function loadSales() {
@@ -3386,18 +5134,23 @@ async function loadSales() {
         return;
     }
 
-
     const {
         data,
         error
-    } = await supabaseClient
-        .from("sales")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("sale_date", {
-            ascending: false
-        });
-
+    } =
+        await supabaseClient
+            .from("sales")
+            .select("*")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order(
+                "sale_date",
+                {
+                    ascending: false
+                }
+            );
 
     if (error) {
 
@@ -3409,10 +5162,8 @@ async function loadSales() {
         return;
     }
 
-
     salesCache =
         data || [];
-
 
     renderSales();
 
@@ -3425,39 +5176,107 @@ function updateSalesMetrics() {
     const today =
         todayISO();
 
-
     const todaySales =
-        salesCache.filter(sale => {
+        salesCache.filter(
+            sale => {
 
-            return String(
-                sale.sale_date || ""
-            ).startsWith(today);
-
-        });
-
+                return (
+                    sale.status !==
+                        "cancelled" &&
+                    String(
+                        sale.sale_date ||
+                        ""
+                    ).startsWith(
+                        today
+                    )
+                );
+            }
+        );
 
     const total =
         todaySales.reduce(
             (sum, sale) =>
-                sum + Number(
-                    sale.total || 0
+                sum +
+                Number(
+                    sale.total ||
+                    0
                 ),
             0
         );
 
-
     if ($("salesToday")) {
 
-        $("salesToday").textContent =
-            formatCurrency(total);
+        $("salesToday")
+            .textContent =
+            formatCurrency(
+                total
+            );
     }
-
 
     if ($("salesOrdersToday")) {
 
-        $("salesOrdersToday").textContent =
+        $("salesOrdersToday")
+            .textContent =
             todaySales.length;
     }
+}
+
+
+function renderSaleHistoryCard(
+    sale
+) {
+
+    const cancelled =
+        sale.status ===
+        "cancelled";
+
+    return `
+
+        <div class="sale-card">
+
+            <div>
+
+                <strong>
+                    Venda #${escapeHtml(
+                        sale.sale_number
+                    )}
+                </strong>
+
+                <span>
+                    ${new Date(
+                        sale.sale_date
+                    ).toLocaleDateString(
+                        "pt-BR"
+                    )}
+                </span>
+
+                ${
+                    cancelled
+                        ? `
+                        <small>
+                            Cancelada
+                        </small>
+                        `
+                        : `
+                        <small>
+                            ${escapeHtml(
+                                sale.payment_method ||
+                                "Pagamento não informado"
+                            )}
+                        </small>
+                        `
+                }
+
+            </div>
+
+            <strong>
+                ${formatCurrency(
+                    sale.total
+                )}
+            </strong>
+
+        </div>
+    `;
 }
 
 
@@ -3469,7 +5288,6 @@ function renderSales() {
     if (!container) {
         return;
     }
-
 
     if (!salesCache.length) {
 
@@ -3484,34 +5302,596 @@ function renderSales() {
         return;
     }
 
-
     container.innerHTML =
-        salesCache.map(sale => `
-
-            <div class="sale-card">
-
-                <div>
-
-                    <strong>
-                        Venda #${sale.sale_number}
-                    </strong>
-
-                    <span>
-                        ${new Date(
-                            sale.sale_date
-                        ).toLocaleDateString("pt-BR")}
-                    </span>
-
-                </div>
+        salesCache.map(
+            renderSaleHistoryCard
+        ).join("");
+}
 
 
-                <strong>
-                    ${formatCurrency(sale.total)}
-                </strong>
+async function registerSale() {
 
-            </div>
+    if (!currentUser) {
+        return;
+    }
 
-        `).join("");
+    if (!saleDraft.length) {
+
+        showMessage(
+            "saleFormMessage",
+            "Adicione pelo menos um produto à venda."
+        );
+
+        return;
+    }
+
+    const paymentMethod =
+        $("salePaymentMethod")
+            ?.value ||
+        "";
+
+    if (!paymentMethod) {
+
+        showMessage(
+            "saleFormMessage",
+            "Selecione a forma de pagamento."
+        );
+
+        return;
+    }
+
+    const summary =
+        renderSaleSummary();
+
+    if (
+        summary.total <= 0
+    ) {
+
+        showMessage(
+            "saleFormMessage",
+            "O total da venda deve ser maior que zero."
+        );
+
+        return;
+    }
+
+    const registerButton =
+        $("saleRegisterButton");
+
+    setLoading(
+        registerButton,
+        true,
+        "Registrando..."
+    );
+
+    let saleId =
+        null;
+
+    const updatedVariants =
+        [];
+
+    let saleItemsInserted =
+        false;
+
+    let inventoryMovementsInserted =
+        false;
+
+    let financeInserted =
+        false;
+
+    try {
+
+        // =================================================
+        // VALIDA ESTOQUE NOVAMENTE ANTES DE GRAVAR
+        // =================================================
+
+        for (
+            const item
+            of saleDraft
+        ) {
+
+            const {
+                data: currentVariant,
+                error:
+                    variantReadError
+            } =
+                await supabaseClient
+                    .from(
+                        "product_variants"
+                    )
+                    .select(`
+                        id,
+                        product_id,
+                        stock_quantity
+                    `)
+                    .eq(
+                        "id",
+                        item.variantId
+                    )
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    )
+                    .single();
+
+            if (
+                variantReadError ||
+                !currentVariant
+            ) {
+                throw new Error(
+                    `Não foi possível verificar o estoque de "${item.productName}".`
+                );
+            }
+
+            const currentStock =
+                Number(
+                    currentVariant.stock_quantity ||
+                    0
+                );
+
+            if (
+                item.quantity >
+                currentStock
+            ) {
+                throw new Error(
+                    `Estoque insuficiente para "${item.productName}" (${item.variantDescription}). Disponível: ${currentStock}.`
+                );
+            }
+
+            item.currentStock =
+                currentStock;
+        }
+
+        // =================================================
+        // CRIA VENDA
+        // =================================================
+
+        const saleNumber =
+            await getNextSaleNumber();
+
+        const notes =
+            $("saleNotesInput")
+                ?.value
+                ?.trim() ||
+            null;
+
+        const {
+            data: sale,
+            error:
+                saleError
+        } =
+            await supabaseClient
+                .from("sales")
+                .insert({
+                    user_id:
+                        currentUser.id,
+                    sale_number:
+                        saleNumber,
+                    sale_date:
+                        new Date()
+                            .toISOString(),
+                    subtotal:
+                        summary.subtotal,
+                    discount:
+                        summary.discount,
+                    total:
+                        summary.total,
+                    payment_method:
+                        paymentMethod,
+                    status:
+                        "completed",
+                    notes
+                })
+                .select()
+                .single();
+
+        if (saleError) {
+            throw saleError;
+        }
+
+        saleId =
+            sale.id;
+
+        // =================================================
+        // SALE ITEMS
+        // =================================================
+
+        const saleItems =
+            saleDraft.map(
+                item => ({
+
+                    user_id:
+                        currentUser.id,
+
+                    sale_id:
+                        sale.id,
+
+                    product_variant_id:
+                        item.variantId,
+
+                    product_name:
+                        item.productName,
+
+                    variant_description:
+                        item.variantDescription,
+
+                    quantity:
+                        item.quantity,
+
+                    unit_price:
+                        item.unitPrice,
+
+                    unit_cost:
+                        item.unitCost,
+
+                    discount:
+                        0,
+
+                    total:
+                        item.quantity *
+                        item.unitPrice
+                })
+            );
+
+        const {
+            error:
+                saleItemsError
+        } =
+            await supabaseClient
+                .from("sale_items")
+                .insert(
+                    saleItems
+                );
+
+        if (saleItemsError) {
+            throw saleItemsError;
+        }
+
+        saleItemsInserted =
+            true;
+
+        // =================================================
+        // ESTOQUE + MOVIMENTAÇÕES
+        // =================================================
+
+        const movements = [];
+
+        for (
+            const item
+            of saleDraft
+        ) {
+
+            const previousStock =
+                Number(
+                    item.currentStock ||
+                    0
+                );
+
+            const newStock =
+                previousStock -
+                item.quantity;
+
+            const {
+                data:
+                    updatedVariant,
+                error:
+                    stockError
+            } =
+                await supabaseClient
+                    .from(
+                        "product_variants"
+                    )
+                    .update({
+                        stock_quantity:
+                            newStock
+                    })
+                    .eq(
+                        "id",
+                        item.variantId
+                    )
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    )
+                    .eq(
+                        "stock_quantity",
+                        previousStock
+                    )
+                    .select()
+                    .single();
+
+            if (
+                stockError ||
+                !updatedVariant
+            ) {
+
+                throw new Error(
+                    `O estoque de "${item.productName}" mudou enquanto a venda era registrada. A operação será desfeita.`
+                );
+            }
+
+            updatedVariants.push({
+                id:
+                    item.variantId,
+                previousStock,
+                newStock
+            });
+
+            movements.push({
+                user_id:
+                    currentUser.id,
+                product_variant_id:
+                    item.variantId,
+                movement_type:
+                    "sale",
+                quantity:
+                    item.quantity,
+                reference_id:
+                    sale.id,
+                reason:
+                    `Venda #${saleNumber}`,
+                notes:
+                    item.variantDescription
+            });
+        }
+
+        const {
+            error:
+                movementError
+        } =
+            await supabaseClient
+                .from(
+                    "inventory_movements"
+                )
+                .insert(
+                    movements
+                );
+
+        if (movementError) {
+            throw movementError;
+        }
+
+        inventoryMovementsInserted =
+            true;
+
+        // =================================================
+        // FINANCEIRO AUTOMÁTICO
+        // =================================================
+
+        const {
+            error:
+                financeError
+        } =
+            await supabaseClient
+                .from(
+                    "financial_transactions"
+                )
+                .insert({
+                    user_id:
+                        currentUser.id,
+                    transaction_type:
+                        "income",
+                    category:
+                        "Venda",
+                    description:
+                        `Venda #${saleNumber}`,
+                    amount:
+                        summary.total,
+                    transaction_date:
+                        todayISO(),
+                    payment_method:
+                        paymentMethod,
+                    reference_id:
+                        sale.id,
+                    notes:
+                        notes
+                });
+
+        if (financeError) {
+            throw financeError;
+        }
+
+        financeInserted =
+            true;
+
+        // =================================================
+        // SUCESSO
+        // =================================================
+
+        closeModal(
+            "saleModal"
+        );
+
+        resetSaleDraft();
+
+        await Promise.all([
+            loadProducts(),
+            loadStock(),
+            loadSales(),
+            loadFinance()
+        ]);
+
+        await loadDashboard();
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao registrar venda:",
+            error
+        );
+
+        // =================================================
+        // ROLLBACK FINANCEIRO
+        // =================================================
+
+        if (
+            financeInserted &&
+            saleId
+        ) {
+
+            await supabaseClient
+                .from(
+                    "financial_transactions"
+                )
+                .delete()
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "reference_id",
+                    saleId
+                );
+        }
+
+        // =================================================
+        // ROLLBACK MOVIMENTAÇÕES
+        // =================================================
+
+        if (
+            inventoryMovementsInserted &&
+            saleId
+        ) {
+
+            await supabaseClient
+                .from(
+                    "inventory_movements"
+                )
+                .delete()
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "reference_id",
+                    saleId
+                );
+        }
+
+        // =================================================
+        // ROLLBACK ESTOQUE
+        // =================================================
+
+        for (
+            const variant
+            of updatedVariants
+        ) {
+
+            await supabaseClient
+                .from(
+                    "product_variants"
+                )
+                .update({
+                    stock_quantity:
+                        variant.previousStock
+                })
+                .eq(
+                    "id",
+                    variant.id
+                )
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "stock_quantity",
+                    variant.newStock
+                );
+        }
+
+        // =================================================
+        // ROLLBACK SALE ITEMS
+        // =================================================
+
+        if (
+            saleItemsInserted &&
+            saleId
+        ) {
+
+            await supabaseClient
+                .from(
+                    "sale_items"
+                )
+                .delete()
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "sale_id",
+                    saleId
+                );
+        }
+
+        // =================================================
+        // ROLLBACK VENDA
+        // =================================================
+
+        if (saleId) {
+
+            await supabaseClient
+                .from("sales")
+                .delete()
+                .eq(
+                    "id",
+                    saleId
+                )
+                .eq(
+                    "user_id",
+                    currentUser.id
+                );
+        }
+
+        showMessage(
+            "saleFormMessage",
+            error.message ||
+            "Não foi possível registrar a venda. Nenhuma alteração deve ter permanecido."
+        );
+
+    } finally {
+
+        setLoading(
+            registerButton,
+            false
+        );
+    }
+}
+
+
+async function getNextSaleNumber() {
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("sales")
+            .select(
+                "sale_number"
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order(
+                "sale_number",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1);
+
+    if (error) {
+        throw error;
+    }
+
+    const last =
+        Number(
+            data?.[0]?.sale_number ||
+            0
+        );
+
+    return last + 1;
 }
 
 
@@ -3525,18 +5905,25 @@ async function loadFinance() {
         return;
     }
 
-
     const {
         data,
         error
-    } = await supabaseClient
-        .from("financial_transactions")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("transaction_date", {
-            ascending: false
-        });
-
+    } =
+        await supabaseClient
+            .from(
+                "financial_transactions"
+            )
+            .select("*")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .order(
+                "transaction_date",
+                {
+                    ascending: false
+                }
+            );
 
     if (error) {
 
@@ -3548,10 +5935,8 @@ async function loadFinance() {
         return;
     }
 
-
     financeCache =
         data || [];
-
 
     renderFinance();
 
@@ -3569,13 +5954,17 @@ function updateFinanceMetrics() {
                     "income"
             )
             .reduce(
-                (sum, transaction) =>
-                    sum + Number(
-                        transaction.amount || 0
+                (
+                    sum,
+                    transaction
+                ) =>
+                    sum +
+                    Number(
+                        transaction.amount ||
+                        0
                     ),
                 0
             );
-
 
     const expenses =
         financeCache
@@ -3585,33 +5974,47 @@ function updateFinanceMetrics() {
                     "expense"
             )
             .reduce(
-                (sum, transaction) =>
-                    sum + Number(
-                        transaction.amount || 0
+                (
+                    sum,
+                    transaction
+                ) =>
+                    sum +
+                    Number(
+                        transaction.amount ||
+                        0
                     ),
                 0
             );
 
-
     const balance =
-        income - expenses;
-
+        income -
+        expenses;
 
     if ($("financeIncome")) {
-        $("financeIncome").textContent =
-            formatCurrency(income);
-    }
 
+        $("financeIncome")
+            .textContent =
+            formatCurrency(
+                income
+            );
+    }
 
     if ($("financeExpenses")) {
-        $("financeExpenses").textContent =
-            formatCurrency(expenses);
+
+        $("financeExpenses")
+            .textContent =
+            formatCurrency(
+                expenses
+            );
     }
 
-
     if ($("financeBalance")) {
-        $("financeBalance").textContent =
-            formatCurrency(balance);
+
+        $("financeBalance")
+            .textContent =
+            formatCurrency(
+                balance
+            );
     }
 }
 
@@ -3624,7 +6027,6 @@ function renderFinance() {
     if (!container) {
         return;
     }
-
 
     if (!financeCache.length) {
 
@@ -3639,16 +6041,15 @@ function renderFinance() {
         return;
     }
 
-
     container.innerHTML =
-        financeCache.map(transaction => {
+        financeCache.map(
+            transaction => {
 
-            const income =
-                transaction.transaction_type ===
-                "income";
+                const income =
+                    transaction.transaction_type ===
+                    "income";
 
-
-            return `
+                return `
 
                 <div class="finance-card">
 
@@ -3669,7 +6070,6 @@ function renderFinance() {
 
                     </div>
 
-
                     <strong class="${
                         income
                             ? "income"
@@ -3684,10 +6084,9 @@ function renderFinance() {
                     </strong>
 
                 </div>
-
             `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
@@ -3700,25 +6099,25 @@ function openTransactionModal() {
         return;
     }
 
-
     form.reset();
-
 
     $("transactionDate").value =
         todayISO();
-
 
     showMessage(
         "transactionFormMessage",
         ""
     );
 
-
-    openModal("transactionModal");
+    openModal(
+        "transactionModal"
+    );
 }
 
 
-async function saveTransaction(event) {
+async function saveTransaction(
+    event
+) {
 
     event.preventDefault();
 
@@ -3726,30 +6125,37 @@ async function saveTransaction(event) {
         return;
     }
 
-
     const type =
         $("transactionType").value;
 
     const category =
-        $("transactionCategory").value.trim();
+        $("transactionCategory")
+            .value
+            .trim();
 
     const description =
-        $("transactionDescription").value.trim();
+        $("transactionDescription")
+            .value
+            .trim();
 
     const amount =
         Number(
-            $("transactionAmount").value || 0
+            $("transactionAmount")
+                .value ||
+            0
         );
 
     const date =
         $("transactionDate").value;
 
     const paymentMethod =
-        $("transactionPaymentMethod").value;
+        $("transactionPaymentMethod")
+            .value;
 
     const notes =
-        $("transactionNotes").value.trim();
-
+        $("transactionNotes")
+            .value
+            .trim();
 
     if (!type) {
 
@@ -3761,7 +6167,6 @@ async function saveTransaction(event) {
         return;
     }
 
-
     if (!description) {
 
         showMessage(
@@ -3771,7 +6176,6 @@ async function saveTransaction(event) {
 
         return;
     }
-
 
     if (amount <= 0) {
 
@@ -3783,32 +6187,40 @@ async function saveTransaction(event) {
         return;
     }
 
-
     try {
 
         const {
             error
-        } = await supabaseClient
-            .from("financial_transactions")
-            .insert({
-                user_id: currentUser.id,
-                transaction_type: type,
-                category: category || null,
-                description,
-                amount,
-                transaction_date: date,
-                payment_method:
-                    paymentMethod || null,
-                notes: notes || null
-            });
-
+        } =
+            await supabaseClient
+                .from(
+                    "financial_transactions"
+                )
+                .insert({
+                    user_id:
+                        currentUser.id,
+                    transaction_type:
+                        type,
+                    category:
+                        category || null,
+                    description,
+                    amount,
+                    transaction_date:
+                        date,
+                    payment_method:
+                        paymentMethod ||
+                        null,
+                    notes:
+                        notes || null
+                });
 
         if (error) {
             throw error;
         }
 
-
-        closeModal("transactionModal");
+        closeModal(
+            "transactionModal"
+        );
 
         await loadFinance();
 
@@ -3840,100 +6252,121 @@ async function loadDashboard() {
         return;
     }
 
-
     await Promise.all([
         loadSales(),
         loadFinance(),
         loadVariants()
     ]);
 
-
     const today =
         todayISO();
-
 
     const todaySales =
         salesCache.filter(
             sale =>
+                sale.status !==
+                    "cancelled" &&
                 String(
-                    sale.sale_date || ""
-                ).startsWith(today)
+                    sale.sale_date ||
+                    ""
+                ).startsWith(
+                    today
+                )
         );
-
 
     const todayRevenue =
         todaySales.reduce(
-            (sum, sale) =>
-                sum + Number(
-                    sale.total || 0
+            (
+                sum,
+                sale
+            ) =>
+                sum +
+                Number(
+                    sale.total ||
+                    0
                 ),
             0
         );
 
-
     const todayExpenses =
         financeCache
-            .filter(transaction =>
-                transaction.transaction_type ===
-                "expense" &&
-                String(
-                    transaction.transaction_date || ""
-                ).startsWith(today)
+            .filter(
+                transaction =>
+                    transaction.transaction_type ===
+                        "expense" &&
+                    String(
+                        transaction.transaction_date ||
+                        ""
+                    ).startsWith(
+                        today
+                    )
             )
             .reduce(
-                (sum, transaction) =>
-                    sum + Number(
-                        transaction.amount || 0
+                (
+                    sum,
+                    transaction
+                ) =>
+                    sum +
+                    Number(
+                        transaction.amount ||
+                        0
                     ),
                 0
             );
 
-
     const lowStock =
-        variantsCache.filter(variant => {
+        variantsCache.filter(
+            variant => {
 
-            const stock =
-                Number(
-                    variant.stock_quantity || 0
-                );
+                const stock =
+                    Number(
+                        variant.stock_quantity ||
+                        0
+                    );
 
-            const minimum =
-                Number(
-                    variant.minimum_stock ??
-                    variant.products?.minimum_stock ??
-                    0
-                );
+                const minimum =
+                    Number(
+                        variant.minimum_stock ??
+                        variant.products
+                            ?.minimum_stock ??
+                        0
+                    );
 
-            return stock <= minimum;
-
-        }).length;
-
+                return stock <=
+                    minimum;
+            }
+        ).length;
 
     if ($("metricSales")) {
 
-        $("metricSales").textContent =
-            formatCurrency(todayRevenue);
+        $("metricSales")
+            .textContent =
+            formatCurrency(
+                todayRevenue
+            );
     }
-
 
     if ($("metricOrders")) {
 
-        $("metricOrders").textContent =
+        $("metricOrders")
+            .textContent =
             todaySales.length;
     }
 
-
     if ($("metricLowStock")) {
 
-        $("metricLowStock").textContent =
+        $("metricLowStock")
+            .textContent =
             lowStock;
     }
 
-
     if ($("metricExpenses")) {
 
-        $("metricExpenses").textContent =
-            formatCurrency(todayExpenses);
+        $("metricExpenses")
+            .textContent =
+            formatCurrency(
+                todayExpenses
+            );
     }
 }
 
@@ -3951,8 +6384,8 @@ function openModal(id) {
         return;
     }
 
-
-    modal.hidden = false;
+    modal.hidden =
+        false;
 
     document.body.classList.add(
         "modal-open"
@@ -3969,8 +6402,8 @@ function closeModal(id) {
         return;
     }
 
-
-    modal.hidden = true;
+    modal.hidden =
+        true;
 
     document.body.classList.remove(
         "modal-open"
@@ -3984,43 +6417,29 @@ function closeModal(id) {
 
 function bindEvents() {
 
-    // =============================================
+    // =================================================
     // LOGIN
-    // =============================================
+    // =================================================
 
-    const loginForm =
-        $("loginForm");
-
-
-    if (loginForm) {
-
-        loginForm.addEventListener(
+    $("loginForm")
+        ?.addEventListener(
             "submit",
             handleLogin
         );
-    }
 
-
-    // =============================================
+    // =================================================
     // LOGOUT
-    // =============================================
+    // =================================================
 
-    const logoutButton =
-        $("logoutButton");
-
-
-    if (logoutButton) {
-
-        logoutButton.addEventListener(
+    $("logoutButton")
+        ?.addEventListener(
             "click",
             handleLogout
         );
-    }
 
-
-    // =============================================
+    // =================================================
     // NAVEGAÇÃO
-    // =============================================
+    // =================================================
 
     document
         .querySelectorAll(
@@ -4036,53 +6455,51 @@ function bindEvents() {
                         button.dataset.section;
 
                     if (section) {
-                        showSection(section);
+                        showSection(
+                            section
+                        );
                     }
-
                 }
             );
-
         });
 
-
-    // =============================================
+    // =================================================
     // NOVOS
-    // =============================================
+    // =================================================
 
     $("newProductButton")
         ?.addEventListener(
             "click",
-            openProductModal
+            () =>
+                openProductModal()
         );
-
 
     $("newCategoryButton")
         ?.addEventListener(
             "click",
-            () => openCategoryModal()
+            () =>
+                openCategoryModal()
         );
-
 
     $("newColorButton")
         ?.addEventListener(
             "click",
-            () => openColorModal()
+            () =>
+                openColorModal()
         );
-
 
     $("newSizeButton")
         ?.addEventListener(
             "click",
-            () => openSizeModal()
+            () =>
+                openSizeModal()
         );
-
 
     $("newSaleButton")
         ?.addEventListener(
             "click",
-            () => openModal("saleModal")
+            openNewSaleModal
         );
-
 
     $("newTransactionButton")
         ?.addEventListener(
@@ -4090,10 +6507,9 @@ function bindEvents() {
             openTransactionModal
         );
 
-
-    // =============================================
+    // =================================================
     // FORMULÁRIOS
-    // =============================================
+    // =================================================
 
     $("productForm")
         ?.addEventListener(
@@ -4101,13 +6517,11 @@ function bindEvents() {
             saveProduct
         );
 
-
     $("categoryForm")
         ?.addEventListener(
             "submit",
             saveCategory
         );
-
 
     $("colorForm")
         ?.addEventListener(
@@ -4115,13 +6529,11 @@ function bindEvents() {
             saveColor
         );
 
-
     $("sizeForm")
         ?.addEventListener(
             "submit",
             saveSize
         );
-
 
     $("transactionForm")
         ?.addEventListener(
@@ -4129,10 +6541,9 @@ function bindEvents() {
             saveTransaction
         );
 
-
-    // =============================================
-    // FOTOS DO PRODUTO
-    // =============================================
+    // =================================================
+    // FOTOS
+    // =================================================
 
     $("productPhotoInput")
         ?.addEventListener(
@@ -4140,10 +6551,9 @@ function bindEvents() {
             handleProductPhotoSelection
         );
 
-
-    // =============================================
+    // =================================================
     // COLOR PICKER
-    // =============================================
+    // =================================================
 
     $("colorHex")
         ?.addEventListener(
@@ -4151,14 +6561,14 @@ function bindEvents() {
             syncColorPreview
         );
 
-
     $("colorHexText")
         ?.addEventListener(
             "input",
             event => {
 
                 let value =
-                    event.target.value.trim();
+                    event.target.value
+                        .trim();
 
                 if (
                     !value.startsWith("#")
@@ -4168,7 +6578,8 @@ function bindEvents() {
                 }
 
                 if (
-                    /^#[0-9A-Fa-f]{6}$/.test(value)
+                    /^#[0-9A-Fa-f]{6}$/
+                        .test(value)
                 ) {
 
                     $("colorHex").value =
@@ -4179,10 +6590,9 @@ function bindEvents() {
             }
         );
 
-
-    // =============================================
-    // VARIAÇÕES DO PRODUTO
-    // =============================================
+    // =================================================
+    // VARIAÇÕES
+    // =================================================
 
     $("addProductVariationButton")
         ?.addEventListener(
@@ -4190,34 +6600,45 @@ function bindEvents() {
             addProductVariation
         );
 
-
     $("openBatchVariationButton")
         ?.addEventListener(
             "click",
             generateBatchVariations
         );
 
-
     $("productVariationColor")
         ?.addEventListener(
             "change",
-            () => showMessage("productFormMessage", "")
+            () =>
+                showMessage(
+                    "productFormMessage",
+                    ""
+                )
         );
-
 
     $("productVariationSize")
         ?.addEventListener(
             "change",
-            () => showMessage("productFormMessage", "")
+            () =>
+                showMessage(
+                    "productFormMessage",
+                    ""
+                )
         );
-
 
     $("productVariationQuantity")
         ?.addEventListener(
             "input",
-            () => showMessage("productFormMessage", "")
+            () =>
+                showMessage(
+                    "productFormMessage",
+                    ""
+                )
         );
 
+    // =================================================
+    // CLIQUES DE VARIAÇÕES
+    // =================================================
 
     document.addEventListener(
         "click",
@@ -4228,18 +6649,20 @@ function bindEvents() {
                     "[data-remove-variation]"
                 );
 
-
-            if (removeVariation) {
+            if (
+                removeVariation
+            ) {
 
                 removeProductVariation(
-                    removeVariation.dataset.removeVariation
+                    removeVariation
+                        .dataset
+                        .removeVariation
                 );
 
                 return;
             }
         }
     );
-
 
     document.addEventListener(
         "input",
@@ -4250,21 +6673,23 @@ function bindEvents() {
                     "[data-variation-quantity]"
                 );
 
-
-            if (quantityInput) {
+            if (
+                quantityInput
+            ) {
 
                 updateProductVariationQuantity(
-                    quantityInput.dataset.variationQuantity,
+                    quantityInput
+                        .dataset
+                        .variationQuantity,
                     quantityInput.value
                 );
             }
         }
     );
 
-
-    // =============================================
+    // =================================================
     // FECHAR MODAIS
-    // =============================================
+    // =================================================
 
     document.addEventListener(
         "click",
@@ -4275,20 +6700,23 @@ function bindEvents() {
                     "[data-close-modal]"
                 );
 
-
-            if (closeButton) {
+            if (
+                closeButton
+            ) {
 
                 closeModal(
-                    closeButton.dataset.closeModal
+                    closeButton
+                        .dataset
+                        .closeModal
                 );
 
                 return;
             }
 
-
             const modal =
-                event.target.closest(".modal");
-
+                event.target.closest(
+                    ".modal"
+                );
 
             if (
                 modal &&
@@ -4299,14 +6727,12 @@ function bindEvents() {
                     modal.id
                 );
             }
-
         }
     );
 
-
-    // =============================================
-    // AÇÕES DE CATEGORIA / COR / TAMANHO
-    // =============================================
+    // =================================================
+    // CATEGORIAS / CORES / TAMANHOS
+    // =================================================
 
     document.addEventListener(
         "click",
@@ -4317,46 +6743,50 @@ function bindEvents() {
                     "[data-edit-category]"
                 );
 
-
-            if (editCategory) {
+            if (
+                editCategory
+            ) {
 
                 const category =
                     categoriesCache.find(
                         item =>
                             item.id ===
-                            editCategory.dataset.editCategory
+                            editCategory
+                                .dataset
+                                .editCategory
                     );
 
-
                 if (category) {
-                    openCategoryModal(category);
+                    openCategoryModal(
+                        category
+                    );
                 }
 
                 return;
             }
-
 
             const deleteCategoryButton =
                 event.target.closest(
                     "[data-delete-category]"
                 );
 
-
-            if (deleteCategoryButton) {
+            if (
+                deleteCategoryButton
+            ) {
 
                 deleteCategory(
-                    deleteCategoryButton.dataset.deleteCategory
+                    deleteCategoryButton
+                        .dataset
+                        .deleteCategory
                 );
 
                 return;
             }
 
-
             const editColor =
                 event.target.closest(
                     "[data-edit-color]"
                 );
-
 
             if (editColor) {
 
@@ -4364,39 +6794,42 @@ function bindEvents() {
                     colorsCache.find(
                         item =>
                             item.id ===
-                            editColor.dataset.editColor
+                            editColor
+                                .dataset
+                                .editColor
                     );
 
-
                 if (color) {
-                    openColorModal(color);
+                    openColorModal(
+                        color
+                    );
                 }
 
                 return;
             }
-
 
             const deleteColorButton =
                 event.target.closest(
                     "[data-delete-color]"
                 );
 
-
-            if (deleteColorButton) {
+            if (
+                deleteColorButton
+            ) {
 
                 deleteColor(
-                    deleteColorButton.dataset.deleteColor
+                    deleteColorButton
+                        .dataset
+                        .deleteColor
                 );
 
                 return;
             }
 
-
             const editSize =
                 event.target.closest(
                     "[data-edit-size]"
                 );
-
 
             if (editSize) {
 
@@ -4404,38 +6837,272 @@ function bindEvents() {
                     sizesCache.find(
                         item =>
                             item.id ===
-                            editSize.dataset.editSize
+                            editSize
+                                .dataset
+                                .editSize
                     );
 
-
                 if (size) {
-                    openSizeModal(size);
+                    openSizeModal(
+                        size
+                    );
                 }
 
                 return;
             }
-
 
             const deleteSizeButton =
                 event.target.closest(
                     "[data-delete-size]"
                 );
 
-
-            if (deleteSizeButton) {
+            if (
+                deleteSizeButton
+            ) {
 
                 deleteSize(
-                    deleteSizeButton.dataset.deleteSize
+                    deleteSizeButton
+                        .dataset
+                        .deleteSize
                 );
+
+                return;
             }
 
+            // =================================================
+            // PRODUTOS
+            // =================================================
+
+            const editProductButton =
+                event.target.closest(
+                    "[data-edit-product]"
+                );
+
+            if (
+                editProductButton
+            ) {
+
+                const product =
+                    productsCache.find(
+                        item =>
+                            item.id ===
+                            editProductButton
+                                .dataset
+                                .editProduct
+                    );
+
+                if (product) {
+                    openProductModal(
+                        product
+                    );
+                }
+
+                return;
+            }
+
+            const deleteProductButton =
+                event.target.closest(
+                    "[data-delete-product]"
+                );
+
+            if (
+                deleteProductButton
+            ) {
+
+                deleteProduct(
+                    deleteProductButton
+                        .dataset
+                        .deleteProduct
+                );
+
+                return;
+            }
+
+            // =================================================
+            // VENDAS
+            // =================================================
+
+            const selectProduct =
+                event.target.closest(
+                    "[data-sale-select-product]"
+                );
+
+            if (
+                selectProduct
+            ) {
+
+                const productId =
+                    selectProduct
+                        .dataset
+                        .saleSelectProduct;
+
+                saleVariantSelectionProductId =
+                    productId;
+
+                const list =
+                    $("saleProductPickerList");
+
+                if (list) {
+                    list.hidden =
+                        true;
+                }
+
+                renderSaleVariantPicker(
+                    productId
+                );
+
+                return;
+            }
+
+            const selectVariant =
+                event.target.closest(
+                    "[data-sale-select-variant]"
+                );
+
+            if (
+                selectVariant
+            ) {
+
+                addSaleVariant(
+                    selectVariant
+                        .dataset
+                        .saleSelectVariant
+                );
+
+                return;
+            }
+
+            const backPicker =
+                event.target.closest(
+                    "[data-sale-back-picker]"
+                );
+
+            if (
+                backPicker
+            ) {
+
+                const list =
+                    $("saleProductPickerList");
+
+                if (list) {
+                    list.hidden =
+                        false;
+                }
+
+                const variantPicker =
+                    $("saleVariantPicker");
+
+                if (variantPicker) {
+                    variantPicker.hidden =
+                        true;
+                }
+
+                return;
+            }
+
+            const decrease =
+                event.target.closest(
+                    "[data-sale-decrease]"
+                );
+
+            if (decrease) {
+
+                const index =
+                    Number(
+                        decrease.dataset
+                            .saleDecrease
+                    );
+
+                const item =
+                    saleDraft[index];
+
+                if (item) {
+
+                    updateSaleItemQuantity(
+                        index,
+                        item.quantity - 1
+                    );
+                }
+
+                return;
+            }
+
+            const increase =
+                event.target.closest(
+                    "[data-sale-increase]"
+                );
+
+            if (increase) {
+
+                const index =
+                    Number(
+                        increase.dataset
+                            .saleIncrease
+                    );
+
+                const item =
+                    saleDraft[index];
+
+                if (item) {
+
+                    updateSaleItemQuantity(
+                        index,
+                        item.quantity + 1
+                    );
+                }
+
+                return;
+            }
+
+            const removeSale =
+                event.target.closest(
+                    "[data-sale-remove]"
+                );
+
+            if (removeSale) {
+
+                removeSaleItem(
+                    Number(
+                        removeSale.dataset
+                            .saleRemove
+                    )
+                );
+
+                return;
+            }
         }
     );
 
+    // =================================================
+    // QUANTIDADE DOS ITENS DA VENDA
+    // =================================================
 
-    // =============================================
+    document.addEventListener(
+        "input",
+        event => {
+
+            const input =
+                event.target.closest(
+                    "[data-sale-quantity]"
+                );
+
+            if (!input) {
+                return;
+            }
+
+            updateSaleItemQuantity(
+                Number(
+                    input.dataset
+                        .saleQuantity
+                ),
+                input.value
+            );
+        }
+    );
+
+    // =================================================
     // BUSCAS
-    // =============================================
+    // =================================================
 
     $("productSearch")
         ?.addEventListener(
@@ -4443,20 +7110,17 @@ function bindEvents() {
             filterProducts
         );
 
-
     $("stockSearch")
         ?.addEventListener(
             "input",
             filterStock
         );
 
-
     $("salesSearch")
         ?.addEventListener(
             "input",
             filterSales
         );
-
 
     $("financeSearch")
         ?.addEventListener(
@@ -4477,29 +7141,32 @@ function filterProducts(event) {
             .toLowerCase()
             .trim();
 
-
     const filtered =
-        productsCache.filter(product => {
+        productsCache.filter(
+            product => {
 
-            return (
-                product.name
-                    ?.toLowerCase()
-                    .includes(search)
-            ) ||
-            (
-                product.sku
-                    ?.toLowerCase()
-                    .includes(search)
-            );
+                return (
+                    product.name
+                        ?.toLowerCase()
+                        .includes(search)
+                ) ||
+                (
+                    product.sku
+                        ?.toLowerCase()
+                        .includes(search)
+                );
+            }
+        );
 
-        });
-
-
-    renderProductCollection(filtered);
+    renderProductCollection(
+        filtered
+    );
 }
 
 
-function renderProductCollection(products) {
+function renderProductCollection(
+    products
+) {
 
     const container =
         $("productsList");
@@ -4507,7 +7174,6 @@ function renderProductCollection(products) {
     if (!container) {
         return;
     }
-
 
     if (!products.length) {
 
@@ -4522,42 +7188,10 @@ function renderProductCollection(products) {
         return;
     }
 
-
     container.innerHTML =
-        products.map(product => `
-
-            <div class="product-card">
-
-                <div class="product-card-info">
-
-                    <strong>
-                        ${escapeHtml(product.name)}
-                    </strong>
-
-                    <span>
-                        ${escapeHtml(product.sku || "Sem SKU")}
-                    </span>
-
-                    <small>
-                        ${escapeHtml(
-                            product.categories?.name ||
-                            "Sem categoria"
-                        )}
-                    </small>
-
-                </div>
-
-                <div class="product-card-price">
-
-                    <strong>
-                        ${formatCurrency(product.sale_price)}
-                    </strong>
-
-                </div>
-
-            </div>
-
-        `).join("");
+        products.map(
+            renderProductCard
+        ).join("");
 }
 
 
@@ -4568,31 +7202,36 @@ function filterStock(event) {
             .toLowerCase()
             .trim();
 
-
     const filtered =
-        variantsCache.filter(variant => {
+        variantsCache.filter(
+            variant => {
 
-            const text = [
+                const text = [
 
-                variant.products?.name,
-                variant.colors?.name,
-                variant.sizes?.name
+                    variant.products?.name,
+                    variant.colors?.name,
+                    variant.sizes?.name
 
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
 
+                return text.includes(
+                    search
+                );
+            }
+        );
 
-            return text.includes(search);
-        });
-
-
-    renderStockCollection(filtered);
+    renderStockCollection(
+        filtered
+    );
 }
 
 
-function renderStockCollection(variants) {
+function renderStockCollection(
+    variants
+) {
 
     const container =
         $("stockList");
@@ -4600,7 +7239,6 @@ function renderStockCollection(variants) {
     if (!container) {
         return;
     }
-
 
     if (!variants.length) {
 
@@ -4614,52 +7252,10 @@ function renderStockCollection(variants) {
         return;
     }
 
-
     container.innerHTML =
-        variants.map(variant => `
-
-            <div class="stock-card">
-
-                <div class="stock-card-info">
-
-                    <strong>
-                        ${escapeHtml(
-                            variant.products?.name ||
-                            "Produto"
-                        )}
-                    </strong>
-
-                    <span>
-                        ${escapeHtml(
-                            variant.colors?.name ||
-                            "Sem cor"
-                        )}
-                        /
-                        ${escapeHtml(
-                            variant.sizes?.name ||
-                            "Sem tamanho"
-                        )}
-                    </span>
-
-                </div>
-
-                <div class="stock-card-quantity">
-
-                    <strong>
-                        ${Number(
-                            variant.stock_quantity || 0
-                        )}
-                    </strong>
-
-                    <small>
-                        unidades
-                    </small>
-
-                </div>
-
-            </div>
-
-        `).join("");
+        variants.map(
+            renderStockCard
+        ).join("");
 }
 
 
@@ -4670,16 +7266,18 @@ function filterSales(event) {
             .toLowerCase()
             .trim();
 
-
     const filtered =
-        salesCache.filter(sale => {
+        salesCache.filter(
+            sale => {
 
-            return String(
-                sale.sale_number || ""
-            ).includes(search);
-
-        });
-
+                return String(
+                    sale.sale_number ||
+                    ""
+                ).includes(
+                    search
+                );
+            }
+        );
 
     const container =
         $("salesList");
@@ -4687,7 +7285,6 @@ function filterSales(event) {
     if (!container) {
         return;
     }
-
 
     if (!filtered.length) {
 
@@ -4700,33 +7297,10 @@ function filterSales(event) {
         return;
     }
 
-
     container.innerHTML =
-        filtered.map(sale => `
-
-            <div class="sale-card">
-
-                <div>
-
-                    <strong>
-                        Venda #${sale.sale_number}
-                    </strong>
-
-                    <span>
-                        ${new Date(
-                            sale.sale_date
-                        ).toLocaleDateString("pt-BR")}
-                    </span>
-
-                </div>
-
-                <strong>
-                    ${formatCurrency(sale.total)}
-                </strong>
-
-            </div>
-
-        `).join("");
+        filtered.map(
+            renderSaleHistoryCard
+        ).join("");
 }
 
 
@@ -4737,24 +7311,25 @@ function filterFinance(event) {
             .toLowerCase()
             .trim();
 
-
     const filtered =
-        financeCache.filter(transaction => {
+        financeCache.filter(
+            transaction => {
 
-            const text = [
+                const text = [
 
-                transaction.description,
-                transaction.category
+                    transaction.description,
+                    transaction.category
 
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
 
-
-            return text.includes(search);
-        });
-
+                return text.includes(
+                    search
+                );
+            }
+        );
 
     const container =
         $("financeList");
@@ -4762,7 +7337,6 @@ function filterFinance(event) {
     if (!container) {
         return;
     }
-
 
     if (!filtered.length) {
 
@@ -4775,16 +7349,15 @@ function filterFinance(event) {
         return;
     }
 
-
     container.innerHTML =
-        filtered.map(transaction => {
+        filtered.map(
+            transaction => {
 
-            const income =
-                transaction.transaction_type ===
-                "income";
+                const income =
+                    transaction.transaction_type ===
+                    "income";
 
-
-            return `
+                return `
 
                 <div class="finance-card">
 
@@ -4819,15 +7392,14 @@ function filterFinance(event) {
                     </strong>
 
                 </div>
-
             `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
 // =========================================================
-// CARREGAMENTO INICIAL
+// CARREGAMENTO
 // =========================================================
 
 async function loadProductsPage() {
@@ -4838,7 +7410,6 @@ async function loadProductsPage() {
         loadSizes(),
         loadProducts()
     ]);
-
 }
 
 
@@ -4853,7 +7424,6 @@ async function loadInitialData() {
         loadSales(),
         loadFinance()
     ]);
-
 
     await loadDashboard();
 }
@@ -4870,15 +7440,17 @@ async function checkSession() {
         const {
             data,
             error
-        } = await supabaseClient.auth.getSession();
-
+        } =
+            await supabaseClient.auth
+                .getSession();
 
         if (error) {
             throw error;
         }
 
-
-        if (data?.session?.user) {
+        if (
+            data?.session?.user
+        ) {
 
             await showApplication(
                 data.session.user
@@ -4892,13 +7464,14 @@ async function checkSession() {
             const appScreen =
                 $("appScreen");
 
-
             if (loginScreen) {
-                loginScreen.hidden = false;
+                loginScreen.hidden =
+                    false;
             }
 
             if (appScreen) {
-                appScreen.hidden = true;
+                appScreen.hidden =
+                    true;
             }
         }
 
@@ -4915,13 +7488,14 @@ async function checkSession() {
         const appScreen =
             $("appScreen");
 
-
         if (loginScreen) {
-            loginScreen.hidden = false;
+            loginScreen.hidden =
+                false;
         }
 
         if (appScreen) {
-            appScreen.hidden = true;
+            appScreen.hidden =
+                true;
         }
     }
 }
@@ -4938,7 +7512,6 @@ document.addEventListener(
         console.log(
             "MabijuFit iniciando..."
         );
-
 
         if (
             typeof supabaseClient ===
@@ -4957,55 +7530,63 @@ document.addEventListener(
             return;
         }
 
-
         bindEvents();
 
+        supabaseClient.auth
+            .onAuthStateChange(
+                async (
+                    event,
+                    session
+                ) => {
 
-        supabaseClient.auth.onAuthStateChange(
-            async (event, session) => {
-
-                console.log(
-                    "Auth:",
-                    event
-                );
-
-
-                if (
-                    event === "SIGNED_IN" &&
-                    session?.user
-                ) {
-
-                    await showApplication(
-                        session.user
+                    console.log(
+                        "Auth:",
+                        event
                     );
 
-                }
+                    if (
+                        event ===
+                            "SIGNED_IN" &&
+                        session?.user
+                    ) {
 
-
-                if (
-                    event === "SIGNED_OUT"
-                ) {
-
-                    currentUser = null;
-                    appInitialized = false;
-
-                    clearProductPhotosDraft();
-
-
-                    if ($("appScreen")) {
-                        $("appScreen").hidden = true;
+                        await showApplication(
+                            session.user
+                        );
                     }
 
-                    if ($("loginScreen")) {
-                        $("loginScreen").hidden = false;
+                    if (
+                        event ===
+                        "SIGNED_OUT"
+                    ) {
+
+                        currentUser =
+                            null;
+
+                        appInitialized =
+                            false;
+
+                        clearProductPhotosDraft();
+
+                        if (
+                            $("appScreen")
+                        ) {
+                            $("appScreen")
+                                .hidden =
+                                true;
+                        }
+
+                        if (
+                            $("loginScreen")
+                        ) {
+                            $("loginScreen")
+                                .hidden =
+                                false;
+                        }
                     }
                 }
-
-            }
-        );
-
+            );
 
         await checkSession();
-
     }
 );
