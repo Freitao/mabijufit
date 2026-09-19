@@ -1,2251 +1,2304 @@
-<!DOCTYPE html><html lang="pt-BR">
-<head>
+<!DOCTYPE html><html lang="pt-BR">  <head>  <meta charset="UTF-8">  
 
-    <meta charset="UTF-8">
+<meta  
+    name="viewport"  
+    content="width=device-width, initial-scale=1.0"  
+>  
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta  
+    name="theme-color"  
+    content="#d47799"  
+>  
 
-    <meta
-        name="theme-color"
-        content="#d47799"
-    >
+<meta  
+    name="description"  
+    content="MabijuFit - Gestão inteligente da sua loja"  
+>  
 
-    <meta
-        name="description"
-        content="MabijuFit - Gestão inteligente da sua loja"
-    >
+<link  
+    rel="manifest"  
+    href="manifest.json"  
+>  
 
-    <link
-        rel="manifest"
-        href="manifest.json"
-    >
+<link  
+    rel="icon"  
+    type="image/png"  
+    href="assets/icons/icon-192.png"  
+>  
 
-    <link
-        rel="icon"
-        type="image/png"
-        href="assets/icons/icon-192.png"
-    >
+<link  
+    rel="stylesheet"  
+    href="css/style.css"  
+>  
 
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
+<title>MabijuFit</title>
 
-    <title>MabijuFit</title>
+</head>  <body>  <div id="app">  <!-- =====================================================  
+     LOGIN  
+     ===================================================== -->  
 
-</head>
+<main  
+    id="loginScreen"  
+    class="login-page"  
+>  
 
+    <div class="login-card">  
 
-<body>
+        <div class="login-logo">  
 
-<div id="app">
+            <img  
+                src="assets/icons/icon-192.png"  
+                alt="MabijuFit"  
+            >  
 
+        </div>  
 
-    <!-- =====================================================
-         LOGIN
-         ===================================================== -->
 
-    <main
-        id="loginScreen"
-        class="login-page"
-    >
+        <h1>  
+            MabijuFit  
+        </h1>  
 
-        <div class="login-card">
 
-            <div class="login-logo">
+        <p class="login-subtitle">  
+            Gestão da sua loja  
+        </p>  
 
-                <img
-                    src="assets/icons/icon-192.png"
-                    alt="MabijuFit"
-                >
 
-            </div>
+        <form id="loginForm">  
 
+            <div class="form-group">  
 
-            <h1>
-                MabijuFit
-            </h1>
+                <label for="email">  
+                    E-mail  
+                </label>  
 
+                <input  
+                    id="email"  
+                    type="email"  
+                    autocomplete="email"  
+                    placeholder="seu@email.com"  
+                    required  
+                >  
 
-            <p class="login-subtitle">
-                Gestão da sua loja
-            </p>
+            </div>  
 
 
-            <form id="loginForm">
+            <div class="form-group">  
 
-                <div class="form-group">
+                <label for="password">  
+                    Senha  
+                </label>  
 
-                    <label for="email">
-                        E-mail
-                    </label>
+                <input  
+                    id="password"  
+                    type="password"  
+                    autocomplete="current-password"  
+                    placeholder="••••••••"  
+                    required  
+                >  
 
-                    <input
-                        id="email"
-                        type="email"
-                        autocomplete="email"
-                        placeholder="seu@email.com"
-                        required
-                    >
+            </div>  
 
-                </div>
 
+            <button  
+                id="loginButton"  
+                type="submit"  
+                class="primary-button"  
+            >  
+                Entrar  
+            </button>  
 
-                <div class="form-group">
 
-                    <label for="password">
-                        Senha
-                    </label>
+            <div  
+                id="loginMessage"  
+                class="form-message"  
+            ></div>  
 
-                    <input
-                        id="password"
-                        type="password"
-                        autocomplete="current-password"
-                        placeholder="••••••••"
-                        required
-                    >
+        </form>  
 
-                </div>
 
+        <div class="login-footer">  
+            MabijuFit&nbsp; Gestão inteligente  
+        </div>  
 
-                <button
-                    id="loginButton"
-                    type="submit"
-                    class="primary-button"
-                >
-                    Entrar
-                </button>
+    </div>  
 
+</main>  
 
-                <div
-                    id="loginMessage"
-                    class="form-message"
-                ></div>
 
-            </form>
 
+<!-- =====================================================  
+     APLICAÇÃO  
+     ===================================================== -->  
 
-            <div class="login-footer">
-                MabijuFit&nbsp; Gestão inteligente
-            </div>
+<main  
+    id="appScreen"  
+    class="app-screen"  
+    hidden  
+>  
 
-        </div>
 
-    </main>
+    <!-- =================================================  
+         CABEÇALHO  
+         ================================================= -->  
 
+    <header class="app-header">  
 
+        <div>  
 
-    <!-- =====================================================
-         APLICAÇÃO
-         ===================================================== -->
+            <span class="app-greeting">  
+                Olá,  
+            </span>  
 
-    <main
-        id="appScreen"
-        class="app-screen"
-        hidden
-    >
+            <strong id="userName">  
+                MabijuFit  
+            </strong>  
 
+        </div>  
 
-        <!-- =================================================
-             CABEÇALHO
-             ================================================= -->
 
-        <header class="app-header">
+        <button  
+            id="logoutButton"  
+            type="button"  
+            class="logout-button"  
+        >  
+            Sair  
+        </button>  
 
-            <div>
+    </header>  
 
-                <span class="app-greeting">
-                    Olá,
-                </span>
 
-                <strong id="userName">
-                    MabijuFit
-                </strong>
 
-            </div>
+    <!-- =================================================  
+         CONTEÚDO  
+         ================================================= -->  
 
+    <div class="app-content">  
 
-            <button
-                id="logoutButton"
-                type="button"
-                class="logout-button"
-            >
-                Sair
-            </button>
 
-        </header>
+        <!-- =============================================  
+             INÍCIO  
+             ============================================= -->  
 
+        <section  
+            id="homeScreen"  
+            class="app-section"  
+        >  
 
+            <div class="section-heading">  
 
-        <!-- =================================================
-             CONTEÚDO
-             ================================================= -->
+                <div>  
 
-        <div class="app-content">
+                    <span class="section-eyebrow">  
+                        VISÃO GERAL  
+                    </span>  
 
+                    <h2>  
+                        Resumo da loja  
+                    </h2>  
 
-            <!-- =============================================
-                 INÍCIO
-                 ============================================= -->
+                </div>  
 
-            <section
-                id="homeScreen"
-                class="app-section"
-            >
+            </div>  
 
-                <div class="section-heading">
 
-                    <div>
+            <div class="metrics-grid">  
 
-                        <span class="section-eyebrow">
-                            VISÃO GERAL
-                        </span>
 
-                        <h2>
-                            Resumo da loja
-                        </h2>
+                <article class="metric-card">  
 
-                    </div>
+                    <span>  
+                        Vendas  
+                    </span>  
 
-                </div>
+                    <strong id="metricSales">  
+                        R$ 0,00  
+                    </strong>  
 
+                    <small>  
+                        Hoje  
+                    </small>  
 
-                <div class="metrics-grid">
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Vendas
-                        </span>
+                    <span>  
+                        Pedidos  
+                    </span>  
 
-                        <strong id="metricSales">
-                            R$ 0,00
-                        </strong>
+                    <strong id="metricOrders">  
+                        0  
+                    </strong>  
 
-                        <small>
-                            Hoje
-                        </small>
+                    <small>  
+                        Hoje  
+                    </small>  
 
-                    </article>
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Pedidos
-                        </span>
+                    <span>  
+                        Estoque baixo  
+                    </span>  
 
-                        <strong id="metricOrders">
-                            0
-                        </strong>
+                    <strong id="metricLowStock">  
+                        0  
+                    </strong>  
 
-                        <small>
-                            Hoje
-                        </small>
+                    <small>  
+                        Produtos  
+                    </small>  
 
-                    </article>
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Estoque baixo
-                        </span>
+                    <span>  
+                        Despesas  
+                    </span>  
 
-                        <strong id="metricLowStock">
-                            0
-                        </strong>
+                    <strong id="metricExpenses">  
+                        R$ 0,00  
+                    </strong>  
 
-                        <small>
-                            Produtos
-                        </small>
+                    <small>  
+                        Hoje  
+                    </small>  
 
-                    </article>
+                </article>  
 
+            </div>  
 
-                    <article class="metric-card">
 
-                        <span>
-                            Despesas
-                        </span>
 
-                        <strong id="metricExpenses">
-                            R$ 0,00
-                        </strong>
+            <div class="section-block">  
 
-                        <small>
-                            Hoje
-                        </small>
+                <h3>  
+                    Acessos rápidos  
+                </h3>  
 
-                    </article>
 
-                </div>
+                <div class="quick-actions">  
 
 
+                    <button  
+                        type="button"  
+                        class="quick-action"  
+                        data-section="products"  
+                    >  
 
-                <div class="section-block">
+                        <span>  
+                            P  
+                        </span>  
 
-                    <h3>
-                        Acessos rápidos
-                    </h3>
+                        <strong>  
+                            Produtos  
+                        </strong>  
 
+                    </button>  
 
-                    <div class="quick-actions">
 
+                    <button  
+                        type="button"  
+                        class="quick-action"  
+                        data-section="stock"  
+                    >  
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="products"
-                        >
+                        <span>  
+                            E  
+                        </span>  
 
-                            <span>
-                                P
-                            </span>
+                        <strong>  
+                            Estoque  
+                        </strong>  
 
-                            <strong>
-                                Produtos
-                            </strong>
+                    </button>  
 
-                        </button>
 
+                    <button  
+                        type="button"  
+                        class="quick-action"  
+                        data-section="sales"  
+                    >  
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="stock"
-                        >
+                        <span>  
+                            V  
+                        </span>  
 
-                            <span>
-                                E
-                            </span>
+                        <strong>  
+                            Vendas  
+                        </strong>  
 
-                            <strong>
-                                Estoque
-                            </strong>
+                    </button>  
 
-                        </button>
 
+                    <button  
+                        type="button"  
+                        class="quick-action"  
+                        data-section="finance"  
+                    >  
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="sales"
-                        >
+                        <span>  
+                            F  
+                        </span>  
 
-                            <span>
-                                V
-                            </span>
+                        <strong>  
+                            Financeiro  
+                        </strong>  
 
-                            <strong>
-                                Vendas
-                            </strong>
+                    </button>  
 
-                        </button>
 
+                </div>  
 
-                        <button
-                            type="button"
-                            class="quick-action"
-                            data-section="finance"
-                        >
+            </div>  
 
-                            <span>
-                                F
-                            </span>
 
-                            <strong>
-                                Financeiro
-                            </strong>
 
-                        </button>
+            <div class="section-block">  
 
+                <h3>  
+                    Atividade recente  
+                </h3>  
 
-                    </div>
 
-                </div>
+                <div  
+                    id="recentActivity"  
+                    class="empty-state"  
+                >  
 
+                    <div class="empty-state-icon">  
+                        M  
+                    </div>  
 
+                    <strong>  
+                        Nenhuma atividade ainda  
+                    </strong>  
 
-                <div class="section-block">
+                    <p>  
+                        As vendas e movimentações aparecerão aqui.  
+                    </p>  
 
-                    <h3>
-                        Atividade recente
-                    </h3>
+                </div>  
 
+            </div>  
 
-                    <div
-                        id="recentActivity"
-                        class="empty-state"
-                    >
+        </section>  
 
-                        <div class="empty-state-icon">
-                            M
-                        </div>
 
-                        <strong>
-                            Nenhuma atividade ainda
-                        </strong>
 
-                        <p>
-                            As vendas e movimentações aparecerão aqui.
-                        </p>
+        <!-- =============================================  
+             PRODUTOS  
+             ============================================= -->  
 
-                    </div>
+        <section  
+            id="productsScreen"  
+            class="app-section"  
+            hidden  
+        >  
 
-                </div>
 
-            </section>
+            <div class="section-heading">  
 
+                <div>  
 
+                    <span class="section-eyebrow">  
+                        CATÁLOGO  
+                    </span>  
 
-            <!-- =============================================
-                 PRODUTOS
-                 ============================================= -->
+                    <h2>  
+                        Produtos  
+                    </h2>  
 
-            <section
-                id="productsScreen"
-                class="app-section"
-                hidden
-            >
+                </div>  
 
 
-                <div class="section-heading">
+                <button  
+                    id="newProductButton"  
+                    type="button"  
+                    class="primary-button small"  
+                >  
+                    + Novo  
+                </button>  
 
-                    <div>
+            </div>  
 
-                        <span class="section-eyebrow">
-                            CATÁLOGO
-                        </span>
 
-                        <h2>
-                            Produtos
-                        </h2>
+            <input  
+                id="productSearch"  
+                type="search"  
+                class="search-input"  
+                placeholder="Buscar produto..."  
+            >  
 
-                    </div>
 
 
-                    <button
-                        id="newProductButton"
-                        type="button"
-                        class="primary-button small"
-                    >
-                        + Novo
-                    </button>
+            <div  
+                id="productsList"  
+                class="cards-list"  
+            ></div>  
 
-                </div>
 
 
-                <input
-                    id="productSearch"
-                    type="search"
-                    class="search-input"
-                    placeholder="Buscar produto..."
-                >
+            <!-- =========================================  
+                 CATEGORIAS  
+                 ========================================= -->  
 
+            <div class="section-block">  
 
+                <div class="subsection-heading">  
 
-                <div
-                    id="productsList"
-                    class="cards-list"
-                ></div>
+                    <div>  
 
+                        <span class="section-eyebrow">  
+                            ORGANIZAÇÃO  
+                        </span>  
 
+                        <h3>  
+                            Categorias  
+                        </h3>  
 
-                <!-- =========================================
-                     CATEGORIAS
-                     ========================================= -->
+                    </div>  
 
-                <div class="section-block">
 
-                    <div class="subsection-heading">
+                    <button  
+                        id="newCategoryButton"  
+                        type="button"  
+                        class="secondary-button"  
+                    >  
+                        + Categoria  
+                    </button>  
 
-                        <div>
+                </div>  
 
-                            <span class="section-eyebrow">
-                                ORGANIZAÇÃO
-                            </span>
 
-                            <h3>
-                                Categorias
-                            </h3>
+                <div  
+                    id="categoriesList"  
+                    class="cards-list"  
+                ></div>  
 
-                        </div>
+            </div>  
 
 
-                        <button
-                            id="newCategoryButton"
-                            type="button"
-                            class="secondary-button"
-                        >
-                            + Categoria
-                        </button>
 
-                    </div>
+            <!-- =========================================  
+                 CORES  
+                 ========================================= -->  
 
+            <div class="section-block">  
 
-                    <div
-                        id="categoriesList"
-                        class="cards-list"
-                    ></div>
+                <div class="subsection-heading">  
 
-                </div>
+                    <div>  
 
+                        <span class="section-eyebrow">  
+                            VARIAÇÕES  
+                        </span>  
 
+                        <h3>  
+                            Cores  
+                        </h3>  
 
-                <!-- =========================================
-                     CORES
-                     ========================================= -->
+                    </div>  
 
-                <div class="section-block">
 
-                    <div class="subsection-heading">
+                    <button  
+                        id="newColorButton"  
+                        type="button"  
+                        class="secondary-button"  
+                    >  
+                        + Cor  
+                    </button>  
 
-                        <div>
+                </div>  
 
-                            <span class="section-eyebrow">
-                                VARIAÇÕES
-                            </span>
 
-                            <h3>
-                                Cores
-                            </h3>
+                <div  
+                    id="colorsList"  
+                    class="cards-list"  
+                ></div>  
 
-                        </div>
+            </div>  
 
 
-                        <button
-                            id="newColorButton"
-                            type="button"
-                            class="secondary-button"
-                        >
-                            + Cor
-                        </button>
 
-                    </div>
+            <!-- =========================================  
+                 TAMANHOS  
+                 ========================================= -->  
 
+            <div class="section-block">  
 
-                    <div
-                        id="colorsList"
-                        class="cards-list"
-                    ></div>
+                <div class="subsection-heading">  
 
-                </div>
+                    <div>  
 
+                        <span class="section-eyebrow">  
+                            VARIAÇÕES  
+                        </span>  
 
+                        <h3>  
+                            Tamanhos  
+                        </h3>  
 
-                <!-- =========================================
-                     TAMANHOS
-                     ========================================= -->
+                    </div>  
 
-                <div class="section-block">
 
-                    <div class="subsection-heading">
+                    <button  
+                        id="newSizeButton"  
+                        type="button"  
+                        class="secondary-button"  
+                    >  
+                        + Tamanho  
+                    </button>  
 
-                        <div>
+                </div>  
 
-                            <span class="section-eyebrow">
-                                VARIAÇÕES
-                            </span>
 
-                            <h3>
-                                Tamanhos
-                            </h3>
+                <div  
+                    id="sizesList"  
+                    class="cards-list"  
+                ></div>  
 
-                        </div>
+            </div>  
 
+        </section>  
 
-                        <button
-                            id="newSizeButton"
-                            type="button"
-                            class="secondary-button"
-                        >
-                            + Tamanho
-                        </button>
 
-                    </div>
 
+        <!-- =============================================  
+             ESTOQUE  
+             ============================================= -->  
 
-                    <div
-                        id="sizesList"
-                        class="cards-list"
-                    ></div>
+        <section  
+            id="stockScreen"  
+            class="app-section"  
+            hidden  
+        >  
 
-                </div>
 
-            </section>
+            <div class="section-heading">  
 
+                <div>  
 
+                    <span class="section-eyebrow">  
+                        CONTROLE  
+                    </span>  
 
-            <!-- =============================================
-                 ESTOQUE
-                 ============================================= -->
+                    <h2>  
+                        Estoque  
+                    </h2>  
 
-            <section
-                id="stockScreen"
-                class="app-section"
-                hidden
-            >
+                </div>  
 
+            </div>  
 
-                <div class="section-heading">
 
-                    <div>
+            <div class="metrics-grid">  
 
-                        <span class="section-eyebrow">
-                            CONTROLE
-                        </span>
 
-                        <h2>
-                            Estoque
-                        </h2>
+                <article class="metric-card">  
 
-                    </div>
+                    <span>  
+                        Total  
+                    </span>  
 
-                </div>
+                    <strong id="stockTotal">  
+                        0  
+                    </strong>  
 
+                    <small>  
+                        Unidades  
+                    </small>  
 
-                <div class="metrics-grid">
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Total
-                        </span>
+                    <span>  
+                        Baixo  
+                    </span>  
 
-                        <strong id="stockTotal">
-                            0
-                        </strong>
+                    <strong id="stockLow">  
+                        0  
+                    </strong>  
 
-                        <small>
-                            Unidades
-                        </small>
+                    <small>  
+                        Variações  
+                    </small>  
 
-                    </article>
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Baixo
-                        </span>
+                    <span>  
+                        Zerado  
+                    </span>  
 
-                        <strong id="stockLow">
-                            0
-                        </strong>
+                    <strong id="stockZero">  
+                        0  
+                    </strong>  
 
-                        <small>
-                            Variações
-                        </small>
+                    <small>  
+                        Variações  
+                    </small>  
 
-                    </article>
+                </article>  
 
+            </div>  
 
-                    <article class="metric-card">
 
-                        <span>
-                            Zerado
-                        </span>
+            <input  
+                id="stockSearch"  
+                type="search"  
+                class="search-input"  
+                placeholder="Buscar no estoque..."  
+            >  
 
-                        <strong id="stockZero">
-                            0
-                        </strong>
 
-                        <small>
-                            Variações
-                        </small>
+            <div  
+                id="stockList"  
+                class="cards-list"  
+            ></div>  
 
-                    </article>
+        </section>  
 
-                </div>
 
 
-                <input
-                    id="stockSearch"
-                    type="search"
-                    class="search-input"
-                    placeholder="Buscar no estoque..."
-                >
+        <!-- =============================================  
+             VENDAS  
+             ============================================= -->  
 
+        <section  
+            id="salesScreen"  
+            class="app-section"  
+            hidden  
+        >  
 
-                <div
-                    id="stockList"
-                    class="cards-list"
-                ></div>
 
-            </section>
+            <div class="section-heading">  
 
+                <div>  
 
+                    <span class="section-eyebrow">  
+                        COMERCIAL  
+                    </span>  
 
-            <!-- =============================================
-                 VENDAS
-                 ============================================= -->
+                    <h2>  
+                        Vendas  
+                    </h2>  
 
-            <section
-                id="salesScreen"
-                class="app-section"
-                hidden
-            >
+                </div>  
 
 
-                <div class="section-heading">
+                <button  
+                    id="newSaleButton"  
+                    type="button"  
+                    class="primary-button small"  
+                >  
+                    + Venda  
+                </button>  
 
-                    <div>
+            </div>  
 
-                        <span class="section-eyebrow">
-                            COMERCIAL
-                        </span>
 
-                        <h2>
-                            Vendas
-                        </h2>
+            <div class="metrics-grid">  
 
-                    </div>
 
+                <article class="metric-card">  
 
-                    <button
-                        id="newSaleButton"
-                        type="button"
-                        class="primary-button small"
-                    >
-                        + Venda
-                    </button>
+                    <span>  
+                        Hoje  
+                    </span>  
 
-                </div>
+                    <strong id="salesToday">  
+                        R$ 0,00  
+                    </strong>  
 
+                    <small>  
+                        Vendas  
+                    </small>  
 
-                <div class="metrics-grid">
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Hoje
-                        </span>
+                    <span>  
+                        Pedidos  
+                    </span>  
 
-                        <strong id="salesToday">
-                            R$ 0,00
-                        </strong>
+                    <strong id="salesOrdersToday">  
+                        0  
+                    </strong>  
 
-                        <small>
-                            Vendas
-                        </small>
+                    <small>  
+                        Hoje  
+                    </small>  
 
-                    </article>
+                </article>  
 
+            </div>  
 
-                    <article class="metric-card">
 
-                        <span>
-                            Pedidos
-                        </span>
+            <input  
+                id="salesSearch"  
+                type="search"  
+                class="search-input"  
+                placeholder="Buscar venda..."  
+            >  
 
-                        <strong id="salesOrdersToday">
-                            0
-                        </strong>
 
-                        <small>
-                            Hoje
-                        </small>
+            <div  
+                id="salesList"  
+                class="cards-list"  
+            ></div>  
 
-                    </article>
+        </section>  
 
-                </div>
 
 
-                <input
-                    id="salesSearch"
-                    type="search"
-                    class="search-input"
-                    placeholder="Buscar venda..."
-                >
+        <!-- =============================================  
+             FINANCEIRO  
+             ============================================= -->  
 
+        <section  
+            id="financeScreen"  
+            class="app-section"  
+            hidden  
+        >  
 
-                <div
-                    id="salesList"
-                    class="cards-list"
-                ></div>
 
-            </section>
+            <div class="section-heading">  
 
+                <div>  
 
+                    <span class="section-eyebrow">  
+                        FINANCEIRO  
+                    </span>  
 
-            <!-- =============================================
-                 FINANCEIRO
-                 ============================================= -->
+                    <h2>  
+                        Financeiro  
+                    </h2>  
 
-            <section
-                id="financeScreen"
-                class="app-section"
-                hidden
-            >
+                </div>  
 
 
-                <div class="section-heading">
+                <button  
+                    id="newTransactionButton"  
+                    type="button"  
+                    class="primary-button small"  
+                >  
+                    + Lançamento  
+                </button>  
 
-                    <div>
+            </div>  
 
-                        <span class="section-eyebrow">
-                            FINANCEIRO
-                        </span>
 
-                        <h2>
-                            Financeiro
-                        </h2>
+            <div class="metrics-grid">  
 
-                    </div>
 
+                <article class="metric-card">  
 
-                    <button
-                        id="newTransactionButton"
-                        type="button"
-                        class="primary-button small"
-                    >
-                        + Lançamento
-                    </button>
+                    <span>  
+                        Receitas  
+                    </span>  
 
-                </div>
+                    <strong id="financeIncome">  
+                        R$ 0,00  
+                    </strong>  
 
+                    <small>  
+                        Período  
+                    </small>  
 
-                <div class="metrics-grid">
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Receitas
-                        </span>
+                    <span>  
+                        Despesas  
+                    </span>  
 
-                        <strong id="financeIncome">
-                            R$ 0,00
-                        </strong>
+                    <strong id="financeExpenses">  
+                        R$ 0,00  
+                    </strong>  
 
-                        <small>
-                            Período
-                        </small>
+                    <small>  
+                        Período  
+                    </small>  
 
-                    </article>
+                </article>  
 
 
-                    <article class="metric-card">
+                <article class="metric-card">  
 
-                        <span>
-                            Despesas
-                        </span>
+                    <span>  
+                        Resultado  
+                    </span>  
 
-                        <strong id="financeExpenses">
-                            R$ 0,00
-                        </strong>
+                    <strong id="financeBalance">  
+                        R$ 0,00  
+                    </strong>  
 
-                        <small>
-                            Período
-                        </small>
+                    <small>  
+                        Período  
+                    </small>  
 
-                    </article>
+                </article>  
 
+            </div>  
 
-                    <article class="metric-card">
 
-                        <span>
-                            Resultado
-                        </span>
+            <input  
+                id="financeSearch"  
+                type="search"  
+                class="search-input"  
+                placeholder="Buscar lançamento..."  
+            >  
 
-                        <strong id="financeBalance">
-                            R$ 0,00
-                        </strong>
 
-                        <small>
-                            Período
-                        </small>
+            <div  
+                id="financeList"  
+                class="cards-list"  
+            ></div>  
 
-                    </article>
+        </section>  
 
-                </div>
 
+    </div>  
 
-                <input
-                    id="financeSearch"
-                    type="search"
-                    class="search-input"
-                    placeholder="Buscar lançamento..."
-                >
 
 
-                <div
-                    id="financeList"
-                    class="cards-list"
-                ></div>
+    <!-- =================================================  
+         NAVEGAÇÃO INFERIOR  
+         ================================================= -->  
 
-            </section>
+    <nav class="bottom-navigation">  
 
+<button  
+    type="button"  
+    class="nav-item active"  
+    data-section="home"  
+>  
+    <span class="nav-icon" aria-hidden="true">  
+        <svg viewBox="0 0 24 24" fill="none">  
+            <path  
+                d="M3 10.8L12 3l9 7.8"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+                stroke-linejoin="round"  
+            />  
+            <path  
+                d="M5.5 9.8V21h13V9.8"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+            <path  
+                d="M9.5 21v-6h5v6"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+        </svg>  
+    </span>  
 
-        </div>
+    <small>  
+        Início  
+    </small>  
+</button>  
 
 
+<button  
+    type="button"  
+    class="nav-item"  
+    data-section="products"  
+>  
+    <span class="nav-icon" aria-hidden="true">  
+        <svg viewBox="0 0 24 24" fill="none">  
+            <path  
+                d="M6 8h12l1 13H5L6 8Z"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+            <path  
+                d="M9 9V6a3 3 0 0 1 6 0v3"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+            />  
+        </svg>  
+    </span>  
 
-        <!-- =================================================
-             NAVEGAÇÃO INFERIOR
-             ================================================= -->
+    <small>  
+        Produtos  
+    </small>  
+</button>  
 
-        <nav class="bottom-navigation">
 
-    <button
-        type="button"
-        class="nav-item active"
-        data-section="home"
-    >
-        <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M3 10.8L12 3l9 7.8"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-                <path
-                    d="M5.5 9.8V21h13V9.8"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-                <path
-                    d="M9.5 21v-6h5v6"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-            </svg>
-        </span>
+<button  
+    type="button"  
+    class="nav-item"  
+    data-section="stock"  
+>  
+    <span class="nav-icon" aria-hidden="true">  
+        <svg viewBox="0 0 24 24" fill="none">  
+            <path  
+                d="M3 7.5L12 3l9 4.5L12 12 3 7.5Z"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+            <path  
+                d="M3 7.5V16.5L12 21V12"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+            <path  
+                d="M21 7.5V16.5L12 21"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linejoin="round"  
+            />  
+        </svg>  
+    </span>  
 
-        <small>
-            Início
-        </small>
-    </button>
+    <small>  
+        Estoque  
+    </small>  
+</button>  
 
 
-    <button
-        type="button"
-        class="nav-item"
-        data-section="products"
-    >
-        <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M6 8h12l1 13H5L6 8Z"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-                <path
-                    d="M9 9V6a3 3 0 0 1 6 0v3"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-            </svg>
-        </span>
+<button  
+    type="button"  
+    class="nav-item"  
+    data-section="sales"  
+>  
+    <span class="nav-icon" aria-hidden="true">  
+        <svg viewBox="0 0 24 24" fill="none">  
+            <path  
+                d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+                stroke-linejoin="round"  
+            />  
+            <circle  
+                cx="10"  
+                cy="20"  
+                r="1.3"  
+                fill="currentColor"  
+            />  
+            <circle  
+                cx="18"  
+                cy="20"  
+                r="1.3"  
+                fill="currentColor"  
+            />  
+        </svg>  
+    </span>  
 
-        <small>
-            Produtos
-        </small>
-    </button>
+    <small>  
+        Vendas  
+    </small>  
+</button>  
 
 
-    <button
-        type="button"
-        class="nav-item"
-        data-section="stock"
-    >
-        <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M3 7.5L12 3l9 4.5L12 12 3 7.5Z"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-                <path
-                    d="M3 7.5V16.5L12 21V12"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-                <path
-                    d="M21 7.5V16.5L12 21"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                />
-            </svg>
-        </span>
+<button  
+    type="button"  
+    class="nav-item"  
+    data-section="finance"  
+>  
+    <span class="nav-icon" aria-hidden="true">  
+        <svg viewBox="0 0 24 24" fill="none">  
+            <path  
+                d="M4 19V10"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+            />  
+            <path  
+                d="M10 19V5"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+            />  
+            <path  
+                d="M16 19v-7"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+            />  
+            <path  
+                d="M22 19V3"  
+                stroke="currentColor"  
+                stroke-width="2"  
+                stroke-linecap="round"  
+            />  
+        </svg>  
+    </span>  
 
-        <small>
-            Estoque
-        </small>
-    </button>
+    <small>  
+        Financeiro  
+    </small>  
+</button>
 
+</nav>  </main>  
 
-    <button
-        type="button"
-        class="nav-item"
-        data-section="sales"
-    >
-        <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-                <circle
-                    cx="10"
-                    cy="20"
-                    r="1.3"
-                    fill="currentColor"
-                />
-                <circle
-                    cx="18"
-                    cy="20"
-                    r="1.3"
-                    fill="currentColor"
-                />
-            </svg>
-        </span>
 
-        <small>
-            Vendas
-        </small>
-    </button>
 
+<!-- =====================================================  
+     MODAL — PRODUTO  
+     ===================================================== -->  
 
-    <button
-        type="button"
-        class="nav-item"
-        data-section="finance"
-    >
-        <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M4 19V10"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-                <path
-                    d="M10 19V5"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-                <path
-                    d="M16 19v-7"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-                <path
-                    d="M22 19V3"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-            </svg>
-        </span>
+<div  
+    id="productModal"  
+    class="modal"  
+    hidden  
+>  
 
-        <small>
-            Financeiro
-        </small>
-    </button>
+    <div class="modal-content">  
 
-</nav>
+        <div class="modal-header">  
 
-    </main>
+            <div>  
 
+                <span class="section-eyebrow">  
+                    CATÁLOGO  
+                </span>  
 
+                <h2>  
+                    Novo produto  
+                </h2>  
 
-    <!-- =====================================================
-         MODAL — PRODUTO
-         ===================================================== -->
+            </div>  
 
-    <div
-        id="productModal"
-        class="modal"
-        hidden
-    >
 
-        <div class="modal-content">
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="productModal"  
+            >  
+                ×  
+            </button>  
 
-            <div class="modal-header">
+        </div>  
 
-                <div>
 
-                    <span class="section-eyebrow">
-                        CATÁLOGO
-                    </span>
+        <form id="productForm">  
 
-                    <h2>
-                        Novo produto
-                    </h2>
 
-                </div>
+            <input  
+                id="productId"  
+                type="hidden"  
+            >  
 
 
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="productModal"
-                >
-                    ×
-                </button>
+            <div class="form-group">  
 
-            </div>
+                <label for="productName">  
+                    Nome do produto  
+                </label>  
 
+                <input  
+                    id="productName"  
+                    type="text"  
+                    placeholder="Ex.: Legging Power"  
+                    required  
+                >  
 
-            <form id="productForm">
+            </div>  
 
 
-                <input
-                    id="productId"
-                    type="hidden"
-                >
+            <div class="form-group">  
 
+                <label for="productSku">  
+                    SKU  
+                </label>  
 
-                <div class="form-group">
+                <input  
+                    id="productSku"  
+                    type="text"  
+                    placeholder="Ex.: LEG-001"  
+                >  
 
-                    <label for="productName">
-                        Nome do produto
-                    </label>
+            </div>  
 
-                    <input
-                        id="productName"
-                        type="text"
-                        placeholder="Ex.: Legging Power"
-                        required
-                    >
 
-                </div>
+            <div class="form-group">  
 
+                <label for="productCategory">  
+                    Categoria  
+                </label>  
 
-                <div class="form-group">
+                <select id="productCategory">  
 
-                    <label for="productSku">
-                        SKU
-                    </label>
+                    <option value="">  
+                        Selecione  
+                    </option>  
 
-                    <input
-                        id="productSku"
-                        type="text"
-                        placeholder="Ex.: LEG-001"
-                    >
+                </select>  
 
-                </div>
+            </div>  
 
 
-                <div class="form-group">
+            <div class="form-group">  
 
-                    <label for="productCategory">
-                        Categoria
-                    </label>
+                <label for="productDescription">  
+                    Descrição  
+                </label>  
 
-                    <select id="productCategory">
+                <textarea  
+                    id="productDescription"  
+                    rows="4"  
+                    placeholder="Descrição do produto"  
+                ></textarea>  
 
-                        <option value="">
-                            Selecione
-                        </option>
+            </div>  
 
-                    </select>
 
-                </div>
+            <div class="form-row">  
 
 
-                <div class="form-group">
+                <div class="form-group">  
 
-                    <label for="productDescription">
-                        Descrição
-                    </label>
+                    <label for="productCostPrice">  
+                        Preço de custo  
+                    </label>  
 
-                    <textarea
-                        id="productDescription"
-                        rows="4"
-                        placeholder="Descrição do produto"
-                    ></textarea>
+                    <input  
+                        id="productCostPrice"  
+                        type="number"  
+                        min="0"  
+                        step="0.01"  
+                        inputmode="decimal"  
+                        placeholder="0,00"  
+                    >  
 
-                </div>
+                </div>  
 
 
-                <div class="form-row">
+                <div class="form-group">  
 
+                    <label for="productSalePrice">  
+                        Preço de venda  
+                    </label>  
 
-                    <div class="form-group">
+                    <input  
+                        id="productSalePrice"  
+                        type="number"  
+                        min="0"  
+                        step="0.01"  
+                        inputmode="decimal"  
+                        placeholder="0,00"  
+                        required  
+                    >  
 
-                        <label for="productCostPrice">
-                            Preço de custo
-                        </label>
+                </div>  
 
-                        <input
-                            id="productCostPrice"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            inputmode="decimal"
-                            placeholder="0,00"
-                        >
 
-                    </div>
+            </div>  
 
 
-                    <div class="form-group">
+            <div class="form-group">  
 
-                        <label for="productSalePrice">
-                            Preço de venda
-                        </label>
+                <label for="productMinimumStock">  
+                    Estoque mínimo  
+                </label>  
 
-                        <input
-                            id="productSalePrice"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            inputmode="decimal"
-                            placeholder="0,00"
-                            required
-                        >
+                <input  
+                    id="productMinimumStock"  
+                    type="number"  
+                    min="0"  
+                    step="1"  
+                    inputmode="numeric"  
+                    value="0"  
+                >  
 
-                    </div>
+            </div>  
 
 
-                </div>
+            <label  
+                class="checkbox-label"  
+            >  
 
+                <input  
+                    id="productActive"  
+                    type="checkbox"  
+                    checked  
+                >  
 
-                <div class="form-group">
+                <span>  
+                    Produto ativo  
+                </span>  
 
-                    <label for="productMinimumStock">
-                        Estoque mínimo
-                    </label>
+            </label>  
 
-                    <input
-                        id="productMinimumStock"
-                        type="number"
-                        min="0"
-                        step="1"
-                        inputmode="numeric"
-                        value="0"
-                    >
 
-                </div>
 
+            <!-- =========================================  
+ FOTOS DO PRODUTO  
+ ========================================= -->
 
-                <label
-                    class="checkbox-label"
-                >
+<div class="variation-section product-photo-section">  <div class="variation-heading">  
 
-                    <input
-                        id="productActive"
-                        type="checkbox"
-                        checked
-                    >
+    <div>  
 
-                    <span>
-                        Produto ativo
-                    </span>
+        <h3>  
+            Fotos do produto  
+        </h3>  
 
-                </label>
+        <p>  
+            Adicione fotos para identificar melhor a peça.  
+        </p>  
 
+    </div>  
 
+</div>  
 
-                <!-- =========================================
-                     CORES
-                     ========================================= -->
 
-                <div class="variation-section">
+<label  
+    class="product-photo-upload"  
+    for="productPhotoInput"  
+>  
 
-                    <div class="variation-heading">
+    <div class="product-photo-upload-icon">  
+        📷  
+    </div>  
 
-                        <div>
+    <strong>  
+        Adicionar fotos  
+    </strong>  
 
-                            <h3>
-                                Cores disponíveis
-                            </h3>
+    <span>  
+        Toque para selecionar uma ou mais fotos.  
+    </span>  
 
-                            <p>
-                                Selecione as cores que esse produto possui.
-                            </p>
+</label>  
 
-                        </div>
 
-                    </div>
+<input  
+    id="productPhotoInput"  
+    type="file"  
+    accept="image/*"  
+    multiple  
+    hidden  
+>  
 
 
-                    <div
-                        id="productColors"
-                        class="variation-options"
-                    ></div>
+<div  
+    id="productPhotoPreview"  
+    class="product-photo-preview"  
+></div>
 
-                </div>
+</div>  <!-- =========================================  
+     VARIAÇÕES DO PRODUTO  
+     ========================================= -->  <div class="variation-section">  <div class="variation-heading">  
 
+    <div>  
 
+        <h3>  
+            Variações do produto  
+        </h3>  
 
-                <!-- =========================================
-                     TAMANHOS
-                     ========================================= -->
+        <p>  
+            Cadastre somente as combinações que realmente existem.  
+        </p>  
 
-                <div class="variation-section">
+    </div>  
 
-                    <div class="variation-heading">
+</div>  
 
-                        <div>
 
-                            <h3>
-                                Tamanhos disponíveis
-                            </h3>
+<!-- =========================================  
+     ADICIONAR VARIAÇÃO  
+     ========================================= -->  
 
-                            <p>
-                                Selecione os tamanhos que esse produto possui.
-                            </p>
+<div class="product-variation-form">  
 
-                        </div>
+    <div class="product-variation-field">  
 
-                    </div>
+        <label for="productVariationColor">  
+            Cor  
+        </label>  
 
+        <select id="productVariationColor">  
 
-                    <div
-                        id="productSizes"
-                        class="variation-options"
-                    ></div>
+            <option value="">  
+                Selecione a cor  
+            </option>  
 
-                </div>
+        </select>  
 
+    </div>  
 
 
-                <!-- =========================================
-                     VARIAÇÕES GERADAS
-                     ========================================= -->
+    <div class="product-variation-field">  
 
-                <div class="variation-section">
+        <label for="productVariationSize">  
+            Tamanho  
+        </label>  
 
-                    <div class="variation-heading">
+        <select id="productVariationSize">  
 
-                        <div>
+            <option value="">  
+                Selecione o tamanho  
+            </option>  
 
-                            <h3>
-                                Variações geradas
-                            </h3>
+        </select>  
 
-                            <p>
-                                As combinações de cor e tamanho serão criadas automaticamente.
-                            </p>
+    </div>  
 
-                        </div>
 
-                    </div>
+    <div class="product-variation-field">  
 
+        <label for="productVariationQuantity">  
+            Quantidade disponível  
+        </label>  
 
-                    <div
-                        id="productVariantsPreview"
-                        class="variation-preview"
-                    ></div>
+        <input  
+            id="productVariationQuantity"  
+            type="number"  
+            min="0"  
+            step="1"  
+            value="1"  
+            inputmode="numeric"  
+            placeholder="Ex.: 3"  
+        >  
 
-                </div>
+    </div>  
 
 
+    <button  
+        id="addProductVariationButton"  
+        type="button"  
+        class="secondary-button"  
+    >  
+        + Adicionar variação  
+    </button>  
 
-                <div
-                    id="productFormMessage"
-                    class="form-message"
-                ></div>
+</div>  
 
 
-                <div class="modal-actions">
+<!-- =========================================  
+     LISTA DE VARIAÇÕES  
+     ========================================= -->  
 
+<div  
+    id="productVariantsList"  
+    class="product-variants-list"  
+>  
 
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="productModal"
-                    >
-                        Cancelar
-                    </button>
+    <div class="empty-state compact">  
 
+        <strong>  
+            Nenhuma variação adicionada  
+        </strong>  
 
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Salvar produto
-                    </button>
+        <p>  
+            Selecione cor, tamanho e quantidade acima.  
+        </p>  
 
+    </div>  
 
-                </div>
+</div>  
 
 
-            </form>
+<!-- =========================================  
+     CRIAÇÃO EM LOTE  
+     ========================================= -->  
 
-        </div>
+<div class="product-variation-batch">  
 
-    </div>
+    <button  
+        id="openBatchVariationButton"  
+        type="button"  
+        class="secondary-button"  
+    >  
+        ⚡ Gerar várias combinações  
+    </button>  
 
-
-
-    <!-- =====================================================
-         MODAL — CATEGORIA
-         ===================================================== -->
-
-    <div
-        id="categoryModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-
-                    <span class="section-eyebrow">
-                        ORGANIZAÇÃO
-                    </span>
-
-                    <h2>
-                        Categoria
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="categoryModal"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="categoryForm">
-
-                <input
-                    id="categoryId"
-                    type="hidden"
-                >
-
-
-                <div class="form-group">
-
-                    <label for="categoryName">
-                        Nome
-                    </label>
-
-                    <input
-                        id="categoryName"
-                        type="text"
-                        placeholder="Ex.: Leggings"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="categoryDescription">
-                        Descrição
-                    </label>
-
-                    <textarea
-                        id="categoryDescription"
-                        rows="4"
-                        placeholder="Descrição da categoria"
-                    ></textarea>
-
-                </div>
-
-
-                <label class="checkbox-label">
-
-                    <input
-                        id="categoryActive"
-                        type="checkbox"
-                        checked
-                    >
-
-                    <span>
-                        Categoria ativa
-                    </span>
-
-                </label>
-
-
-                <div
-                    id="categoryFormMessage"
-                    class="form-message"
-                ></div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="categoryModal"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Salvar
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         MODAL — COR
-         ===================================================== -->
-
-    <div
-        id="colorModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-
-                    <span class="section-eyebrow">
-                        VARIAÇÕES
-                    </span>
-
-                    <h2>
-                        Cor
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="colorModal"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="colorForm">
-
-                <input
-                    id="colorId"
-                    type="hidden"
-                >
-
-
-                <div class="form-group">
-
-                    <label for="colorName">
-                        Nome da cor
-                    </label>
-
-                    <input
-                        id="colorName"
-                        type="text"
-                        placeholder="Ex.: Rosa"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Cor
-                    </label>
-
-
-                    <div class="color-input-row">
-
-                        <input
-                            id="colorHex"
-                            type="color"
-                            value="#E8A0B8"
-                        >
-
-
-                        <input
-                            id="colorHexText"
-                            type="text"
-                            value="#E8A0B8"
-                            maxlength="7"
-                            placeholder="#E8A0B8"
-                        >
-
-                    </div>
-
-
-                    <div class="color-preview-wrapper">
-
-                        <span>
-                            Pré-visualização
-                        </span>
-
-                        <span
-                            id="colorPreview"
-                            class="color-preview"
-                            style="background:#E8A0B8;"
-                        ></span>
-
-                    </div>
-
-                </div>
-
-
-                <label class="checkbox-label">
-
-                    <input
-                        id="colorActive"
-                        type="checkbox"
-                        checked
-                    >
-
-                    <span>
-                        Cor ativa
-                    </span>
-
-                </label>
-
-
-                <div
-                    id="colorFormMessage"
-                    class="form-message"
-                ></div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="colorModal"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Salvar
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         MODAL — TAMANHO
-         ===================================================== -->
-
-    <div
-        id="sizeModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-
-                    <span class="section-eyebrow">
-                        VARIAÇÕES
-                    </span>
-
-                    <h2>
-                        Tamanho
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="sizeModal"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="sizeForm">
-
-                <input
-                    id="sizeId"
-                    type="hidden"
-                >
-
-
-                <div class="form-group">
-
-                    <label for="sizeName">
-                        Tamanho
-                    </label>
-
-                    <input
-                        id="sizeName"
-                        type="text"
-                        placeholder="Ex.: M"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="sizeDisplayOrder">
-                        Ordem de exibição
-                    </label>
-
-                    <input
-                        id="sizeDisplayOrder"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value="0"
-                    >
-
-                </div>
-
-
-                <label class="checkbox-label">
-
-                    <input
-                        id="sizeActive"
-                        type="checkbox"
-                        checked
-                    >
-
-                    <span>
-                        Tamanho ativo
-                    </span>
-
-                </label>
-
-
-                <div
-                    id="sizeFormMessage"
-                    class="form-message"
-                ></div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="sizeModal"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Salvar
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         MODAL — VENDA
-         ===================================================== -->
-
-    <div
-        id="saleModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-
-                    <span class="section-eyebrow">
-                        COMERCIAL
-                    </span>
-
-                    <h2>
-                        Nova venda
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="saleModal"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="saleForm">
-
-
-                <div class="form-group">
-
-                    <label>
-                        Produtos
-                    </label>
-
-                    <div
-                        id="saleItems"
-                        class="sale-items"
-                    ></div>
-
-                </div>
-
-
-                <button
-                    id="addSaleItemButton"
-                    type="button"
-                    class="secondary-button"
-                >
-                    + Adicionar produto
-                </button>
-
-
-                <div class="form-group">
-
-                    <label for="saleDiscount">
-                        Desconto
-                    </label>
-
-                    <input
-                        id="saleDiscount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputmode="decimal"
-                        value="0"
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="salePaymentMethod">
-                        Forma de pagamento
-                    </label>
-
-                    <select id="salePaymentMethod">
-
-                        <option value="">
-                            Selecione
-                        </option>
-
-                        <option value="Dinheiro">
-                            Dinheiro
-                        </option>
-
-                        <option value="Pix">
-                            Pix
-                        </option>
-
-                        <option value="Cartão de débito">
-                            Cartão de débito
-                        </option>
-
-                        <option value="Cartão de crédito">
-                            Cartão de crédito
-                        </option>
-
-                        <option value="Transferência">
-                            Transferência
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="saleNotes">
-                        Observações
-                    </label>
-
-                    <textarea
-                        id="saleNotes"
-                        rows="3"
-                        placeholder="Observações da venda"
-                    ></textarea>
-
-                </div>
-
-
-                <div class="sale-total-box">
-
-                    <span>
-                        Total
-                    </span>
-
-                    <strong id="saleTotal">
-                        R$ 0,00
-                    </strong>
-
-                </div>
-
-
-                <div
-                    id="saleFormMessage"
-                    class="form-message"
-                ></div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="saleModal"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Registrar venda
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         MODAL — FINANCEIRO
-         ===================================================== -->
-
-    <div
-        id="transactionModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-
-                    <span class="section-eyebrow">
-                        FINANCEIRO
-                    </span>
-
-                    <h2>
-                        Lançamento
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    data-close-modal="transactionModal"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="transactionForm">
-
-
-                <div class="form-group">
-
-                    <label for="transactionType">
-                        Tipo
-                    </label>
-
-                    <select id="transactionType" required>
-
-                        <option value="">
-                            Selecione
-                        </option>
-
-                        <option value="income">
-                            Receita
-                        </option>
-
-                        <option value="expense">
-                            Despesa
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionCategory">
-                        Categoria
-                    </label>
-
-                    <input
-                        id="transactionCategory"
-                        type="text"
-                        placeholder="Ex.: Fornecedores"
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionDescription">
-                        Descrição
-                    </label>
-
-                    <input
-                        id="transactionDescription"
-                        type="text"
-                        placeholder="Ex.: Compra de mercadorias"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionAmount">
-                        Valor
-                    </label>
-
-                    <input
-                        id="transactionAmount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputmode="decimal"
-                        placeholder="0,00"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionDate">
-                        Data
-                    </label>
-
-                    <input
-                        id="transactionDate"
-                        type="date"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionPaymentMethod">
-                        Forma de pagamento
-                    </label>
-
-                    <select id="transactionPaymentMethod">
-
-                        <option value="">
-                            Selecione
-                        </option>
-
-                        <option value="Dinheiro">
-                            Dinheiro
-                        </option>
-
-                        <option value="Pix">
-                            Pix
-                        </option>
-
-                        <option value="Cartão de débito">
-                            Cartão de débito
-                        </option>
-
-                        <option value="Cartão de crédito">
-                            Cartão de crédito
-                        </option>
-
-                        <option value="Transferência">
-                            Transferência
-                        </option>
-
-                        <option value="Boleto">
-                            Boleto
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="transactionNotes">
-                        Observações
-                    </label>
-
-                    <textarea
-                        id="transactionNotes"
-                        rows="3"
-                        placeholder="Observações"
-                    ></textarea>
-
-                </div>
-
-
-                <div
-                    id="transactionFormMessage"
-                    class="form-message"
-                ></div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="transactionModal"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Salvar lançamento
-                    </button>
-
-                </div>
-
-
-            </form>
-
-        </div>
-
-    </div>
-
+    <p>  
+        Use esta opção quando o produto possuir muitas combinações de cor e tamanho.  
+    </p>  
 
 </div>
 
+</div>  
+                <div  
+                    id="productFormMessage"  
+                    class="form-message"  
+                ></div>  <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="productModal"  
+                >  
+                    Cancelar  
+                </button>  
 
 
-<!-- =====================================================
-     SUPABASE
-     ===================================================== -->
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Salvar produto  
+                </button>  
 
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
-<script src="js/supabase.js"></script>
-
-<script src="js/app.js"></script>
+            </div>  
 
 
-<!-- =====================================================
-     SERVICE WORKER
-     ===================================================== -->
+        </form>  
 
-<script>
+    </div>  
 
-if ("serviceWorker" in navigator) {
-
-    window.addEventListener(
-        "load",
-        () => {
-
-            navigator.serviceWorker.register(
-                "service-worker.js"
-            ).catch(
-                error =>
-                    console.error(
-                        "Erro no Service Worker:",
-                        error
-                    )
-            );
-
-        }
-    );
-
-}
-
-</script>
+</div>  
 
 
-</body>
+<!-- =====================================================  
+     MODAL — CATEGORIA  
+     ===================================================== -->  
 
-</html>
+<div  
+    id="categoryModal"  
+    class="modal"  
+    hidden  
+>  
+
+    <div class="modal-content">  
+
+        <div class="modal-header">  
+
+            <div>  
+
+                <span class="section-eyebrow">  
+                    ORGANIZAÇÃO  
+                </span>  
+
+                <h2>  
+                    Categoria  
+                </h2>  
+
+            </div>  
+
+
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="categoryModal"  
+            >  
+                ×  
+            </button>  
+
+        </div>  
+
+
+        <form id="categoryForm">  
+
+            <input  
+                id="categoryId"  
+                type="hidden"  
+            >  
+
+
+            <div class="form-group">  
+
+                <label for="categoryName">  
+                    Nome  
+                </label>  
+
+                <input  
+                    id="categoryName"  
+                    type="text"  
+                    placeholder="Ex.: Leggings"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="categoryDescription">  
+                    Descrição  
+                </label>  
+
+                <textarea  
+                    id="categoryDescription"  
+                    rows="4"  
+                    placeholder="Descrição da categoria"  
+                ></textarea>  
+
+            </div>  
+
+
+            <label class="checkbox-label">  
+
+                <input  
+                    id="categoryActive"  
+                    type="checkbox"  
+                    checked  
+                >  
+
+                <span>  
+                    Categoria ativa  
+                </span>  
+
+            </label>  
+
+
+            <div  
+                id="categoryFormMessage"  
+                class="form-message"  
+            ></div>  
+
+
+            <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="categoryModal"  
+                >  
+                    Cancelar  
+                </button>  
+
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Salvar  
+                </button>  
+
+            </div>  
+
+        </form>  
+
+    </div>  
+
+</div>  
+
+
+
+<!-- =====================================================  
+     MODAL — COR  
+     ===================================================== -->  
+
+<div  
+    id="colorModal"  
+    class="modal"  
+    hidden  
+>  
+
+    <div class="modal-content">  
+
+        <div class="modal-header">  
+
+            <div>  
+
+                <span class="section-eyebrow">  
+                    VARIAÇÕES  
+                </span>  
+
+                <h2>  
+                    Cor  
+                </h2>  
+
+            </div>  
+
+
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="colorModal"  
+            >  
+                ×  
+            </button>  
+
+        </div>  
+
+
+        <form id="colorForm">  
+
+            <input  
+                id="colorId"  
+                type="hidden"  
+            >  
+
+
+            <div class="form-group">  
+
+                <label for="colorName">  
+                    Nome da cor  
+                </label>  
+
+                <input  
+                    id="colorName"  
+                    type="text"  
+                    placeholder="Ex.: Rosa"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label>  
+                    Cor  
+                </label>  
+
+
+                <div class="color-input-row">  
+
+                    <input  
+                        id="colorHex"  
+                        type="color"  
+                        value="#E8A0B8"  
+                    >  
+
+
+                    <input  
+                        id="colorHexText"  
+                        type="text"  
+                        value="#E8A0B8"  
+                        maxlength="7"  
+                        placeholder="#E8A0B8"  
+                    >  
+
+                </div>  
+
+
+                <div class="color-preview-wrapper">  
+
+                    <span>  
+                        Pré-visualização  
+                    </span>  
+
+                    <span  
+                        id="colorPreview"  
+                        class="color-preview"  
+                        style="background:#E8A0B8;"  
+                    ></span>  
+
+                </div>  
+
+            </div>  
+
+
+            <label class="checkbox-label">  
+
+                <input  
+                    id="colorActive"  
+                    type="checkbox"  
+                    checked  
+                >  
+
+                <span>  
+                    Cor ativa  
+                </span>  
+
+            </label>  
+
+
+            <div  
+                id="colorFormMessage"  
+                class="form-message"  
+            ></div>  
+
+
+            <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="colorModal"  
+                >  
+                    Cancelar  
+                </button>  
+
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Salvar  
+                </button>  
+
+            </div>  
+
+        </form>  
+
+    </div>  
+
+</div>  
+
+
+
+<!-- =====================================================  
+     MODAL — TAMANHO  
+     ===================================================== -->  
+
+<div  
+    id="sizeModal"  
+    class="modal"  
+    hidden  
+>  
+
+    <div class="modal-content">  
+
+        <div class="modal-header">  
+
+            <div>  
+
+                <span class="section-eyebrow">  
+                    VARIAÇÕES  
+                </span>  
+
+                <h2>  
+                    Tamanho  
+                </h2>  
+
+            </div>  
+
+
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="sizeModal"  
+            >  
+                ×  
+            </button>  
+
+        </div>  
+
+
+        <form id="sizeForm">  
+
+            <input  
+                id="sizeId"  
+                type="hidden"  
+            >  
+
+
+            <div class="form-group">  
+
+                <label for="sizeName">  
+                    Tamanho  
+                </label>  
+
+                <input  
+                    id="sizeName"  
+                    type="text"  
+                    placeholder="Ex.: M"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="sizeDisplayOrder">  
+                    Ordem de exibição  
+                </label>  
+
+                <input  
+                    id="sizeDisplayOrder"  
+                    type="number"  
+                    min="0"  
+                    step="1"  
+                    value="0"  
+                >  
+
+            </div>  
+
+
+            <label class="checkbox-label">  
+
+                <input  
+                    id="sizeActive"  
+                    type="checkbox"  
+                    checked  
+                >  
+
+                <span>  
+                    Tamanho ativo  
+                </span>  
+
+            </label>  
+
+
+            <div  
+                id="sizeFormMessage"  
+                class="form-message"  
+            ></div>  
+
+
+            <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="sizeModal"  
+                >  
+                    Cancelar  
+                </button>  
+
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Salvar  
+                </button>  
+
+            </div>  
+
+        </form>  
+
+    </div>  
+
+</div>  
+
+
+
+<!-- =====================================================  
+     MODAL — VENDA  
+     ===================================================== -->  
+
+<div  
+    id="saleModal"  
+    class="modal"  
+    hidden  
+>  
+
+    <div class="modal-content">  
+
+        <div class="modal-header">  
+
+            <div>  
+
+                <span class="section-eyebrow">  
+                    COMERCIAL  
+                </span>  
+
+                <h2>  
+                    Nova venda  
+                </h2>  
+
+            </div>  
+
+
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="saleModal"  
+            >  
+                ×  
+            </button>  
+
+        </div>  
+
+
+        <form id="saleForm">  
+
+
+            <div class="form-group">  
+
+                <label>  
+                    Produtos  
+                </label>  
+
+                <div  
+                    id="saleItems"  
+                    class="sale-items"  
+                ></div>  
+
+            </div>  
+
+
+            <button  
+                id="addSaleItemButton"  
+                type="button"  
+                class="secondary-button"  
+            >  
+                + Adicionar produto  
+            </button>  
+
+
+            <div class="form-group">  
+
+                <label for="saleDiscount">  
+                    Desconto  
+                </label>  
+
+                <input  
+                    id="saleDiscount"  
+                    type="number"  
+                    min="0"  
+                    step="0.01"  
+                    inputmode="decimal"  
+                    value="0"  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="salePaymentMethod">  
+                    Forma de pagamento  
+                </label>  
+
+                <select id="salePaymentMethod">  
+
+                    <option value="">  
+                        Selecione  
+                    </option>  
+
+                    <option value="Dinheiro">  
+                        Dinheiro  
+                    </option>  
+
+                    <option value="Pix">  
+                        Pix  
+                    </option>  
+
+                    <option value="Cartão de débito">  
+                        Cartão de débito  
+                    </option>  
+
+                    <option value="Cartão de crédito">  
+                        Cartão de crédito  
+                    </option>  
+
+                    <option value="Transferência">  
+                        Transferência  
+                    </option>  
+
+                </select>  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="saleNotes">  
+                    Observações  
+                </label>  
+
+                <textarea  
+                    id="saleNotes"  
+                    rows="3"  
+                    placeholder="Observações da venda"  
+                ></textarea>  
+
+            </div>  
+
+
+            <div class="sale-total-box">  
+
+                <span>  
+                    Total  
+                </span>  
+
+                <strong id="saleTotal">  
+                    R$ 0,00  
+                </strong>  
+
+            </div>  
+
+
+            <div  
+                id="saleFormMessage"  
+                class="form-message"  
+            ></div>  
+
+
+            <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="saleModal"  
+                >  
+                    Cancelar  
+                </button>  
+
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Registrar venda  
+                </button>  
+
+            </div>  
+
+        </form>  
+
+    </div>  
+
+</div>  
+
+
+
+<!-- =====================================================  
+     MODAL — FINANCEIRO  
+     ===================================================== -->  
+
+<div  
+    id="transactionModal"  
+    class="modal"  
+    hidden  
+>  
+
+    <div class="modal-content">  
+
+        <div class="modal-header">  
+
+            <div>  
+
+                <span class="section-eyebrow">  
+                    FINANCEIRO  
+                </span>  
+
+                <h2>  
+                    Lançamento  
+                </h2>  
+
+            </div>  
+
+
+            <button  
+                type="button"  
+                class="modal-close"  
+                data-close-modal="transactionModal"  
+            >  
+                ×  
+            </button>  
+
+        </div>  
+
+
+        <form id="transactionForm">  
+
+
+            <div class="form-group">  
+
+                <label for="transactionType">  
+                    Tipo  
+                </label>  
+
+                <select id="transactionType" required>  
+
+                    <option value="">  
+                        Selecione  
+                    </option>  
+
+                    <option value="income">  
+                        Receita  
+                    </option>  
+
+                    <option value="expense">  
+                        Despesa  
+                    </option>  
+
+                </select>  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionCategory">  
+                    Categoria  
+                </label>  
+
+                <input  
+                    id="transactionCategory"  
+                    type="text"  
+                    placeholder="Ex.: Fornecedores"  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionDescription">  
+                    Descrição  
+                </label>  
+
+                <input  
+                    id="transactionDescription"  
+                    type="text"  
+                    placeholder="Ex.: Compra de mercadorias"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionAmount">  
+                    Valor  
+                </label>  
+
+                <input  
+                    id="transactionAmount"  
+                    type="number"  
+                    min="0"  
+                    step="0.01"  
+                    inputmode="decimal"  
+                    placeholder="0,00"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionDate">  
+                    Data  
+                </label>  
+
+                <input  
+                    id="transactionDate"  
+                    type="date"  
+                    required  
+                >  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionPaymentMethod">  
+                    Forma de pagamento  
+                </label>  
+
+                <select id="transactionPaymentMethod">  
+
+                    <option value="">  
+                        Selecione  
+                    </option>  
+
+                    <option value="Dinheiro">  
+                        Dinheiro  
+                    </option>  
+
+                    <option value="Pix">  
+                        Pix  
+                    </option>  
+
+                    <option value="Cartão de débito">  
+                        Cartão de débito  
+                    </option>  
+
+                    <option value="Cartão de crédito">  
+                        Cartão de crédito  
+                    </option>  
+
+                    <option value="Transferência">  
+                        Transferência  
+                    </option>  
+
+                    <option value="Boleto">  
+                        Boleto  
+                    </option>  
+
+                </select>  
+
+            </div>  
+
+
+            <div class="form-group">  
+
+                <label for="transactionNotes">  
+                    Observações  
+                </label>  
+
+                <textarea  
+                    id="transactionNotes"  
+                    rows="3"  
+                    placeholder="Observações"  
+                ></textarea>  
+
+            </div>  
+
+
+            <div  
+                id="transactionFormMessage"  
+                class="form-message"  
+            ></div>  
+
+
+            <div class="modal-actions">  
+
+                <button  
+                    type="button"  
+                    class="secondary-button"  
+                    data-close-modal="transactionModal"  
+                >  
+                    Cancelar  
+                </button>  
+
+                <button  
+                    type="submit"  
+                    class="primary-button"  
+                >  
+                    Salvar lançamento  
+                </button>  
+
+            </div>  
+
+
+        </form>  
+
+    </div>  
+
+</div>
+
+</div>  <!-- =====================================================  
+     SUPABASE  
+     ===================================================== -->  <script  
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"  
+></script>  <script src="js/supabase.js"></script>  <script src="js/app.js"></script>  <!-- =====================================================  
+     SERVICE WORKER  
+     ===================================================== -->  <script>  
+  
+if ("serviceWorker" in navigator) {  
+  
+    window.addEventListener(  
+        "load",  
+        () => {  
+  
+            navigator.serviceWorker.register(  
+                "service-worker.js"  
+            ).catch(  
+                error =>  
+                    console.error(  
+                        "Erro no Service Worker:",  
+                        error  
+                    )  
+            );  
+  
+        }  
+    );  
+  
+}  
+  
+</script>  </body>  </html>  
