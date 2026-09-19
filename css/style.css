@@ -2794,3 +2794,61 @@ textarea:disabled {
         border-radius: 15px;
     }
 }
+/* =========================================================
+   MABIJUFIT — ÍCONES SVG DOS BOTÕES
+   ========================================================= */
+
+.category-card-actions button::before,
+.category-card-actions button::after,
+.color-card-actions button::before,
+.color-card-actions button::after,
+.size-card-actions button::before,
+.size-card-actions button::after {
+    content: none !important;
+    display: none !important;
+}
+
+.category-card-actions button,
+.color-card-actions button,
+.size-card-actions button {
+    font-size: 0 !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon {
+    width: 18px;
+    height: 18px;
+
+    display: block;
+
+    flex-shrink: 0;
+}
+
+.category-card-actions .icon-button:not(.danger),
+.color-card-actions .icon-button:not(.danger),
+.size-card-actions .icon-button:not(.danger) {
+    color: var(--gray-700);
+}
+
+.category-card-actions .icon-button.danger,
+.color-card-actions .icon-button.danger,
+.size-card-actions .icon-button.danger {
+    color: #c95f79;
+}
+
+.category-card-actions .icon-button:hover,
+.color-card-actions .icon-button:hover,
+.size-card-actions .icon-button:hover {
+    background: var(--pink-100);
+    color: var(--pink-600);
+}
+
+.category-card-actions .icon-button.danger:hover,
+.color-card-actions .icon-button.danger:hover,
+.size-card-actions .icon-button.danger:hover {
+    background: #fde8ed;
+    color: #c44563;
+}
