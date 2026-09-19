@@ -2110,3 +2110,327 @@ div[hidden] {
         font-size: 10px;
     }
 }
+/* =========================================================
+   CORREÇÃO DOS COMPONENTES VISUAIS
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   CHECKBOXES
+   --------------------------------------------------------- */
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    min-height: 42px;
+
+    color: #302c30;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 22px;
+    height: 22px;
+
+    min-width: 22px;
+    min-height: 22px;
+
+    margin: 0;
+
+    border: 2px solid #d7d0d5;
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    position: relative;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+    background: #d989a4;
+    border-color: #d989a4;
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+    content: "";
+
+    position: absolute;
+
+    left: 6px;
+    top: 2px;
+
+    width: 6px;
+    height: 11px;
+
+    border-right: 3px solid #ffffff;
+    border-bottom: 3px solid #ffffff;
+
+    transform: rotate(45deg);
+}
+
+.checkbox-label input[type="checkbox"]:active {
+    transform: scale(0.92);
+}
+
+
+/* ---------------------------------------------------------
+   CARDS DE CORES
+   --------------------------------------------------------- */
+
+.color-card {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    min-height: 68px;
+
+    padding: 12px 14px;
+}
+
+.color-card-swatch {
+    display: block;
+
+    width: 42px !important;
+    height: 42px !important;
+
+    min-width: 42px !important;
+    min-height: 42px !important;
+
+    flex: 0 0 42px;
+
+    border-radius: 50% !important;
+
+    border: 1px solid rgba(0, 0, 0, 0.10);
+
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+
+    background-color: #eeeeee;
+}
+
+.color-card-info,
+.color-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.color-card-name {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.color-card-code {
+    margin-top: 2px;
+
+    color: #918991;
+
+    font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   TAMANHOS
+   --------------------------------------------------------- */
+
+.size-card {
+    min-height: 68px;
+
+    padding: 12px 14px;
+}
+
+.size-badge {
+    width: 42px;
+    height: 42px;
+
+    min-width: 42px;
+
+    border-radius: 50%;
+
+    font-size: 13px;
+}
+
+.size-card-name {
+    font-size: 14px;
+}
+
+.size-card-order {
+    font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   OPÇÕES DE VARIAÇÃO
+   --------------------------------------------------------- */
+
+#productColors,
+#productSizes {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+
+/*
+   O JavaScript pode gerar as opções diretamente como
+   labels ou elementos de opção. Estas regras deixam
+   ambos visualmente consistentes.
+*/
+
+#productColors label,
+#productSizes label {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 44px;
+    min-height: 38px;
+
+    padding: 0 12px;
+
+    border: 1px solid #f0d8e1;
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    color: #6f6670;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#productColors input[type="checkbox"],
+#productSizes input[type="checkbox"] {
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+#productColors input[type="checkbox"]:checked + label,
+#productSizes input[type="checkbox"]:checked + label {
+    background: #d989a4;
+
+    border-color: #d989a4;
+
+    color: #ffffff;
+}
+
+
+/* ---------------------------------------------------------
+   SEÇÃO DE VARIAÇÕES DO PRODUTO
+   --------------------------------------------------------- */
+
+.variation-section {
+    padding: 14px;
+
+    border-radius: 17px;
+
+    background: #fff7fa;
+
+    border: 1px solid #f7dce6;
+}
+
+.variation-section h3 {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.variation-section p {
+    margin-top: 4px;
+
+    color: #777077;
+
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* ---------------------------------------------------------
+   MODAIS
+   --------------------------------------------------------- */
+
+.modal-content {
+    width: 100%;
+
+    padding: 22px 18px 24px;
+}
+
+.modal-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 4px;
+}
+
+.modal-actions > button {
+    flex: 1;
+
+    min-height: 46px;
+}
+
+
+/* ---------------------------------------------------------
+   INPUTS DE PRODUTO
+   --------------------------------------------------------- */
+
+.form-row {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 420px) {
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .modal-content {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .color-card,
+    .size-card {
+        min-height: 64px;
+    }
+
+    .color-card-swatch,
+    .size-badge {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+    }
+}
