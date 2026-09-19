@@ -1,6 +1,8 @@
-S145-15IKB<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -60,46 +62,109 @@ S145-15IKB<!DOCTYPE html>
         rel="stylesheet"
         href="css/style.css"
     >
+
 </head>
+
 
 <body>
 
     <div id="app">
 
-        <header class="app-header">
-            <div class="brand">
-                <span class="brand-name">MabijuFit</span>
-                <span class="brand-subtitle">
-                    Gestão da sua loja
-                </span>
-            </div>
-        </header>
+        <main class="login-page">
 
+            <section class="login-card">
 
-        <main class="app-content">
-
-            <section class="welcome-card">
-
-                <div class="welcome-logo">
-                    M
+                <div class="login-logo">
+                    <img
+                        src="assets/icons/icon-192.png"
+                        alt="MabijuFit"
+                    >
                 </div>
 
-                <h1>
-                    Bem-vinda à MabijuFit
-                </h1>
 
-                <p>
-                    Seu sistema de gestão
-                    está sendo preparado.
-                </p>
+                <div class="login-header">
 
-                <button
-                    type="button"
-                    id="startButton"
-                    class="primary-button"
+                    <h1>
+                        MabijuFit
+                    </h1>
+
+                    <p>
+                        Gestão da sua loja
+                    </p>
+
+                </div>
+
+
+                <form
+                    id="loginForm"
+                    class="login-form"
                 >
-                    Começar
-                </button>
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            E-mail
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="seu@email.com"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Senha
+                        </label>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Digite sua senha"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        id="loginButton"
+                        class="primary-button"
+                    >
+                        Entrar
+                    </button>
+
+
+                    <p
+                        id="loginMessage"
+                        class="login-message"
+                        aria-live="polite"
+                    ></p>
+
+                </form>
+
+
+                <div class="login-footer">
+
+                    <span>
+                        MabijuFit
+                    </span>
+
+                    <span>
+                        Gestão inteligente
+                    </span>
+
+                </div>
 
             </section>
 
@@ -107,9 +172,13 @@ S145-15IKB<!DOCTYPE html>
 
     </div>
 
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="js/supabase.js"></script>
+
     <script src="js/app.js"></script>
 
 </body>
+
 </html>
