@@ -21,6 +21,9 @@ let variantsCache = [];
 let salesCache = [];
 let financeCache = [];
 
+// Variações que estão sendo cadastradas no produto atual.
+let productVariationsDraft = [];
+
 
 // =========================================================
 // HELPERS
@@ -475,87 +478,22 @@ function renderCategories() {
 
                 </div>
 
-
                 <div class="category-card-actions">
 
                     <button
                         type="button"
                         class="icon-button"
                         data-edit-category="${category.id}"
-                        aria-label="Editar categoria"
                     >
-
-                        <svg
-                            class="action-icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-
-                            <path
-                                d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-
-                            <path
-                                d="m14.5 7.5 2 2"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                        </svg>
-
+                        ✎
                     </button>
-
 
                     <button
                         type="button"
                         class="icon-button danger"
                         data-delete-category="${category.id}"
-                        aria-label="Excluir categoria"
                     >
-
-                        <svg
-                            class="action-icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-
-                            <path
-                                d="M5 7h14"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                            <path
-                                d="M9 7V5.5h6V7"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                            <path
-                                d="M7 7.5 8 20h8l1-12.5"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linejoin="round"
-                            />
-
-                            <path
-                                d="M10 11v5.5M14 11v5.5"
-                                stroke="currentColor"
-                                stroke-width="1.6"
-                                stroke-linecap="round"
-                            />
-
-                        </svg>
-
+                        ×
                     </button>
 
                 </div>
@@ -855,7 +793,6 @@ function renderColors() {
                             style="background:${escapeHtml(hex)}"
                         ></span>
 
-
                         <div class="color-card-text">
 
                             <strong class="color-card-name">
@@ -877,80 +814,16 @@ function renderColors() {
                             type="button"
                             class="icon-button"
                             data-edit-color="${color.id}"
-                            aria-label="Editar cor"
                         >
-
-                            <svg
-                                class="action-icon"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                aria-hidden="true"
-                            >
-
-                                <path
-                                    d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-
-                                <path
-                                    d="m14.5 7.5 2 2"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-
-                            </svg>
-
+                            ✎
                         </button>
-
 
                         <button
                             type="button"
                             class="icon-button danger"
                             data-delete-color="${color.id}"
-                            aria-label="Excluir cor"
                         >
-
-                            <svg
-                                class="action-icon"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                aria-hidden="true"
-                            >
-
-                                <path
-                                    d="M5 7h14"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-
-                                <path
-                                    d="M9 7V5.5h6V7"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-
-                                <path
-                                    d="M7 7.5 8 20h8l1-12.5"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linejoin="round"
-                                />
-
-                                <path
-                                    d="M10 11v5.5M14 11v5.5"
-                                    stroke="currentColor"
-                                    stroke-width="1.6"
-                                    stroke-linecap="round"
-                                />
-
-                            </svg>
-
+                            ×
                         </button>
 
                     </div>
@@ -1247,7 +1120,6 @@ function renderSizes() {
                         ${escapeHtml(size.name)}
                     </span>
 
-
                     <div>
 
                         <strong class="size-card-name">
@@ -1269,80 +1141,16 @@ function renderSizes() {
                         type="button"
                         class="icon-button"
                         data-edit-size="${size.id}"
-                        aria-label="Editar tamanho"
                     >
-
-                        <svg
-                            class="action-icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-
-                            <path
-                                d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-
-                            <path
-                                d="m14.5 7.5 2 2"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                        </svg>
-
+                        ✎
                     </button>
-
 
                     <button
                         type="button"
                         class="icon-button danger"
                         data-delete-size="${size.id}"
-                        aria-label="Excluir tamanho"
                     >
-
-                        <svg
-                            class="action-icon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-
-                            <path
-                                d="M5 7h14"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                            <path
-                                d="M9 7V5.5h6V7"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
-
-                            <path
-                                d="M7 7.5 8 20h8l1-12.5"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linejoin="round"
-                            />
-
-                            <path
-                                d="M10 11v5.5M14 11v5.5"
-                                stroke="currentColor"
-                                stroke-width="1.6"
-                                stroke-linecap="round"
-                            />
-
-                        </svg>
-
+                        ×
                     </button>
 
                 </div>
@@ -1526,150 +1334,107 @@ async function deleteSize(id) {
 
 function renderProductVariationOptions() {
 
-    const colorsContainer =
-        $("productColors");
+    const colorSelect =
+        $("productVariationColor");
 
-    const sizesContainer =
-        $("productSizes");
+    const sizeSelect =
+        $("productVariationSize");
 
 
-    if (colorsContainer) {
+    if (colorSelect) {
 
-        if (!colorsCache.length) {
+        const currentColor =
+            colorSelect.value;
 
-            colorsContainer.innerHTML = `
-                <div class="empty-state compact">
-                    <strong>Nenhuma cor cadastrada</strong>
-                    <p>Cadastre cores primeiro em Produtos.</p>
-                </div>
-            `;
+        colorSelect.innerHTML = `
+            <option value="">Selecione a cor</option>
+        `;
 
-        } else {
+        colorsCache
+            .filter(color => color.is_active !== false)
+            .forEach(color => {
 
-            colorsContainer.innerHTML =
-                colorsCache
-                    .filter(color => color.is_active !== false)
-                    .map(color => `
+                const option =
+                    document.createElement("option");
 
-                        <label class="variation-option">
+                option.value =
+                    color.id;
 
-                            <input
-                                type="checkbox"
-                                name="productColor"
-                                value="${color.id}"
-                                data-color-name="${escapeHtml(color.name)}"
-                                data-color-hex="${escapeHtml(color.hex_code || "#cccccc")}"
-                            >
+                option.textContent =
+                    color.name;
 
-                            <span
-                                class="variation-color-dot"
-                                style="background:${escapeHtml(color.hex_code || "#cccccc")}"
-                            ></span>
+                option.dataset.colorName =
+                    color.name || "";
 
-                            <span>
-                                ${escapeHtml(color.name)}
-                            </span>
+                option.dataset.colorHex =
+                    color.hex_code || "#cccccc";
 
-                        </label>
+                colorSelect.appendChild(option);
+            });
 
-                    `)
-                    .join("");
+        if ([...colorSelect.options]
+            .some(option => option.value === currentColor)) {
+
+            colorSelect.value =
+                currentColor;
         }
     }
 
 
-    if (sizesContainer) {
+    if (sizeSelect) {
 
-        if (!sizesCache.length) {
+        const currentSize =
+            sizeSelect.value;
 
-            sizesContainer.innerHTML = `
-                <div class="empty-state compact">
-                    <strong>Nenhum tamanho cadastrado</strong>
-                    <p>Cadastre tamanhos primeiro em Produtos.</p>
-                </div>
-            `;
+        sizeSelect.innerHTML = `
+            <option value="">Selecione o tamanho</option>
+        `;
 
-        } else {
+        sizesCache
+            .filter(size => size.is_active !== false)
+            .forEach(size => {
 
-            sizesContainer.innerHTML =
-                sizesCache
-                    .filter(size => size.is_active !== false)
-                    .map(size => `
+                const option =
+                    document.createElement("option");
 
-                        <label class="variation-option">
+                option.value =
+                    size.id;
 
-                            <input
-                                type="checkbox"
-                                name="productSize"
-                                value="${size.id}"
-                                data-size-name="${escapeHtml(size.name)}"
-                            >
+                option.textContent =
+                    size.name;
 
-                            <span class="size-badge">
-                                ${escapeHtml(size.name)}
-                            </span>
+                option.dataset.sizeName =
+                    size.name || "";
 
-                        </label>
+                sizeSelect.appendChild(option);
+            });
 
-                    `)
-                    .join("");
+        if ([...sizeSelect.options]
+            .some(option => option.value === currentSize)) {
+
+            sizeSelect.value =
+                currentSize;
         }
     }
-
-
-    updateProductVariantsPreview();
 }
 
 
-function getSelectedColors() {
-
-    return [
-        ...document.querySelectorAll(
-            'input[name="productColor"]:checked'
-        )
-    ].map(input => ({
-        id: input.value,
-        name: input.dataset.colorName || ""
-    }));
-}
-
-
-function getSelectedSizes() {
-
-    return [
-        ...document.querySelectorAll(
-            'input[name="productSize"]:checked'
-        )
-    ].map(input => ({
-        id: input.value,
-        name: input.dataset.sizeName || ""
-    }));
-}
-
-
-function updateProductVariantsPreview() {
+function renderProductVariationsList() {
 
     const container =
-        $("productVariantsPreview");
+        $("productVariantsList");
 
     if (!container) {
         return;
     }
 
 
-    const colors =
-        getSelectedColors();
-
-    const sizes =
-        getSelectedSizes();
-
-
-    if (!colors.length || !sizes.length) {
+    if (!productVariationsDraft.length) {
 
         container.innerHTML = `
             <div class="empty-state compact">
-                <strong>Nenhuma variação selecionada</strong>
-                <p>Selecione pelo menos uma cor e um tamanho.</p>
+                <strong>Nenhuma variação adicionada</strong>
+                <p>Selecione cor, tamanho e quantidade acima.</p>
             </div>
         `;
 
@@ -1677,34 +1442,338 @@ function updateProductVariantsPreview() {
     }
 
 
-    const combinations = [];
+    container.innerHTML =
+        productVariationsDraft.map((variation, index) => {
 
+            const hex =
+                variation.colorHex || "#cccccc";
 
-    colors.forEach(color => {
+            return `
 
-        sizes.forEach(size => {
+                <div
+                    class="product-variant-draft-item"
+                    data-variation-index="${index}"
+                >
 
-            combinations.push(`
-                <div class="variant-preview-item">
+                    <div class="product-variant-draft-info">
 
-                    <span>
-                        ${escapeHtml(color.name)}
-                    </span>
+                        <span
+                            class="variation-color-dot"
+                            style="background:${escapeHtml(hex)}"
+                        ></span>
 
-                    <strong>
-                        ${escapeHtml(size.name)}
-                    </strong>
+                        <strong>
+                            ${escapeHtml(variation.colorName || "Sem cor")}
+                        </strong>
+
+                        <span class="product-variant-draft-size">
+                            ${escapeHtml(variation.sizeName || "Sem tamanho")}
+                        </span>
+
+                    </div>
+
+                    <div class="product-variant-draft-actions">
+
+                        <label class="product-variant-quantity-control">
+                            <span>Qtd.</span>
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                inputmode="numeric"
+                                value="${Number(variation.quantity || 0)}"
+                                data-variation-quantity="${index}"
+                                aria-label="Quantidade da variação ${escapeHtml(variation.colorName || "")} ${escapeHtml(variation.sizeName || "")}"
+                            >
+                        </label>
+
+                        <button
+                            type="button"
+                            class="icon-button danger"
+                            data-remove-variation="${index}"
+                            aria-label="Remover variação"
+                            title="Remover variação"
+                        >
+                            🗑
+                        </button>
+
+                    </div>
 
                 </div>
-            `);
 
+            `;
+
+        }).join("");
+}
+
+
+function addProductVariation() {
+
+    const colorSelect =
+        $("productVariationColor");
+
+    const sizeSelect =
+        $("productVariationSize");
+
+    const quantityInput =
+        $("productVariationQuantity");
+
+
+    if (!colorSelect || !sizeSelect || !quantityInput) {
+        return;
+    }
+
+
+    const colorId =
+        colorSelect.value;
+
+    const sizeId =
+        sizeSelect.value;
+
+    const quantity =
+        Number(quantityInput.value || 0);
+
+
+    if (!colorId) {
+
+        showMessage(
+            "productFormMessage",
+            "Selecione uma cor para adicionar a variação."
+        );
+
+        colorSelect.focus();
+        return;
+    }
+
+
+    if (!sizeId) {
+
+        showMessage(
+            "productFormMessage",
+            "Selecione um tamanho para adicionar a variação."
+        );
+
+        sizeSelect.focus();
+        return;
+    }
+
+
+    if (!Number.isInteger(quantity) || quantity < 0) {
+
+        showMessage(
+            "productFormMessage",
+            "Informe uma quantidade inteira igual ou maior que zero."
+        );
+
+        quantityInput.focus();
+        return;
+    }
+
+
+    const alreadyExists =
+        productVariationsDraft.some(
+            variation =>
+                variation.colorId === colorId &&
+                variation.sizeId === sizeId
+        );
+
+
+    if (alreadyExists) {
+
+        showMessage(
+            "productFormMessage",
+            "Essa combinação de cor e tamanho já foi adicionada."
+        );
+
+        return;
+    }
+
+
+    const color =
+        colorsCache.find(item => item.id === colorId);
+
+    const size =
+        sizesCache.find(item => item.id === sizeId);
+
+
+    productVariationsDraft.push({
+        colorId,
+        colorName: color?.name || colorSelect.selectedOptions[0]?.textContent || "",
+        colorHex: color?.hex_code || colorSelect.selectedOptions[0]?.dataset.colorHex || "#cccccc",
+        sizeId,
+        sizeName: size?.name || sizeSelect.selectedOptions[0]?.textContent || "",
+        quantity
+    });
+
+
+    renderProductVariationsList();
+
+
+    quantityInput.value = "1";
+    colorSelect.value = "";
+    sizeSelect.value = "";
+
+
+    showMessage(
+        "productFormMessage",
+        "Variação adicionada.",
+        "success"
+    );
+}
+
+
+function removeProductVariation(index) {
+
+    const numericIndex =
+        Number(index);
+
+
+    if (
+        !Number.isInteger(numericIndex) ||
+        numericIndex < 0 ||
+        numericIndex >= productVariationsDraft.length
+    ) {
+        return;
+    }
+
+
+    productVariationsDraft.splice(
+        numericIndex,
+        1
+    );
+
+
+    renderProductVariationsList();
+}
+
+
+function updateProductVariationQuantity(index, value) {
+
+    const numericIndex =
+        Number(index);
+
+    if (!productVariationsDraft[numericIndex]) {
+        return;
+    }
+
+
+    const quantity =
+        Number(value);
+
+
+    if (
+        !Number.isInteger(quantity) ||
+        quantity < 0
+    ) {
+        return;
+    }
+
+
+    productVariationsDraft[numericIndex].quantity =
+        quantity;
+}
+
+
+function generateBatchVariations() {
+
+    const activeColors =
+        colorsCache.filter(
+            color => color.is_active !== false
+        );
+
+    const activeSizes =
+        sizesCache.filter(
+            size => size.is_active !== false
+        );
+
+
+    if (!activeColors.length || !activeSizes.length) {
+
+        showMessage(
+            "productFormMessage",
+            "Cadastre pelo menos uma cor e um tamanho antes de gerar combinações."
+        );
+
+        return;
+    }
+
+
+    const quantityValue =
+        prompt(
+            "Qual quantidade deve ser aplicada às novas combinações?",
+            "1"
+        );
+
+
+    if (quantityValue === null) {
+        return;
+    }
+
+
+    const quantity =
+        Number(quantityValue);
+
+
+    if (
+        !Number.isInteger(quantity) ||
+        quantity < 0
+    ) {
+
+        showMessage(
+            "productFormMessage",
+            "Informe uma quantidade inteira igual ou maior que zero."
+        );
+
+        return;
+    }
+
+
+    let added = 0;
+
+
+    activeColors.forEach(color => {
+
+        activeSizes.forEach(size => {
+
+            const exists =
+                productVariationsDraft.some(
+                    variation =>
+                        variation.colorId === color.id &&
+                        variation.sizeId === size.id
+                );
+
+
+            if (exists) {
+                return;
+            }
+
+
+            productVariationsDraft.push({
+                colorId: color.id,
+                colorName: color.name || "",
+                colorHex: color.hex_code || "#cccccc",
+                sizeId: size.id,
+                sizeName: size.name || "",
+                quantity
+            });
+
+
+            added += 1;
         });
 
     });
 
 
-    container.innerHTML =
-        combinations.join("");
+    renderProductVariationsList();
+
+
+    showMessage(
+        "productFormMessage",
+        added
+            ? `${added} combinação(ões) adicionada(s).`
+            : "Todas as combinações já estavam adicionadas.",
+        "success"
+    );
 }
 
 
@@ -1844,6 +1913,17 @@ function resetProductForm() {
     $("productActive").checked = true;
 
 
+    productVariationsDraft = [];
+
+
+    const photoPreview =
+        $("productPhotoPreview");
+
+    if (photoPreview) {
+        photoPreview.innerHTML = "";
+    }
+
+
     showMessage(
         "productFormMessage",
         ""
@@ -1851,7 +1931,7 @@ function resetProductForm() {
 
 
     renderProductVariationOptions();
-
+    renderProductVariationsList();
     populateCategorySelect();
 }
 
@@ -1908,13 +1988,6 @@ async function saveProduct(event) {
         $("productActive").checked;
 
 
-    const colors =
-        getSelectedColors();
-
-    const sizes =
-        getSelectedSizes();
-
-
     if (!name) {
 
         showMessage(
@@ -1937,11 +2010,25 @@ async function saveProduct(event) {
     }
 
 
+    if (!Number.isInteger(minimumStock) || minimumStock < 0) {
+
+        showMessage(
+            "productFormMessage",
+            "O estoque mínimo deve ser um número inteiro igual ou maior que zero."
+        );
+
+        return;
+    }
+
+
     setLoading(
         button,
         true,
         "Salvando..."
     );
+
+
+    let createdProductId = null;
 
 
     try {
@@ -1971,32 +2058,26 @@ async function saveProduct(event) {
         }
 
 
+        createdProductId =
+            product.id;
+
+
         // =============================================
-        // CRIA AS VARIAÇÕES AUTOMATICAMENTE
+        // CRIA SOMENTE AS VARIAÇÕES ADICIONADAS PELO USUÁRIO
         // =============================================
 
-        if (colors.length && sizes.length) {
+        if (productVariationsDraft.length) {
 
-            const variants = [];
-
-
-            colors.forEach(color => {
-
-                sizes.forEach(size => {
-
-                    variants.push({
-                        user_id: currentUser.id,
-                        product_id: product.id,
-                        color_id: color.id,
-                        size_id: size.id,
-                        stock_quantity: 0,
-                        minimum_stock: minimumStock,
-                        is_active: true
-                    });
-
-                });
-
-            });
+            const variants =
+                productVariationsDraft.map(variation => ({
+                    user_id: currentUser.id,
+                    product_id: product.id,
+                    color_id: variation.colorId,
+                    size_id: variation.sizeId,
+                    stock_quantity: Number(variation.quantity || 0),
+                    minimum_stock: minimumStock,
+                    is_active: true
+                }));
 
 
             const {
@@ -2014,13 +2095,15 @@ async function saveProduct(event) {
                 );
 
                 throw new Error(
-                    "Produto criado, mas não foi possível criar as variações."
+                    "Não foi possível criar as variações do produto. O produto será desfeito."
                 );
             }
         }
 
 
         closeModal("productModal");
+
+        productVariationsDraft = [];
 
         await loadProducts();
 
@@ -2034,6 +2117,30 @@ async function saveProduct(event) {
             "Erro ao salvar produto:",
             error
         );
+
+
+        // Se o produto foi criado mas as variações falharam,
+        // tenta remover o produto para evitar cadastro incompleto.
+        if (createdProductId) {
+
+            const {
+                error: cleanupError
+            } = await supabaseClient
+                .from("products")
+                .delete()
+                .eq("id", createdProductId)
+                .eq("user_id", currentUser.id);
+
+
+            if (cleanupError) {
+
+                console.error(
+                    "Erro ao desfazer produto após falha:",
+                    cleanupError
+                );
+            }
+        }
+
 
         showMessage(
             "productFormMessage",
@@ -3067,22 +3174,83 @@ function bindEvents() {
 
 
     // =============================================
-    // VARIAÇÕES
+    // VARIAÇÕES DO PRODUTO
     // =============================================
 
+    $("addProductVariationButton")
+        ?.addEventListener(
+            "click",
+            addProductVariation
+        );
+
+
+    $("openBatchVariationButton")
+        ?.addEventListener(
+            "click",
+            generateBatchVariations
+        );
+
+
+    $("productVariationColor")
+        ?.addEventListener(
+            "change",
+            () => showMessage("productFormMessage", "")
+        );
+
+
+    $("productVariationSize")
+        ?.addEventListener(
+            "change",
+            () => showMessage("productFormMessage", "")
+        );
+
+
+    $("productVariationQuantity")
+        ?.addEventListener(
+            "input",
+            () => showMessage("productFormMessage", "")
+        );
+
+
     document.addEventListener(
-        "change",
+        "click",
         event => {
 
-            if (
-                event.target.matches(
-                    'input[name="productColor"], input[name="productSize"]'
-                )
-            ) {
+            const removeVariation =
+                event.target.closest(
+                    "[data-remove-variation]"
+                );
 
-                updateProductVariantsPreview();
+
+            if (removeVariation) {
+
+                removeProductVariation(
+                    removeVariation.dataset.removeVariation
+                );
+
+                return;
             }
+        }
+    );
 
+
+    document.addEventListener(
+        "input",
+        event => {
+
+            const quantityInput =
+                event.target.closest(
+                    "[data-variation-quantity]"
+                );
+
+
+            if (quantityInput) {
+
+                updateProductVariationQuantity(
+                    quantityInput.dataset.variationQuantity,
+                    quantityInput.value
+                );
+            }
         }
     );
 
