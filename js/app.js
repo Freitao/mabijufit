@@ -1,5 +1,5 @@
 // =========================================================
-// MABIJUFIT — APLICAÇÃO PRINCIPAL
+// MABIJUFIT — APLICAÇÃO PRINCIPAL.
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", () => {
