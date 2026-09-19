@@ -2,7 +2,7 @@
 // MABIJUFIT — SERVICE WORKER
 // =========================================================
 
-const CACHE_NAME = "mabijufit-v1";
+const CACHE_NAME = "mabijufit-v2";
 
 const APP_FILES = [
     "./",
