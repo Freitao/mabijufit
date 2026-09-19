@@ -2748,3 +2748,49 @@ textarea:disabled {
         font-size: 9px;
     }
 }
+/* =========================================================
+   CORREÇÃO — ABA ATIVA DA NAVEGAÇÃO MOBILE
+   ========================================================= */
+
+.bottom-navigation {
+    overflow: hidden;
+}
+
+.nav-item {
+    position: relative;
+    overflow: hidden;
+
+    border-radius: 16px;
+}
+
+.nav-item.active {
+    margin: 2px 3px;
+
+    background: var(--pink-100);
+
+    border-radius: 16px;
+}
+
+
+/* Evita que o fundo ativo ultrapasse a área da navegação */
+
+@media (max-width: 420px) {
+
+    .bottom-navigation {
+        padding: 5px 4px;
+
+        overflow: hidden;
+    }
+
+    .nav-item {
+        margin: 0;
+
+        border-radius: 15px;
+    }
+
+    .nav-item.active {
+        margin: 2px;
+
+        border-radius: 15px;
+    }
+}
