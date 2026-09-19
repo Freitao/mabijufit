@@ -1,40 +1,51 @@
-/* =========================================================
-   MABIJUFIT — APP.JS
-   VERSÃO CONSOLIDADA
-   Produtos + Cores + Tamanhos + Variações + Estoque
-   ========================================================= */
+// =========================================================
+// MABIJUFIT — APP.JS
+// Versão consolidada
+// =========================================================
 
 "use strict";
 
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
+// =========================================================
+// ESTADO
+// =========================================================
 
-const $ = (id) => document.getElementById(id);
+let currentUser = null;
+let appInitialized = false;
 
-const $$ = (selector) => {
-    return Array.from(document.querySelectorAll(selector));
-};
+let categoriesCache = [];
+let colorsCache = [];
+let sizesCache = [];
+let productsCache = [];
+let variantsCache = [];
+let salesCache = [];
+let financeCache = [];
 
 
-function escapeHTML(value) {
+// =========================================================
+// HELPERS
+// =========================================================
 
+function $(id) {
+    return document.getElementById(id);
+}
+
+
+function escapeHtml(value) {
     if (value === null || value === undefined) {
         return "";
     }
 
     return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
-function money(value) {
-
+function formatCurrency(value) {
     const number = Number(value || 0);
 
     return number.toLocaleString("pt-BR", {
@@ -45,7 +56,6 @@ function money(value) {
 
 
 function todayISO() {
-
     const date = new Date();
 
     const year = date.getFullYear();
@@ -56,68 +66,23 @@ function todayISO() {
 }
 
 
-function formatDate(value) {
-
-    if (!value) {
-        return "";
-    }
-
-    const date = new Date(`${value}T00:00:00`);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString("pt-BR");
-}
-
-
-function normalizeHex(value) {
-
-    if (!value) {
-        return "#000000";
-    }
-
-    let hex = String(value).trim();
-
-    if (!hex.startsWith("#")) {
-        hex = `#${hex}`;
-    }
-
-    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-        return "#000000";
-    }
-
-    return hex.toUpperCase();
-}
-
-
-function showMessage(element, message, type = "error") {
+function showMessage(elementId, message, type = "error") {
+    const element = $(elementId);
 
     if (!element) {
         return;
     }
 
     element.textContent = message || "";
+    element.className = `form-message ${type}`;
 
-    element.style.color =
-        type === "success"
-            ? "#2f8f62"
-            : "#b4235a";
-}
-
-
-function clearMessage(element) {
-
-    if (!element) {
-        return;
+    if (!message) {
+        element.className = "form-message";
     }
-
-    element.textContent = "";
 }
 
 
-function setButtonLoading(button, loading, loadingText = "Salvando...") {
+function setLoading(button, loading, text = "Salvando...") {
 
     if (!button) {
         return;
@@ -129,9 +94,7 @@ function setButtonLoading(button, loading, loadingText = "Salvando...") {
             button.textContent;
 
         button.disabled = true;
-        button.textContent = loadingText;
-
-        button.style.opacity = "0.7";
+        button.textContent = text;
 
     } else {
 
@@ -140,135 +103,152 @@ function setButtonLoading(button, loading, loadingText = "Salvando...") {
         button.textContent =
             button.dataset.originalText ||
             button.textContent;
-
-        button.style.opacity = "";
     }
 }
 
 
-/* =========================================================
-   ESTADO DA APLICAÇÃO
-   ========================================================= */
+function getAuthErrorMessage(error) {
 
-const state = {
+    const message =
+        String(error?.message || "").toLowerCase();
 
-    session: null,
-    user: null,
+    if (
+        message.includes("invalid login credentials") ||
+        message.includes("invalid credentials")
+    ) {
+        return "E-mail ou senha incorretos.";
+    }
 
-    initialized: false,
+    if (
+        message.includes("email not confirmed")
+    ) {
+        return "O e-mail desta conta ainda não foi confirmado.";
+    }
 
-    currentSection: "home",
+    if (
+        message.includes("too many requests")
+    ) {
+        return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    }
 
-    categories: [],
-    colors: [],
-    sizes: [],
-    products: [],
-    variants: [],
+    return error?.message ||
+        "Não foi possível entrar. Tente novamente.";
+}
 
-    sales: [],
-    transactions: [],
 
-    selectedProductColors: new Set(),
-    selectedProductSizes: new Set(),
+// =========================================================
+// TELAS
+// =========================================================
 
-    productVariantDrafts: new Map()
+const sectionMap = {
+    home: "homeScreen",
+    products: "productsScreen",
+    stock: "stockScreen",
+    sales: "salesScreen",
+    finance: "financeScreen"
 };
 
 
-/* =========================================================
-   AUTH
-   ========================================================= */
+function showSection(sectionName) {
 
-async function checkSession() {
+    Object.entries(sectionMap).forEach(
+        ([name, elementId]) => {
 
-    try {
+            const section = $(elementId);
 
-        const {
-            data,
-            error
-        } = await supabaseClient.auth.getSession();
+            if (!section) {
+                return;
+            }
 
-        if (error) {
-            console.error(error);
+            section.hidden =
+                name !== sectionName;
         }
+    );
 
-        const session = data?.session || null;
 
-        state.session = session;
-        state.user = session?.user || null;
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(button => {
 
-        updateAuthUI();
+            button.classList.toggle(
+                "active",
+                button.dataset.section === sectionName
+            );
 
-        if (session) {
-            await initializeApp();
-        }
+        });
 
-    } catch (error) {
 
-        console.error(
-            "Erro ao verificar sessão:",
-            error
-        );
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 
-        updateAuthUI();
+
+    if (sectionName === "home") {
+        loadDashboard();
+    }
+
+    if (sectionName === "products") {
+        loadProductsPage();
+    }
+
+    if (sectionName === "stock") {
+        loadStock();
+    }
+
+    if (sectionName === "sales") {
+        loadSales();
+    }
+
+    if (sectionName === "finance") {
+        loadFinance();
     }
 }
 
 
-function updateAuthUI() {
+// =========================================================
+// LOGIN / LOGOUT
+// =========================================================
 
-    const loginScreen = $("loginScreen");
-    const appScreen = $("appScreen");
+async function handleLogin(event) {
 
-    if (!loginScreen || !appScreen) {
-        return;
-    }
+    event.preventDefault();
+    event.stopPropagation();
 
-    if (state.session) {
-
-        loginScreen.hidden = true;
-        appScreen.hidden = false;
-
-        updateUserName();
-
-    } else {
-
-        loginScreen.hidden = false;
-        appScreen.hidden = true;
-    }
-}
-
-
-function updateUserName() {
-
-    const userName = $("userName");
-
-    if (!userName || !state.user) {
-        return;
-    }
-
-    const fullName =
-        state.user.user_metadata?.full_name ||
-        state.user.user_metadata?.name ||
-        state.user.email ||
-        "MabijuFit";
-
-    userName.textContent = fullName;
-}
-
-
-async function login(email, password) {
-
-    const message = $("loginMessage");
+    const emailInput = $("email");
+    const passwordInput = $("password");
     const button = $("loginButton");
 
-    clearMessage(message);
+    const email =
+        emailInput?.value.trim() || "";
 
-    setButtonLoading(
+    const password =
+        passwordInput?.value || "";
+
+
+    showMessage(
+        "loginMessage",
+        ""
+    );
+
+
+    if (!email || !password) {
+
+        showMessage(
+            "loginMessage",
+            "Informe o e-mail e a senha."
+        );
+
+        return;
+    }
+
+
+    setLoading(
         button,
         true,
         "Entrando..."
     );
+
 
     try {
 
@@ -276,20 +256,34 @@ async function login(email, password) {
             data,
             error
         } = await supabaseClient.auth.signInWithPassword({
-            email: email.trim(),
+            email,
             password
         });
+
 
         if (error) {
             throw error;
         }
 
-        state.session = data.session;
-        state.user = data.user;
 
-        updateAuthUI();
+        if (!data?.session) {
 
-        await initializeApp();
+            showMessage(
+                "loginMessage",
+                "Login realizado, mas nenhuma sessão foi criada."
+            );
+
+            return;
+        }
+
+
+        currentUser =
+            data.user;
+
+
+        await showApplication(
+            data.user
+        );
 
     } catch (error) {
 
@@ -298,25 +292,14 @@ async function login(email, password) {
             error
         );
 
-        let text =
-            error?.message ||
-            "Não foi possível entrar.";
-
-        if (
-            text.toLowerCase().includes("invalid login credentials")
-        ) {
-            text =
-                "E-mail ou senha incorretos.";
-        }
-
         showMessage(
-            message,
-            text
+            "loginMessage",
+            getAuthErrorMessage(error)
         );
 
     } finally {
 
-        setButtonLoading(
+        setLoading(
             button,
             false
         );
@@ -324,7 +307,7 @@ async function login(email, password) {
 }
 
 
-async function logout() {
+async function handleLogout() {
 
     try {
 
@@ -336,159 +319,88 @@ async function logout() {
             "Erro ao sair:",
             error
         );
-
-    } finally {
-
-        state.session = null;
-        state.user = null;
-
-        state.initialized = false;
-
-        updateAuthUI();
-
-        showSection("home");
-    }
-}
-
-
-/* =========================================================
-   INICIALIZAÇÃO
-   ========================================================= */
-
-async function initializeApp() {
-
-    if (!state.user) {
-        return;
     }
 
-    if (state.initialized) {
-        return;
+
+    currentUser = null;
+    appInitialized = false;
+
+
+    const appScreen = $("appScreen");
+    const loginScreen = $("loginScreen");
+
+    if (appScreen) {
+        appScreen.hidden = true;
     }
 
-    state.initialized = true;
+    if (loginScreen) {
+        loginScreen.hidden = false;
+    }
 
-    updateUserName();
-
-    await loadAllData();
 
     showSection("home");
 }
 
 
-async function loadAllData() {
+async function showApplication(user) {
 
-    await Promise.all([
-        loadCategories(),
-        loadColors(),
-        loadSizes(),
-        loadProducts(),
-        loadVariants(),
-        loadSales(),
-        loadTransactions()
-    ]);
+    currentUser = user;
 
-    populateCategorySelect();
 
-    renderProductVariationSelectors();
+    const loginScreen =
+        $("loginScreen");
 
-    renderProducts();
+    const appScreen =
+        $("appScreen");
 
-    renderCategories();
 
-    renderColors();
+    if (loginScreen) {
+        loginScreen.hidden = true;
+    }
 
-    renderSizes();
+    if (appScreen) {
+        appScreen.hidden = false;
+    }
 
-    renderStock();
 
-    renderSales();
+    const userName =
+        $("userName");
 
-    renderFinance();
 
-    updateDashboard();
+    if (userName) {
+
+        const fullName =
+            user.user_metadata?.full_name;
+
+        userName.textContent =
+            fullName ||
+            user.email ||
+            "Usuário";
+    }
+
+
+    if (!appInitialized) {
+
+        appInitialized = true;
+
+        await loadInitialData();
+    }
+
+
+    showSection("home");
 }
 
 
-/* =========================================================
-   NAVEGAÇÃO
-   ========================================================= */
-
-function showSection(section) {
-
-    const screens = {
-        home: "homeScreen",
-        products: "productsScreen",
-        stock: "stockScreen",
-        sales: "salesScreen",
-        finance: "financeScreen"
-    };
-
-    Object.values(screens).forEach(id => {
-
-        const element = $(id);
-
-        if (element) {
-            element.hidden = true;
-        }
-    });
-
-
-    const target = $(screens[section]);
-
-    if (target) {
-        target.hidden = false;
-    }
-
-
-    $$(".nav-item").forEach(button => {
-
-        button.classList.toggle(
-            "active",
-            button.dataset.section === section
-        );
-
-    });
-
-
-    state.currentSection = section;
-
-
-    if (section === "home") {
-        updateDashboard();
-    }
-
-    if (section === "products") {
-
-        renderProducts();
-        renderCategories();
-        renderColors();
-        renderSizes();
-
-    }
-
-    if (section === "stock") {
-        renderStock();
-    }
-
-    if (section === "sales") {
-        renderSales();
-    }
-
-    if (section === "finance") {
-        renderFinance();
-    }
-}
-
-
-/* =========================================================
-   CATEGORIAS
-   ========================================================= */
+// =========================================================
+// CATEGORIAS
+// =========================================================
 
 async function loadCategories() {
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
+
 
     const {
         data,
@@ -496,8 +408,9 @@ async function loadCategories() {
     } = await supabaseClient
         .from("categories")
         .select("*")
-        .eq("user_id", state.user.id)
+        .eq("user_id", currentUser.id)
         .order("name");
+
 
     if (error) {
 
@@ -509,59 +422,33 @@ async function loadCategories() {
         return;
     }
 
-    state.categories = data || [];
-}
+
+    categoriesCache =
+        data || [];
 
 
-function populateCategorySelect() {
-
-    const select = $("productCategory");
-
-    if (!select) {
-        return;
-    }
-
-    const currentValue = select.value;
-
-    select.innerHTML = `
-        <option value="">Selecione</option>
-    `;
-
-    state.categories
-        .filter(category => category.is_active !== false)
-        .forEach(category => {
-
-            const option =
-                document.createElement("option");
-
-            option.value = category.id;
-            option.textContent = category.name;
-
-            select.appendChild(option);
-        });
-
-    if (currentValue) {
-        select.value = currentValue;
-    }
+    renderCategories();
+    populateCategorySelect();
 }
 
 
 function renderCategories() {
 
-    const container = $("categoriesList");
+    const container =
+        $("categoriesList");
 
     if (!container) {
         return;
     }
 
-    if (!state.categories.length) {
+
+    if (!categoriesCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
+                <div class="empty-state-icon">C</div>
                 <strong>Nenhuma categoria cadastrada</strong>
-                <p>
-                    Crie categorias para organizar seus produtos.
-                </p>
+                <p>Crie categorias para organizar seus produtos.</p>
             </div>
         `;
 
@@ -570,101 +457,116 @@ function renderCategories() {
 
 
     container.innerHTML =
-        state.categories.map(category => {
+        categoriesCache.map(category => `
 
-            return `
-                <article class="category-card">
+            <div class="category-card">
 
-                    <div class="category-card-header">
+                <div class="category-card-info">
 
-                        <div>
-                            <div class="category-card-name">
-                                ${escapeHTML(category.name)}
-                            </div>
+                    <strong>
+                        ${escapeHtml(category.name)}
+                    </strong>
 
-                            ${
-                                category.is_active === false
-                                    ? `<div class="category-card-description">Inativa</div>`
-                                    : ""
-                            }
+                    <span>
+                        ${escapeHtml(
+                            category.description || "Sem descrição"
+                        )}
+                    </span>
 
-                        </div>
+                </div>
 
-                    </div>
+                <div class="category-card-actions">
 
-                    ${
-                        category.description
-                            ? `
-                                <div class="category-card-description">
-                                    ${escapeHTML(category.description)}
-                                </div>
-                            `
-                            : ""
-                    }
+                    <button
+                        type="button"
+                        class="icon-button"
+                        data-edit-category="${category.id}"
+                    >
+                        ✎
+                    </button>
 
-                    <div class="category-card-actions">
+                    <button
+                        type="button"
+                        class="icon-button danger"
+                        data-delete-category="${category.id}"
+                    >
+                        ×
+                    </button>
 
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-edit-category="${category.id}"
-                        >
-                            Editar
-                        </button>
+                </div>
 
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-delete-category="${category.id}"
-                        >
-                            Excluir
-                        </button>
+            </div>
 
-                    </div>
-
-                </article>
-            `;
-
-        }).join("");
+        `).join("");
 }
 
 
-function resetCategoryForm() {
+function populateCategorySelect() {
 
-    const form = $("categoryForm");
+    const select =
+        $("productCategory");
 
-    if (form) {
-        form.reset();
+    if (!select) {
+        return;
     }
 
-    $("categoryId").value = "";
 
-    $("categoryActive").checked = true;
+    select.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
 
-    clearMessage(
-        $("categoryFormMessage")
-    );
+
+    categoriesCache
+        .filter(category => category.is_active !== false)
+        .forEach(category => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                category.id;
+
+            option.textContent =
+                category.name;
+
+            select.appendChild(option);
+        });
 }
 
 
 function openCategoryModal(category = null) {
 
-    resetCategoryForm();
+    const form =
+        $("categoryForm");
 
-    if (category) {
-
-        $("categoryId").value =
-            category.id;
-
-        $("categoryName").value =
-            category.name || "";
-
-        $("categoryDescription").value =
-            category.description || "";
-
-        $("categoryActive").checked =
-            category.is_active !== false;
+    if (!form) {
+        return;
     }
+
+
+    form.reset();
+
+
+    $("categoryId").value =
+        category?.id || "";
+
+    $("categoryName").value =
+        category?.name || "";
+
+    $("categoryDescription").value =
+        category?.description || "";
+
+    $("categoryActive").checked =
+        category?.is_active !== false;
+
+
+    showMessage(
+        "categoryFormMessage",
+        ""
+    );
+
 
     openModal("categoryModal");
 }
@@ -674,27 +576,28 @@ async function saveCategory(event) {
 
     event.preventDefault();
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
-    const message = $("categoryFormMessage");
 
-    const button =
-        event.submitter ||
-        $("categoryForm")?.querySelector(
-            'button[type="submit"]'
-        );
-
-    clearMessage(message);
+    const id =
+        $("categoryId").value.trim();
 
     const name =
         $("categoryName").value.trim();
 
+    const description =
+        $("categoryDescription").value.trim();
+
+    const isActive =
+        $("categoryActive").checked;
+
+
     if (!name) {
 
         showMessage(
-            message,
+            "categoryFormMessage",
             "Informe o nome da categoria."
         );
 
@@ -702,95 +605,57 @@ async function saveCategory(event) {
     }
 
 
-    setButtonLoading(
-        button,
-        true
-    );
+    const payload = {
+        name,
+        description,
+        is_active: isActive
+    };
 
 
     try {
 
-        const id =
-            $("categoryId").value;
-
-        const payload = {
-
-            user_id: state.user.id,
-
-            name,
-
-            description:
-                $("categoryDescription")
-                    .value
-                    .trim() || null,
-
-            is_active:
-                $("categoryActive").checked
-        };
-
-
-        let result;
+        let query;
 
 
         if (id) {
 
-            result =
-                await supabaseClient
-                    .from("categories")
-                    .update(payload)
-                    .eq("id", id)
-                    .eq("user_id", state.user.id);
+            query = await supabaseClient
+                .from("categories")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", currentUser.id);
 
         } else {
 
-            result =
-                await supabaseClient
-                    .from("categories")
-                    .insert(payload);
+            query = await supabaseClient
+                .from("categories")
+                .insert({
+                    ...payload,
+                    user_id: currentUser.id
+                });
         }
 
 
-        if (result.error) {
-            throw result.error;
+        if (query.error) {
+            throw query.error;
         }
 
 
-        showMessage(
-            message,
-            "Categoria salva com sucesso.",
-            "success"
-        );
-
+        closeModal("categoryModal");
 
         await loadCategories();
 
-        populateCategorySelect();
-
-        renderCategories();
-
-
-        setTimeout(() => {
-
-            closeModal("categoryModal");
-
-        }, 400);
-
-
     } catch (error) {
 
-        console.error(error);
-
-        showMessage(
-            message,
-            error.message ||
-            "Erro ao salvar categoria."
+        console.error(
+            "Erro ao salvar categoria:",
+            error
         );
 
-    } finally {
-
-        setButtonLoading(
-            button,
-            false
+        showMessage(
+            "categoryFormMessage",
+            error.message ||
+            "Não foi possível salvar a categoria."
         );
     }
 }
@@ -798,14 +663,16 @@ async function saveCategory(event) {
 
 async function deleteCategory(id) {
 
-    if (!id) {
+    if (!currentUser) {
         return;
     }
 
+
     const confirmed =
-        window.confirm(
+        confirm(
             "Excluir esta categoria?"
         );
+
 
     if (!confirmed) {
         return;
@@ -818,15 +685,18 @@ async function deleteCategory(id) {
         .from("categories")
         .delete()
         .eq("id", id)
-        .eq("user_id", state.user.id);
+        .eq("user_id", currentUser.id);
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Erro ao excluir categoria:",
+            error
+        );
 
         alert(
-            "Não foi possível excluir a categoria."
+            "Não foi possível excluir. Verifique se existem produtos usando esta categoria."
         );
 
         return;
@@ -834,22 +704,19 @@ async function deleteCategory(id) {
 
 
     await loadCategories();
-
-    populateCategorySelect();
-
-    renderCategories();
 }
 
 
-/* =========================================================
-   CORES
-   ========================================================= */
+// =========================================================
+// CORES
+// =========================================================
 
 async function loadColors() {
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
+
 
     const {
         data,
@@ -857,8 +724,9 @@ async function loadColors() {
     } = await supabaseClient
         .from("colors")
         .select("*")
-        .eq("user_id", state.user.id)
+        .eq("user_id", currentUser.id)
         .order("name");
+
 
     if (error) {
 
@@ -870,27 +738,33 @@ async function loadColors() {
         return;
     }
 
-    state.colors = data || [];
+
+    colorsCache =
+        data || [];
+
+
+    renderColors();
+    renderProductVariationOptions();
 }
 
 
 function renderColors() {
 
-    const container = $("colorsList");
+    const container =
+        $("colorsList");
 
     if (!container) {
         return;
     }
 
 
-    if (!state.colors.length) {
+    if (!colorsCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
+                <div class="empty-state-icon">C</div>
                 <strong>Nenhuma cor cadastrada</strong>
-                <p>
-                    Cadastre cores para usar nas variações.
-                </p>
+                <p>Cadastre cores para utilizar nos produtos.</p>
             </div>
         `;
 
@@ -899,32 +773,32 @@ function renderColors() {
 
 
     container.innerHTML =
-        state.colors.map(color => {
+        colorsCache.map(color => {
 
             const hex =
-                normalizeHex(color.hex_code);
+                color.hex_code || "#cccccc";
 
 
             return `
-                <article class="color-card">
 
-                    <span
-                        class="color-card-swatch"
-                        style="background:${hex};"
-                    ></span>
-
+                <div class="color-card">
 
                     <div class="color-card-info">
 
+                        <span
+                            class="color-card-swatch"
+                            style="background:${escapeHtml(hex)}"
+                        ></span>
+
                         <div class="color-card-text">
 
-                            <div class="color-card-name">
-                                ${escapeHTML(color.name)}
-                            </div>
+                            <strong class="color-card-name">
+                                ${escapeHtml(color.name)}
+                            </strong>
 
-                            <div class="color-card-code">
-                                ${hex}
-                            </div>
+                            <small class="color-card-code">
+                                ${escapeHtml(hex)}
+                            </small>
 
                         </div>
 
@@ -935,7 +809,7 @@ function renderColors() {
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="icon-button"
                             data-edit-color="${color.id}"
                         >
                             ✎
@@ -943,7 +817,7 @@ function renderColors() {
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="icon-button danger"
                             data-delete-color="${color.id}"
                         >
                             ×
@@ -951,67 +825,76 @@ function renderColors() {
 
                     </div>
 
-                </article>
+                </div>
+
             `;
 
         }).join("");
 }
 
 
-function resetColorForm() {
+function syncColorPreview() {
 
-    const form = $("colorForm");
+    const color =
+        $("colorHex")?.value ||
+        "#E8A0B8";
 
-    if (form) {
-        form.reset();
+    const text =
+        $("colorHexText");
+
+    const preview =
+        $("colorPreview");
+
+
+    if (text) {
+        text.value =
+            color.toUpperCase();
     }
 
-    $("colorId").value = "";
-
-    $("colorHex").value =
-        "#E8A0B8";
-
-    $("colorHexText").value =
-        "#E8A0B8";
-
-    $("colorPreview").style.background =
-        "#E8A0B8";
-
-    $("colorActive").checked = true;
-
-    clearMessage(
-        $("colorFormMessage")
-    );
+    if (preview) {
+        preview.style.background =
+            color;
+    }
 }
 
 
 function openColorModal(color = null) {
 
-    resetColorForm();
+    const form =
+        $("colorForm");
 
-    if (color) {
-
-        const hex =
-            normalizeHex(color.hex_code);
-
-        $("colorId").value =
-            color.id;
-
-        $("colorName").value =
-            color.name || "";
-
-        $("colorHex").value =
-            hex;
-
-        $("colorHexText").value =
-            hex;
-
-        $("colorPreview").style.background =
-            hex;
-
-        $("colorActive").checked =
-            color.is_active !== false;
+    if (!form) {
+        return;
     }
+
+
+    form.reset();
+
+
+    $("colorId").value =
+        color?.id || "";
+
+    $("colorName").value =
+        color?.name || "";
+
+    $("colorHex").value =
+        color?.hex_code || "#E8A0B8";
+
+    $("colorHexText").value =
+        color?.hex_code || "#E8A0B8";
+
+    $("colorActive").checked =
+        color?.is_active !== false;
+
+
+    syncColorPreview();
+
+
+    showMessage(
+        "colorFormMessage",
+        ""
+    );
+
 
     openModal("colorModal");
 }
@@ -1021,32 +904,28 @@ async function saveColor(event) {
 
     event.preventDefault();
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
-    const message =
-        $("colorFormMessage");
 
-    const button =
-        event.submitter;
-
-    clearMessage(message);
-
+    const id =
+        $("colorId").value.trim();
 
     const name =
         $("colorName").value.trim();
 
     const hex =
-        normalizeHex(
-            $("colorHexText").value
-        );
+        $("colorHexText").value.trim();
+
+    const isActive =
+        $("colorActive").checked;
 
 
     if (!name) {
 
         showMessage(
-            message,
+            "colorFormMessage",
             "Informe o nome da cor."
         );
 
@@ -1054,95 +933,68 @@ async function saveColor(event) {
     }
 
 
-    setButtonLoading(
-        button,
-        true
-    );
+    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+
+        showMessage(
+            "colorFormMessage",
+            "Informe uma cor hexadecimal válida, por exemplo #E8A0B8."
+        );
+
+        return;
+    }
+
+
+    const payload = {
+        name,
+        hex_code: hex.toUpperCase(),
+        is_active: isActive
+    };
 
 
     try {
 
-        const id =
-            $("colorId").value;
-
-
-        const payload = {
-
-            user_id:
-                state.user.id,
-
-            name,
-
-            hex_code:
-                hex,
-
-            is_active:
-                $("colorActive").checked
-        };
-
-
-        let result;
+        let query;
 
 
         if (id) {
 
-            result =
-                await supabaseClient
-                    .from("colors")
-                    .update(payload)
-                    .eq("id", id)
-                    .eq("user_id", state.user.id);
+            query = await supabaseClient
+                .from("colors")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", currentUser.id);
 
         } else {
 
-            result =
-                await supabaseClient
-                    .from("colors")
-                    .insert(payload);
+            query = await supabaseClient
+                .from("colors")
+                .insert({
+                    ...payload,
+                    user_id: currentUser.id
+                });
         }
 
 
-        if (result.error) {
-            throw result.error;
+        if (query.error) {
+            throw query.error;
         }
 
+
+        closeModal("colorModal");
 
         await loadColors();
 
-        renderColors();
-
-        renderProductVariationSelectors();
-
-
-        showMessage(
-            message,
-            "Cor salva com sucesso.",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            closeModal("colorModal");
-
-        }, 400);
-
-
     } catch (error) {
 
-        console.error(error);
-
-        showMessage(
-            message,
-            error.message ||
-            "Erro ao salvar cor."
+        console.error(
+            "Erro ao salvar cor:",
+            error
         );
 
-    } finally {
-
-        setButtonLoading(
-            button,
-            false
+        showMessage(
+            "colorFormMessage",
+            error.message ||
+            "Não foi possível salvar a cor."
         );
     }
 }
@@ -1150,16 +1002,12 @@ async function saveColor(event) {
 
 async function deleteColor(id) {
 
-    if (!id) {
+    if (!currentUser) {
         return;
     }
 
-    const confirmed =
-        window.confirm(
-            "Excluir esta cor?"
-        );
 
-    if (!confirmed) {
+    if (!confirm("Excluir esta cor?")) {
         return;
     }
 
@@ -1170,42 +1018,38 @@ async function deleteColor(id) {
         .from("colors")
         .delete()
         .eq("id", id)
-        .eq("user_id", state.user.id);
+        .eq("user_id", currentUser.id);
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Erro ao excluir cor:",
+            error
+        );
 
         alert(
-            "Não foi possível excluir a cor. Ela pode estar vinculada a uma variação."
+            "Não foi possível excluir esta cor. Ela pode estar vinculada a produtos."
         );
 
         return;
     }
 
 
-    state.selectedProductColors.delete(id);
-
     await loadColors();
-
-    renderColors();
-
-    renderProductVariationSelectors();
-
-    generateVariantPreview();
 }
 
 
-/* =========================================================
-   TAMANHOS
-   ========================================================= */
+// =========================================================
+// TAMANHOS
+// =========================================================
 
 async function loadSizes() {
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
+
 
     const {
         data,
@@ -1213,13 +1057,10 @@ async function loadSizes() {
     } = await supabaseClient
         .from("sizes")
         .select("*")
-        .eq("user_id", state.user.id)
-        .order("display_order", {
-            ascending: true
-        })
-        .order("name", {
-            ascending: true
-        });
+        .eq("user_id", currentUser.id)
+        .order("display_order")
+        .order("name");
+
 
     if (error) {
 
@@ -1231,27 +1072,33 @@ async function loadSizes() {
         return;
     }
 
-    state.sizes = data || [];
+
+    sizesCache =
+        data || [];
+
+
+    renderSizes();
+    renderProductVariationOptions();
 }
 
 
 function renderSizes() {
 
-    const container = $("sizesList");
+    const container =
+        $("sizesList");
 
     if (!container) {
         return;
     }
 
 
-    if (!state.sizes.length) {
+    if (!sizesCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
+                <div class="empty-state-icon">T</div>
                 <strong>Nenhum tamanho cadastrado</strong>
-                <p>
-                    Cadastre tamanhos para usar nas variações.
-                </p>
+                <p>Cadastre tamanhos para utilizar nos produtos.</p>
             </div>
         `;
 
@@ -1260,98 +1107,88 @@ function renderSizes() {
 
 
     container.innerHTML =
-        state.sizes.map(size => {
+        sizesCache.map(size => `
 
-            return `
-                <article class="size-card">
+            <div class="size-card">
 
-                    <div class="size-card-info">
+                <div class="size-card-info">
 
-                        <span class="size-badge">
-                            ${escapeHTML(size.name)}
-                        </span>
+                    <span class="size-badge">
+                        ${escapeHtml(size.name)}
+                    </span>
 
-                        <div>
+                    <div>
 
-                            <div class="size-card-name">
-                                Tamanho ${escapeHTML(size.name)}
-                            </div>
+                        <strong class="size-card-name">
+                            Tamanho ${escapeHtml(size.name)}
+                        </strong>
 
-                            <div class="size-card-order">
-                                Ordem: ${Number(size.display_order || 0)}
-                            </div>
-
-                        </div>
+                        <small class="size-card-order">
+                            Ordem: ${Number(size.display_order || 0)}
+                        </small>
 
                     </div>
 
-
-                    <div class="size-card-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-edit-size="${size.id}"
-                        >
-                            ✎
-                        </button>
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-delete-size="${size.id}"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                </article>
-            `;
-
-        }).join("");
-}
+                </div>
 
 
-function resetSizeForm() {
+                <div class="size-card-actions">
 
-    const form = $("sizeForm");
+                    <button
+                        type="button"
+                        class="icon-button"
+                        data-edit-size="${size.id}"
+                    >
+                        ✎
+                    </button>
 
-    if (form) {
-        form.reset();
-    }
+                    <button
+                        type="button"
+                        class="icon-button danger"
+                        data-delete-size="${size.id}"
+                    >
+                        ×
+                    </button>
 
-    $("sizeId").value = "";
+                </div>
 
-    $("sizeDisplayOrder").value =
-        "0";
+            </div>
 
-    $("sizeActive").checked = true;
-
-    clearMessage(
-        $("sizeFormMessage")
-    );
+        `).join("");
 }
 
 
 function openSizeModal(size = null) {
 
-    resetSizeForm();
+    const form =
+        $("sizeForm");
 
-    if (size) {
-
-        $("sizeId").value =
-            size.id;
-
-        $("sizeName").value =
-            size.name || "";
-
-        $("sizeDisplayOrder").value =
-            Number(size.display_order || 0);
-
-        $("sizeActive").checked =
-            size.is_active !== false;
+    if (!form) {
+        return;
     }
+
+
+    form.reset();
+
+
+    $("sizeId").value =
+        size?.id || "";
+
+    $("sizeName").value =
+        size?.name || "";
+
+    $("sizeDisplayOrder").value =
+        size?.display_order ?? 0;
+
+    $("sizeActive").checked =
+        size?.is_active !== false;
+
+
+    showMessage(
+        "sizeFormMessage",
+        ""
+    );
+
 
     openModal("sizeModal");
 }
@@ -1361,27 +1198,30 @@ async function saveSize(event) {
 
     event.preventDefault();
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
-    const message =
-        $("sizeFormMessage");
 
-    const button =
-        event.submitter;
-
-    clearMessage(message);
-
+    const id =
+        $("sizeId").value.trim();
 
     const name =
         $("sizeName").value.trim();
+
+    const displayOrder =
+        Number(
+            $("sizeDisplayOrder").value || 0
+        );
+
+    const isActive =
+        $("sizeActive").checked;
 
 
     if (!name) {
 
         showMessage(
-            message,
+            "sizeFormMessage",
             "Informe o tamanho."
         );
 
@@ -1389,97 +1229,57 @@ async function saveSize(event) {
     }
 
 
-    setButtonLoading(
-        button,
-        true
-    );
+    const payload = {
+        name,
+        display_order: displayOrder,
+        is_active: isActive
+    };
 
 
     try {
 
-        const id =
-            $("sizeId").value;
-
-
-        const payload = {
-
-            user_id:
-                state.user.id,
-
-            name,
-
-            display_order:
-                Number(
-                    $("sizeDisplayOrder").value || 0
-                ),
-
-            is_active:
-                $("sizeActive").checked
-        };
-
-
-        let result;
+        let query;
 
 
         if (id) {
 
-            result =
-                await supabaseClient
-                    .from("sizes")
-                    .update(payload)
-                    .eq("id", id)
-                    .eq("user_id", state.user.id);
+            query = await supabaseClient
+                .from("sizes")
+                .update(payload)
+                .eq("id", id)
+                .eq("user_id", currentUser.id);
 
         } else {
 
-            result =
-                await supabaseClient
-                    .from("sizes")
-                    .insert(payload);
+            query = await supabaseClient
+                .from("sizes")
+                .insert({
+                    ...payload,
+                    user_id: currentUser.id
+                });
         }
 
 
-        if (result.error) {
-            throw result.error;
+        if (query.error) {
+            throw query.error;
         }
 
+
+        closeModal("sizeModal");
 
         await loadSizes();
 
-        renderSizes();
-
-        renderProductVariationSelectors();
-
-
-        showMessage(
-            message,
-            "Tamanho salvo com sucesso.",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            closeModal("sizeModal");
-
-        }, 400);
-
-
     } catch (error) {
 
-        console.error(error);
-
-        showMessage(
-            message,
-            error.message ||
-            "Erro ao salvar tamanho."
+        console.error(
+            "Erro ao salvar tamanho:",
+            error
         );
 
-    } finally {
-
-        setButtonLoading(
-            button,
-            false
+        showMessage(
+            "sizeFormMessage",
+            error.message ||
+            "Não foi possível salvar o tamanho."
         );
     }
 }
@@ -1487,16 +1287,12 @@ async function saveSize(event) {
 
 async function deleteSize(id) {
 
-    if (!id) {
+    if (!currentUser) {
         return;
     }
 
-    const confirmed =
-        window.confirm(
-            "Excluir este tamanho?"
-        );
 
-    if (!confirmed) {
+    if (!confirm("Excluir este tamanho?")) {
         return;
     }
 
@@ -1507,40 +1303,223 @@ async function deleteSize(id) {
         .from("sizes")
         .delete()
         .eq("id", id)
-        .eq("user_id", state.user.id);
+        .eq("user_id", currentUser.id);
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Erro ao excluir tamanho:",
+            error
+        );
 
         alert(
-            "Não foi possível excluir o tamanho. Ele pode estar vinculado a uma variação."
+            "Não foi possível excluir este tamanho. Ele pode estar vinculado a produtos."
         );
 
         return;
     }
 
 
-    state.selectedProductSizes.delete(id);
-
     await loadSizes();
-
-    renderSizes();
-
-    renderProductVariationSelectors();
-
-    generateVariantPreview();
 }
 
 
-/* =========================================================
-   PRODUTOS
-   ========================================================= */
+// =========================================================
+// VARIAÇÕES DO PRODUTO
+// =========================================================
+
+function renderProductVariationOptions() {
+
+    const colorsContainer =
+        $("productColors");
+
+    const sizesContainer =
+        $("productSizes");
+
+
+    if (colorsContainer) {
+
+        if (!colorsCache.length) {
+
+            colorsContainer.innerHTML = `
+                <div class="empty-state compact">
+                    <strong>Nenhuma cor cadastrada</strong>
+                    <p>Cadastre cores primeiro em Produtos.</p>
+                </div>
+            `;
+
+        } else {
+
+            colorsContainer.innerHTML =
+                colorsCache
+                    .filter(color => color.is_active !== false)
+                    .map(color => `
+
+                        <label class="variation-option">
+
+                            <input
+                                type="checkbox"
+                                name="productColor"
+                                value="${color.id}"
+                                data-color-name="${escapeHtml(color.name)}"
+                                data-color-hex="${escapeHtml(color.hex_code || "#cccccc")}"
+                            >
+
+                            <span
+                                class="variation-color-dot"
+                                style="background:${escapeHtml(color.hex_code || "#cccccc")}"
+                            ></span>
+
+                            <span>
+                                ${escapeHtml(color.name)}
+                            </span>
+
+                        </label>
+
+                    `)
+                    .join("");
+        }
+    }
+
+
+    if (sizesContainer) {
+
+        if (!sizesCache.length) {
+
+            sizesContainer.innerHTML = `
+                <div class="empty-state compact">
+                    <strong>Nenhum tamanho cadastrado</strong>
+                    <p>Cadastre tamanhos primeiro em Produtos.</p>
+                </div>
+            `;
+
+        } else {
+
+            sizesContainer.innerHTML =
+                sizesCache
+                    .filter(size => size.is_active !== false)
+                    .map(size => `
+
+                        <label class="variation-option">
+
+                            <input
+                                type="checkbox"
+                                name="productSize"
+                                value="${size.id}"
+                                data-size-name="${escapeHtml(size.name)}"
+                            >
+
+                            <span class="size-badge">
+                                ${escapeHtml(size.name)}
+                            </span>
+
+                        </label>
+
+                    `)
+                    .join("");
+        }
+    }
+
+
+    updateProductVariantsPreview();
+}
+
+
+function getSelectedColors() {
+
+    return [
+        ...document.querySelectorAll(
+            'input[name="productColor"]:checked'
+        )
+    ].map(input => ({
+        id: input.value,
+        name: input.dataset.colorName || ""
+    }));
+}
+
+
+function getSelectedSizes() {
+
+    return [
+        ...document.querySelectorAll(
+            'input[name="productSize"]:checked'
+        )
+    ].map(input => ({
+        id: input.value,
+        name: input.dataset.sizeName || ""
+    }));
+}
+
+
+function updateProductVariantsPreview() {
+
+    const container =
+        $("productVariantsPreview");
+
+    if (!container) {
+        return;
+    }
+
+
+    const colors =
+        getSelectedColors();
+
+    const sizes =
+        getSelectedSizes();
+
+
+    if (!colors.length || !sizes.length) {
+
+        container.innerHTML = `
+            <div class="empty-state compact">
+                <strong>Nenhuma variação selecionada</strong>
+                <p>Selecione pelo menos uma cor e um tamanho.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const combinations = [];
+
+
+    colors.forEach(color => {
+
+        sizes.forEach(size => {
+
+            combinations.push(`
+                <div class="variant-preview-item">
+
+                    <span>
+                        ${escapeHtml(color.name)}
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(size.name)}
+                    </strong>
+
+                </div>
+            `);
+
+        });
+
+    });
+
+
+    container.innerHTML =
+        combinations.join("");
+}
+
+
+// =========================================================
+// PRODUTOS
+// =========================================================
 
 async function loadProducts() {
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
@@ -1550,11 +1529,15 @@ async function loadProducts() {
         error
     } = await supabaseClient
         .from("products")
-        .select("*")
-        .eq("user_id", state.user.id)
-        .order("created_at", {
-            ascending: false
-        });
+        .select(`
+            *,
+            categories (
+                id,
+                name
+            )
+        `)
+        .eq("user_id", currentUser.id)
+        .order("name");
 
 
     if (error) {
@@ -1568,74 +1551,11 @@ async function loadProducts() {
     }
 
 
-    state.products = data || [];
-}
+    productsCache =
+        data || [];
 
 
-async function loadVariants() {
-
-    if (!state.user) {
-        return;
-    }
-
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("product_variants")
-        .select("*")
-        .eq("user_id", state.user.id);
-
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar variações:",
-            error
-        );
-
-        return;
-    }
-
-
-    state.variants = data || [];
-}
-
-
-function getCategoryName(categoryId) {
-
-    const category =
-        state.categories.find(
-            item => item.id === categoryId
-        );
-
-    return category?.name || "";
-}
-
-
-function getColor(colorId) {
-
-    return state.colors.find(
-        item => item.id === colorId
-    );
-}
-
-
-function getSize(sizeId) {
-
-    return state.sizes.find(
-        item => item.id === sizeId
-    );
-}
-
-
-function getProductVariants(productId) {
-
-    return state.variants.filter(
-        variant =>
-            variant.product_id === productId
-    );
+    renderProducts();
 }
 
 
@@ -1649,55 +1569,13 @@ function renderProducts() {
     }
 
 
-    const search =
-        (
-            $("productSearch")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    let products =
-        state.products;
-
-
-    if (search) {
-
-        products =
-            products.filter(product => {
-
-                return (
-                    String(product.name || "")
-                        .toLowerCase()
-                        .includes(search)
-                    ||
-                    String(product.sku || "")
-                        .toLowerCase()
-                        .includes(search)
-                );
-
-            });
-    }
-
-
-    if (!products.length) {
+    if (!productsCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
-
-                <div class="empty-state-icon">
-                    P
-                </div>
-
-                <strong>
-                    Nenhum produto cadastrado
-                </strong>
-
-                <p>
-                    Cadastre seu primeiro produto para começar a controlar o estoque.
-                </p>
-
+                <div class="empty-state-icon">P</div>
+                <strong>Nenhum produto cadastrado</strong>
+                <p>Cadastre seu primeiro produto para começar a controlar o estoque.</p>
             </div>
         `;
 
@@ -1706,897 +1584,146 @@ function renderProducts() {
 
 
     container.innerHTML =
-        products.map(product => {
+        productsCache.map(product => `
 
-            const variants =
-                getProductVariants(product.id);
+            <div class="product-card">
 
+                <div class="product-card-info">
 
-            const totalStock =
-                variants.reduce(
-                    (sum, variant) =>
-                        sum +
-                        Number(
-                            variant.stock_quantity || 0
-                        ),
-                    0
-                );
+                    <strong>
+                        ${escapeHtml(product.name)}
+                    </strong>
 
+                    <span>
+                        ${escapeHtml(product.sku || "Sem SKU")}
+                    </span>
 
-            const variantCount =
-                variants.length;
+                    <small>
+                        ${
+                            escapeHtml(
+                                product.categories?.name ||
+                                "Sem categoria"
+                            )
+                        }
+                    </small>
 
-
-            return `
-                <article class="product-card">
-
-                    <div class="product-card-header">
-
-                        <div>
-
-                            <div class="product-card-name">
-                                ${escapeHTML(product.name)}
-                            </div>
-
-                            ${
-                                product.sku
-                                    ? `
-                                        <div class="product-card-sku">
-                                            SKU: ${escapeHTML(product.sku)}
-                                        </div>
-                                    `
-                                    : ""
-                            }
-
-                        </div>
-
-                    </div>
+                </div>
 
 
-                    ${
-                        product.description
-                            ? `
-                                <div class="product-card-description">
-                                    ${escapeHTML(product.description)}
-                                </div>
-                            `
-                            : ""
-                    }
+                <div class="product-card-price">
 
+                    <strong>
+                        ${formatCurrency(product.sale_price)}
+                    </strong>
 
-                    <div class="product-card-prices">
+                    <small>
+                        Custo:
+                        ${formatCurrency(product.cost_price)}
+                    </small>
 
-                        <span class="product-cost">
-                            Custo: ${money(product.cost_price)}
-                        </span>
+                </div>
 
-                        <span class="product-sale">
-                            ${money(product.sale_price)}
-                        </span>
+            </div>
 
-                    </div>
-
-
-                    <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            gap:10px;
-                            margin-bottom:12px;
-                            padding:10px 12px;
-                            border-radius:12px;
-                            background:#f8e7ed;
-                            color:#765666;
-                            font-size:12px;
-                        "
-                    >
-
-                        <span>
-                            ${variantCount}
-                            ${variantCount === 1 ? "variação" : "variações"}
-                        </span>
-
-                        <strong>
-                            ${totalStock} un.
-                        </strong>
-
-                    </div>
-
-
-                    <div class="product-card-actions">
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-edit-product="${product.id}"
-                        >
-                            Editar
-                        </button>
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            data-delete-product="${product.id}"
-                        >
-                            Excluir
-                        </button>
-
-                    </div>
-
-                </article>
-            `;
-
-        }).join("");
+        `).join("");
 }
 
 
-/* =========================================================
-   FORMULÁRIO DE PRODUTO
-   ========================================================= */
-
 function resetProductForm() {
 
-    const form = $("productForm");
+    const form =
+        $("productForm");
 
-    if (form) {
-        form.reset();
+    if (!form) {
+        return;
     }
+
+
+    form.reset();
 
 
     $("productId").value = "";
 
+    $("productMinimumStock").value = "0";
 
-    $("productMinimumStock").value =
-        "0";
-
-
-    $("productActive").checked =
-        true;
+    $("productActive").checked = true;
 
 
-    state.selectedProductColors =
-        new Set();
-
-    state.selectedProductSizes =
-        new Set();
-
-    state.productVariantDrafts =
-        new Map();
-
-
-    clearMessage(
-        $("productFormMessage")
+    showMessage(
+        "productFormMessage",
+        ""
     );
 
 
+    renderProductVariationOptions();
+
     populateCategorySelect();
-
-    renderProductVariationSelectors();
-
-    renderVariantPreview();
 }
 
 
-function openProductModal(product = null) {
+function openProductModal() {
 
     resetProductForm();
-
-
-    if (product) {
-
-        $("productId").value =
-            product.id;
-
-        $("productName").value =
-            product.name || "";
-
-        $("productSku").value =
-            product.sku || "";
-
-        $("productCategory").value =
-            product.category_id || "";
-
-        $("productDescription").value =
-            product.description || "";
-
-        $("productCostPrice").value =
-            product.cost_price ?? "";
-
-        $("productSalePrice").value =
-            product.sale_price ?? "";
-
-        $("productMinimumStock").value =
-            product.minimum_stock ?? 0;
-
-        $("productActive").checked =
-            product.is_active !== false;
-
-
-        const variants =
-            getProductVariants(product.id);
-
-
-        variants.forEach(variant => {
-
-            if (variant.color_id) {
-                state.selectedProductColors.add(
-                    variant.color_id
-                );
-            }
-
-            if (variant.size_id) {
-                state.selectedProductSizes.add(
-                    variant.size_id
-                );
-
-
-            const key =
-                variantKey(
-                    variant.color_id,
-                    variant.size_id
-                );
-
-
-            state.productVariantDrafts.set(
-                key,
-                {
-                    color_id:
-                        variant.color_id,
-
-                    size_id:
-                        variant.size_id,
-
-                    stock_quantity:
-                        Number(
-                            variant.stock_quantity || 0
-                        ),
-
-                    minimum_stock:
-                        Number(
-                            variant.minimum_stock ??
-                            product.minimum_stock ??
-                            0
-                        )
-                }
-            );
-
-        });
-
-
-        renderProductVariationSelectors();
-
-        renderVariantPreview();
-    }
-
 
     openModal("productModal");
 }
 
 
-/* =========================================================
-   SELEÇÃO DE CORES E TAMANHOS
-   ========================================================= */
-
-function renderProductVariationSelectors() {
-
-    renderProductColors();
-
-    renderProductSizes();
-}
-
-
-function renderProductColors() {
-
-    const container =
-        $("productColors");
-
-    if (!container) {
-        return;
-    }
-
-
-    const activeColors =
-        state.colors.filter(
-            color =>
-                color.is_active !== false
-        );
-
-
-    if (!activeColors.length) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>Nenhuma cor cadastrada</strong>
-                <p>
-                    Cadastre uma cor primeiro.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        activeColors.map(color => {
-
-            const checked =
-                state.selectedProductColors.has(
-                    color.id
-                );
-
-
-            const hex =
-                normalizeHex(
-                    color.hex_code
-                );
-
-
-            return `
-                <label
-                    style="
-                        display:flex;
-                        align-items:center;
-                        gap:10px;
-                        width:100%;
-                        padding:12px;
-                        border:1px solid ${checked ? "#d982a1" : "#e7dce1"};
-                        border-radius:14px;
-                        background:${checked ? "#fdf0f4" : "#fff"};
-                        cursor:pointer;
-                    "
-                >
-
-                    <input
-                        type="checkbox"
-                        class="product-color-checkbox"
-                        value="${color.id}"
-                        ${checked ? "checked" : ""}
-                        style="
-                            width:20px;
-                            height:20px;
-                            accent-color:#c86e8f;
-                            flex:0 0 20px;
-                        "
-                    >
-
-                    <span
-                        style="
-                            width:28px;
-                            height:28px;
-                            flex:0 0 28px;
-                            border-radius:50%;
-                            background:${hex};
-                            border:2px solid #fff;
-                            box-shadow:0 0 0 1px #ddd3d8;
-                        "
-                    ></span>
-
-                    <span
-                        style="
-                            flex:1;
-                            font-weight:700;
-                            color:#4d4148;
-                        "
-                    >
-                        ${escapeHTML(color.name)}
-                    </span>
-
-                </label>
-            `;
-
-        }).join("");
-}
-
-
-function renderProductSizes() {
-
-    const container =
-        $("productSizes");
-
-    if (!container) {
-        return;
-    }
-
-
-    const activeSizes =
-        state.sizes
-            .filter(
-                size =>
-                    size.is_active !== false
-            )
-            .sort(
-                (a, b) =>
-                    Number(a.display_order || 0) -
-                    Number(b.display_order || 0)
-            );
-
-
-    if (!activeSizes.length) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>Nenhum tamanho cadastrado</strong>
-                <p>
-                    Cadastre um tamanho primeiro.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        activeSizes.map(size => {
-
-            const checked =
-                state.selectedProductSizes.has(
-                    size.id
-                );
-
-
-            return `
-                <label
-                    style="
-                        display:flex;
-                        align-items:center;
-                        gap:10px;
-                        width:100%;
-                        padding:12px;
-                        border:1px solid ${checked ? "#d982a1" : "#e7dce1"};
-                        border-radius:14px;
-                        background:${checked ? "#fdf0f4" : "#fff"};
-                        cursor:pointer;
-                    "
-                >
-
-                    <input
-                        type="checkbox"
-                        class="product-size-checkbox"
-                        value="${size.id}"
-                        ${checked ? "checked" : ""}
-                        style="
-                            width:20px;
-                            height:20px;
-                            accent-color:#c86e8f;
-                            flex:0 0 20px;
-                        "
-                    >
-
-                    <span
-                        style="
-                            min-width:38px;
-                            height:34px;
-                            padding:0 8px;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            border-radius:10px;
-                            background:#f8e7ed;
-                            color:#a05272;
-                            font-weight:800;
-                        "
-                    >
-                        ${escapeHTML(size.name)}
-                    </span>
-
-                    <span
-                        style="
-                            flex:1;
-                            font-weight:700;
-                            color:#4d4148;
-                        "
-                    >
-                        Tamanho ${escapeHTML(size.name)}
-                    </span>
-
-                </label>
-            `;
-
-        }).join("");
-}
-
-
-/* =========================================================
-   VARIAÇÕES
-   ========================================================= */
-
-function variantKey(colorId, sizeId) {
-
-    return `${colorId || "none"}_${sizeId || "none"}`;
-}
-
-
-function generateVariantCombinations() {
-
-    const colors =
-        state.colors.filter(
-            color =>
-                color.is_active !== false &&
-                state.selectedProductColors.has(
-                    color.id
-                )
-        );
-
-
-    const sizes =
-        state.sizes
-            .filter(
-                size =>
-                    size.is_active !== false &&
-                    state.selectedProductSizes.has(
-                        size.id
-                    )
-            )
-            .sort(
-                (a, b) =>
-                    Number(a.display_order || 0) -
-                    Number(b.display_order || 0)
-            );
-
-
-    if (!colors.length || !sizes.length) {
-        return [];
-    }
-
-
-    const combinations = [];
-
-
-    colors.forEach(color => {
-
-        sizes.forEach(size => {
-
-            const key =
-                variantKey(
-                    color.id,
-                    size.id
-                );
-
-
-            const previous =
-                state.productVariantDrafts.get(
-                    key
-                );
-
-
-            combinations.push({
-
-                key,
-
-                color_id:
-                    color.id,
-
-                color_name:
-                    color.name,
-
-                color_hex:
-                    normalizeHex(
-                        color.hex_code
-                    ),
-
-                size_id:
-                    size.id,
-
-                size_name:
-                    size.name,
-
-                stock_quantity:
-                    previous?.stock_quantity ??
-                    0,
-
-                minimum_stock:
-                    previous?.minimum_stock ??
-                    Number(
-                        $("productMinimumStock")?.value ||
-                        0
-                    )
-            });
-
-        });
-
-    });
-
-
-    return combinations;
-}
-
-
-function renderVariantPreview() {
-
-    const container =
-        $("productVariantsPreview");
-
-    if (!container) {
-        return;
-    }
-
-
-    const combinations =
-        generateVariantCombinations();
-
-
-    if (!combinations.length) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-
-                <strong>
-                    Nenhuma variação selecionada
-                </strong>
-
-                <p>
-                    Selecione pelo menos uma cor e um tamanho.
-                </p>
-
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-
-        <div
-            style="
-                display:flex;
-                flex-direction:column;
-                gap:10px;
-            "
-        >
-
-            ${combinations.map(item => {
-
-                return `
-                    <div
-                        style="
-                            padding:13px;
-                            border:1px solid #eadfe4;
-                            border-radius:15px;
-                            background:#fff;
-                        "
-                    >
-
-                        <div
-                            style="
-                                display:flex;
-                                align-items:center;
-                                gap:9px;
-                                margin-bottom:10px;
-                            "
-                        >
-
-                            <span
-                                style="
-                                    width:25px;
-                                    height:25px;
-                                    flex:0 0 25px;
-                                    border-radius:50%;
-                                    background:${item.color_hex};
-                                    border:2px solid #fff;
-                                    box-shadow:0 0 0 1px #ddd3d8;
-                                "
-                            ></span>
-
-                            <strong
-                                style="
-                                    color:#3f353c;
-                                "
-                            >
-                                ${escapeHTML(item.color_name)}
-                                /
-                                ${escapeHTML(item.size_name)}
-                            </strong>
-
-                        </div>
-
-
-                        <div
-                            style="
-                                display:grid;
-                                grid-template-columns:1fr 1fr;
-                                gap:10px;
-                            "
-                        >
-
-                            <div>
-
-                                <label
-                                    style="
-                                        display:block;
-                                        margin-bottom:5px;
-                                        color:#756970;
-                                        font-size:11px;
-                                        font-weight:700;
-                                    "
-                                >
-                                    Estoque inicial
-                                </label>
-
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    inputmode="numeric"
-                                    value="${Number(item.stock_quantity || 0)}"
-                                    data-variant-stock="${item.key}"
-                                    style="
-                                        width:100%;
-                                        min-height:44px;
-                                        padding:0 11px;
-                                        border:1px solid #ded2d8;
-                                        border-radius:12px;
-                                        outline:none;
-                                        background:#fff;
-                                    "
-                                >
-
-                            </div>
-
-
-                            <div>
-
-                                <label
-                                    style="
-                                        display:block;
-                                        margin-bottom:5px;
-                                        color:#756970;
-                                        font-size:11px;
-                                        font-weight:700;
-                                    "
-                                >
-                                    Estoque mínimo
-                                </label>
-
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    inputmode="numeric"
-                                    value="${Number(item.minimum_stock || 0)}"
-                                    data-variant-minimum="${item.key}"
-                                    style="
-                                        width:100%;
-                                        min-height:44px;
-                                        padding:0 11px;
-                                        border:1px solid #ded2d8;
-                                        border-radius:12px;
-                                        outline:none;
-                                        background:#fff;
-                                    "
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                `;
-
-            }).join("")}
-
-        </div>
-    `;
-}
-
-
-function generateVariantPreview() {
-
-    renderVariantPreview();
-}
-
-
-function collectVariantDraftsFromScreen() {
-
-    const stockInputs =
-        $$("[data-variant-stock]");
-
-    const minimumInputs =
-        $$("[data-variant-minimum]");
-
-
-    stockInputs.forEach(input => {
-
-        const key =
-            input.dataset.variantStock;
-
-        const minimumInput =
-            document.querySelector(
-                `[data-variant-minimum="${CSS.escape(key)}"]`
-            );
-
-
-        const current =
-            state.productVariantDrafts.get(
-                key
-            ) || {};
-
-
-        state.productVariantDrafts.set(
-            key,
-            {
-
-                ...current,
-
-                stock_quantity:
-                    Math.max(
-                        0,
-                        Number(input.value || 0)
-                    ),
-
-                minimum_stock:
-                    Math.max(
-                        0,
-                        Number(
-                            minimumInput?.value ||
-                            0
-                        )
-                    )
-            }
-        );
-
-    });
-}
-
-
-/* =========================================================
-   SALVAR PRODUTO + VARIAÇÕES
-   ========================================================= */
-
 async function saveProduct(event) {
 
     event.preventDefault();
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
-
-
-    collectVariantDraftsFromScreen();
-
-
-    const message =
-        $("productFormMessage");
 
 
     const button =
         event.submitter;
 
 
-    clearMessage(message);
-
-
     const name =
         $("productName").value.trim();
 
+    const sku =
+        $("productSku").value.trim();
 
-    const salePrice =
-        Number(
-            $("productSalePrice").value || 0
-        );
+    const categoryId =
+        $("productCategory").value || null;
 
+    const description =
+        $("productDescription").value.trim();
 
     const costPrice =
         Number(
             $("productCostPrice").value || 0
         );
 
+    const salePrice =
+        Number(
+            $("productSalePrice").value || 0
+        );
 
     const minimumStock =
-        Math.max(
-            0,
-            Number(
-                $("productMinimumStock").value || 0
-            )
+        Number(
+            $("productMinimumStock").value || 0
         );
+
+    const isActive =
+        $("productActive").checked;
+
+
+    const colors =
+        getSelectedColors();
+
+    const sizes =
+        getSelectedSizes();
 
 
     if (!name) {
 
         showMessage(
-            message,
+            "productFormMessage",
             "Informe o nome do produto."
         );
 
@@ -2607,7 +1734,7 @@ async function saveProduct(event) {
     if (salePrice < 0 || costPrice < 0) {
 
         showMessage(
-            message,
+            "productFormMessage",
             "Os preços não podem ser negativos."
         );
 
@@ -2615,369 +1742,96 @@ async function saveProduct(event) {
     }
 
 
-    const combinations =
-        generateVariantCombinations();
-
-
-    if (!combinations.length) {
-
-        showMessage(
-            message,
-            "Selecione pelo menos uma cor e um tamanho."
-        );
-
-        return;
-    }
-
-
-    setButtonLoading(
+    setLoading(
         button,
-        true
+        true,
+        "Salvando..."
     );
 
 
     try {
 
-        const productId =
-            $("productId").value;
-
-
-        const payload = {
-
-            user_id:
-                state.user.id,
-
-            category_id:
-                $("productCategory").value ||
-                null,
-
-            name,
-
-            sku:
-                $("productSku").value.trim() ||
-                null,
-
-            description:
-                $("productDescription")
-                    .value
-                    .trim() ||
-                null,
-
-            cost_price:
-                costPrice,
-
-            sale_price:
-                salePrice,
-
-            minimum_stock:
-                minimumStock,
-
-            is_active:
-                $("productActive").checked
-        };
-
-
-        let savedProduct;
-
-
-        /* ===============================================
-           ATUALIZAÇÃO
-           =============================================== */
-
-        if (productId) {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("products")
-                .update(payload)
-                .eq("id", productId)
-                .eq("user_id", state.user.id)
-                .select()
-                .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            savedProduct =
-                data;
-
-
-            /* -------------------------------------------
-               Atualiza as variações existentes.
-               Variações novas são inseridas.
-               ------------------------------------------- */
-
-            const existingVariants =
-                getProductVariants(
-                    productId
-                );
-
-
-            const desiredKeys =
-                new Set(
-                    combinations.map(
-                        item =>
-                            variantKey(
-                                item.color_id,
-                                item.size_id
-                            )
-                    )
-                );
-
-
-            for (
-                const existing
-                of existingVariants
-            ) {
-
-                const key =
-                    variantKey(
-                        existing.color_id,
-                        existing.size_id
-                    );
-
-
-                if (
-                    desiredKeys.has(key)
-                ) {
-
-                    const item =
-                        combinations.find(
-                            combination =>
-                                combination.key === key
-                        );
-
-
-                    await supabaseClient
-                        .from("product_variants")
-                        .update({
-
-                            color_id:
-                                item.color_id,
-
-                            size_id:
-                                item.size_id,
-
-                            stock_quantity:
-                                item.stock_quantity,
-
-                            minimum_stock:
-                                item.minimum_stock,
-
-                            is_active:
-                                true
-
-                        })
-                        .eq(
-                            "id",
-                            existing.id
-                        )
-                        .eq(
-                            "user_id",
-                            state.user.id
-                        );
-
-
-                } else {
-
-                    await supabaseClient
-                        .from("product_variants")
-                        .update({
-
-                            is_active:
-                                false
-
-                        })
-                        .eq(
-                            "id",
-                            existing.id
-                        )
-                        .eq(
-                            "user_id",
-                            state.user.id
-                        );
-                }
-            }
-
-
-            const existingKeys =
-                new Set(
-                    existingVariants.map(
-                        variant =>
-                            variantKey(
-                                variant.color_id,
-                                variant.size_id
-                            )
-                    )
-                );
-
-
-            const newVariants =
-                combinations
-                    .filter(
-                        item =>
-                            !existingKeys.has(
-                                item.key
-                            )
-                    )
-                    .map(item => ({
-
-                        user_id:
-                            state.user.id,
-
-                        product_id:
-                            productId,
-
-                        color_id:
-                            item.color_id,
-
-                        size_id:
-                            item.size_id,
-
-                        stock_quantity:
-                            item.stock_quantity,
-
-                        minimum_stock:
-                            item.minimum_stock,
-
-                        is_active:
-                            true
-                    }));
-
-
-            if (newVariants.length) {
-
-                const {
-                    error
-                } = await supabaseClient
-                    .from("product_variants")
-                    .insert(newVariants);
-
-
-                if (error) {
-                    throw error;
-                }
-            }
-
-
-        /* ===============================================
-           NOVO PRODUTO
-           =============================================== */
-
-        } else {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("products")
-                .insert(payload)
-                .select()
-                .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            savedProduct =
-                data;
-
-
-            const variantsToInsert =
-                combinations.map(item => ({
-
-                    user_id:
-                        state.user.id,
-
-                    product_id:
-                        savedProduct.id,
-
-                    color_id:
-                        item.color_id,
-
-                    size_id:
-                        item.size_id,
-
-                    stock_quantity:
-                        item.stock_quantity,
-
-                    minimum_stock:
-                        item.minimum_stock,
-
-                    is_active:
-                        true
-                }));
+        const {
+            data: product,
+            error: productError
+        } = await supabaseClient
+            .from("products")
+            .insert({
+                user_id: currentUser.id,
+                category_id: categoryId,
+                name,
+                sku: sku || null,
+                description: description || null,
+                cost_price: costPrice,
+                sale_price: salePrice,
+                minimum_stock: minimumStock,
+                is_active: isActive
+            })
+            .select()
+            .single();
+
+
+        if (productError) {
+            throw productError;
+        }
+
+
+        // =============================================
+        // CRIA AS VARIAÇÕES AUTOMATICAMENTE
+        // =============================================
+
+        if (colors.length && sizes.length) {
+
+            const variants = [];
+
+
+            colors.forEach(color => {
+
+                sizes.forEach(size => {
+
+                    variants.push({
+                        user_id: currentUser.id,
+                        product_id: product.id,
+                        color_id: color.id,
+                        size_id: size.id,
+                        stock_quantity: 0,
+                        minimum_stock: minimumStock,
+                        is_active: true
+                    });
+
+                });
+
+            });
 
 
             const {
-                error:
-                    variantError
+                error: variantsError
             } = await supabaseClient
                 .from("product_variants")
-                .insert(
-                    variantsToInsert
+                .insert(variants);
+
+
+            if (variantsError) {
+
+                console.error(
+                    "Erro ao criar variações:",
+                    variantsError
                 );
 
-
-            if (variantError) {
-
-                /* ---------------------------------------
-                   Segurança:
-                   se as variações falharem, removemos
-                   o produto recém-criado.
-                   --------------------------------------- */
-
-                await supabaseClient
-                    .from("products")
-                    .delete()
-                    .eq(
-                        "id",
-                        savedProduct.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
-
-
-                throw variantError;
+                throw new Error(
+                    "Produto criado, mas não foi possível criar as variações."
+                );
             }
         }
 
 
+        closeModal("productModal");
+
         await loadProducts();
 
-        await loadVariants();
+        await loadStock();
 
-        renderProducts();
-
-        renderStock();
-
-        updateDashboard();
-
-
-        showMessage(
-            message,
-            "Produto e variações salvos com sucesso.",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            closeModal(
-                "productModal"
-            );
-
-        }, 600);
-
+        await loadDashboard();
 
     } catch (error) {
 
@@ -2986,17 +1840,15 @@ async function saveProduct(event) {
             error
         );
 
-
         showMessage(
-            message,
+            "productFormMessage",
             error.message ||
             "Não foi possível salvar o produto."
         );
 
-
     } finally {
 
-        setButtonLoading(
+        setLoading(
             button,
             false
         );
@@ -3004,238 +1856,102 @@ async function saveProduct(event) {
 }
 
 
-/* =========================================================
-   EXCLUIR PRODUTO
-   ========================================================= */
+// =========================================================
+// ESTOQUE
+// =========================================================
 
-async function deleteProduct(id) {
+async function loadVariants() {
 
-    if (!id) {
+    if (!currentUser) {
         return;
     }
 
 
-    const product =
-        state.products.find(
-            item =>
-                item.id === id
-        );
-
-
-    if (!product) {
-        return;
-    }
-
-
-    const confirmed =
-        window.confirm(
-            `Excluir o produto "${product.name}"?`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        /*
-         * Primeiro removemos as variações.
-         * Depois removemos o produto.
-         */
-
-        const {
-            error:
-                variantsError
-        } = await supabaseClient
-            .from("product_variants")
-            .delete()
-            .eq(
-                "product_id",
-                id
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("product_variants")
+        .select(`
+            *,
+            products (
+                id,
+                name,
+                sale_price,
+                minimum_stock
+            ),
+            colors (
+                id,
+                name,
+                hex_code
+            ),
+            sizes (
+                id,
+                name
             )
-            .eq(
-                "user_id",
-                state.user.id
-            );
+        `)
+        .eq("user_id", currentUser.id);
 
 
-        if (variantsError) {
-            throw variantsError;
-        }
+    if (error) {
 
-
-        const {
+        console.error(
+            "Erro ao carregar variações:",
             error
-        } = await supabaseClient
-            .from("products")
-            .delete()
-            .eq(
-                "id",
-                id
-            )
-            .eq(
-                "user_id",
-                state.user.id
-            );
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        await loadProducts();
-
-        await loadVariants();
-
-        renderProducts();
-
-        renderStock();
-
-        updateDashboard();
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Não foi possível excluir o produto."
         );
+
+        variantsCache = [];
+
+        return;
     }
+
+
+    variantsCache =
+        data || [];
 }
 
 
-/* =========================================================
-   ESTOQUE
-   ========================================================= */
+async function loadStock() {
 
-function renderStock() {
-
-    const container =
-        $("stockList");
-
-    if (!container) {
-        return;
-    }
-
-
-    const search =
-        (
-            $("stockSearch")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    let variants =
-        state.variants.filter(
-            variant =>
-                variant.is_active !== false
-        );
-
-
-    const enriched =
-        variants.map(variant => {
-
-            const product =
-                state.products.find(
-                    item =>
-                        item.id ===
-                        variant.product_id
-                );
-
-
-            const color =
-                getColor(
-                    variant.color_id
-                );
-
-
-            const size =
-                getSize(
-                    variant.size_id
-                );
-
-
-            return {
-
-                ...variant,
-
-                product,
-
-                color,
-
-                size
-            };
-
-        });
-
-
-    let filtered =
-        enriched;
-
-
-    if (search) {
-
-        filtered =
-            enriched.filter(item => {
-
-                const text = [
-
-                    item.product?.name,
-
-                    item.product?.sku,
-
-                    item.color?.name,
-
-                    item.size?.name
-
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
-
-
-                return text.includes(search);
-            });
-    }
+    await loadVariants();
 
 
     const total =
-        variants.reduce(
-            (sum, item) =>
-                sum +
-                Number(
-                    item.stock_quantity || 0
+        variantsCache.reduce(
+            (sum, variant) =>
+                sum + Number(
+                    variant.stock_quantity || 0
                 ),
             0
         );
 
 
     const low =
-        variants.filter(
-            item =>
+        variantsCache.filter(variant => {
+
+            const stock =
                 Number(
-                    item.stock_quantity || 0
-                ) > 0 &&
+                    variant.stock_quantity || 0
+                );
+
+            const minimum =
                 Number(
-                    item.stock_quantity || 0
-                ) <=
-                Number(
-                    item.minimum_stock || 0
-                )
-        ).length;
+                    variant.minimum_stock ??
+                    variant.products?.minimum_stock ??
+                    0
+                );
+
+            return stock > 0 &&
+                stock <= minimum;
+
+        }).length;
 
 
     const zero =
-        variants.filter(
-            item =>
+        variantsCache.filter(
+            variant =>
                 Number(
-                    item.stock_quantity || 0
+                    variant.stock_quantity || 0
                 ) === 0
         ).length;
 
@@ -3256,23 +1972,27 @@ function renderStock() {
     }
 
 
-    if (!filtered.length) {
+    renderStock();
+}
+
+
+function renderStock() {
+
+    const container =
+        $("stockList");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!variantsCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
-
-                <div class="empty-state-icon">
-                    E
-                </div>
-
-                <strong>
-                    Estoque vazio
-                </strong>
-
-                <p>
-                    As variações dos produtos aparecerão aqui.
-                </p>
-
+                <div class="empty-state-icon">E</div>
+                <strong>Estoque vazio</strong>
+                <p>As variações dos produtos aparecerão aqui.</p>
             </div>
         `;
 
@@ -3281,161 +2001,90 @@ function renderStock() {
 
 
     container.innerHTML =
-        filtered.map(item => {
+        variantsCache.map(variant => {
 
-            const quantity =
+            const productName =
+                variant.products?.name ||
+                "Produto";
+
+            const colorName =
+                variant.colors?.name ||
+                "Sem cor";
+
+            const sizeName =
+                variant.sizes?.name ||
+                "Sem tamanho";
+
+            const stock =
                 Number(
-                    item.stock_quantity || 0
+                    variant.stock_quantity || 0
                 );
 
 
             const minimum =
                 Number(
-                    item.minimum_stock || 0
+                    variant.minimum_stock ??
+                    variant.products?.minimum_stock ??
+                    0
                 );
 
 
-            let statusClass = "";
+            let status =
+                "normal";
 
-            if (quantity === 0) {
-                statusClass = "stock-zero";
-            } else if (quantity <= minimum) {
-                statusClass = "stock-low";
+            if (stock === 0) {
+                status = "zero";
+            } else if (stock <= minimum) {
+                status = "low";
             }
 
 
-            const productName =
-                item.product?.name ||
-                "Produto";
-
-
-            const colorName =
-                item.color?.name ||
-                "Sem cor";
-
-
-            const sizeName =
-                item.size?.name ||
-                "Sem tamanho";
-
-
-            const colorHex =
-                normalizeHex(
-                    item.color?.hex_code
-                );
-
-
             return `
-                <article class="stock-item">
 
-                    <div class="stock-item-header">
+                <div class="stock-card">
 
-                        <div
-                            style="
-                                min-width:0;
-                                display:flex;
-                                align-items:center;
-                                gap:10px;
-                            "
-                        >
+                    <div class="stock-card-info">
 
-                            <span
-                                style="
-                                    width:30px;
-                                    height:30px;
-                                    flex:0 0 30px;
-                                    border-radius:50%;
-                                    background:${colorHex};
-                                    border:2px solid #fff;
-                                    box-shadow:0 0 0 1px #ddd3d8;
-                                "
-                            ></span>
-
-
-                            <div
-                                style="
-                                    min-width:0;
-                                "
-                            >
-
-                                <div
-                                    class="stock-item-name"
-                                    style="
-                                        overflow:hidden;
-                                        text-overflow:ellipsis;
-                                        white-space:nowrap;
-                                    "
-                                >
-                                    ${escapeHTML(productName)}
-                                </div>
-
-                                <div
-                                    style="
-                                        margin-top:3px;
-                                        color:#8b7d84;
-                                        font-size:11px;
-                                    "
-                                >
-                                    ${escapeHTML(colorName)}
-                                    /
-                                    ${escapeHTML(sizeName)}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <strong
-                            class="stock-quantity ${statusClass}"
-                        >
-                            ${quantity}
+                        <strong>
+                            ${escapeHtml(productName)}
                         </strong>
 
-                    </div>
-
-
-                    <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            margin-top:10px;
-                            padding-top:9px;
-                            border-top:1px solid #f0e7eb;
-                            color:#8b7d84;
-                            font-size:11px;
-                        "
-                    >
-
                         <span>
-                            Mínimo: ${minimum}
-                        </span>
-
-                        <span>
-                            ${quantity === 0
-                                ? "Sem estoque"
-                                : quantity <= minimum
-                                    ? "Estoque baixo"
-                                    : "Disponível"
-                            }
+                            ${escapeHtml(colorName)}
+                            /
+                            ${escapeHtml(sizeName)}
                         </span>
 
                     </div>
 
-                </article>
+
+                    <div class="stock-card-quantity ${status}">
+
+                        <strong>
+                            ${stock}
+                        </strong>
+
+                        <small>
+                            unidades
+                        </small>
+
+                    </div>
+
+                </div>
+
             `;
 
         }).join("");
 }
 
 
-/* =========================================================
-   VENDAS
-   ========================================================= */
+// =========================================================
+// VENDAS
+// =========================================================
 
 async function loadSales() {
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
@@ -3446,16 +2095,10 @@ async function loadSales() {
     } = await supabaseClient
         .from("sales")
         .select("*")
-        .eq(
-            "user_id",
-            state.user.id
-        )
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
-        );
+        .eq("user_id", currentUser.id)
+        .order("sale_date", {
+            ascending: false
+        });
 
 
     if (error) {
@@ -3469,8 +2112,54 @@ async function loadSales() {
     }
 
 
-    state.sales =
+    salesCache =
         data || [];
+
+
+    renderSales();
+
+    updateSalesMetrics();
+}
+
+
+function updateSalesMetrics() {
+
+    const today =
+        todayISO();
+
+
+    const todaySales =
+        salesCache.filter(sale => {
+
+            return String(
+                sale.sale_date || ""
+            ).startsWith(today);
+
+        });
+
+
+    const total =
+        todaySales.reduce(
+            (sum, sale) =>
+                sum + Number(
+                    sale.total || 0
+                ),
+            0
+        );
+
+
+    if ($("salesToday")) {
+
+        $("salesToday").textContent =
+            formatCurrency(total);
+    }
+
+
+    if ($("salesOrdersToday")) {
+
+        $("salesOrdersToday").textContent =
+            todaySales.length;
+    }
 }
 
 
@@ -3484,103 +2173,13 @@ function renderSales() {
     }
 
 
-    const search =
-        (
-            $("salesSearch")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    const today =
-        todayISO();
-
-
-    const todaySales =
-        state.sales.filter(
-            sale =>
-                sale.sale_date ===
-                today &&
-                sale.status !==
-                "cancelled"
-        );
-
-
-    const todayTotal =
-        todaySales.reduce(
-            (sum, sale) =>
-                sum +
-                Number(
-                    sale.total || 0
-                ),
-            0
-        );
-
-
-    if ($("salesToday")) {
-
-        $("salesToday").textContent =
-            money(todayTotal);
-    }
-
-
-    if ($("salesOrdersToday")) {
-
-        $("salesOrdersToday").textContent =
-            todaySales.length;
-    }
-
-
-    let sales =
-        state.sales;
-
-
-    if (search) {
-
-        sales =
-            sales.filter(sale => {
-
-                return [
-
-                    sale.sale_number,
-
-                    sale.payment_method,
-
-                    sale.status,
-
-                    sale.notes
-
-                ]
-                    .filter(
-                        value =>
-                            value !== null &&
-                            value !== undefined
-                    )
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(search);
-            });
-    }
-
-
-    if (!sales.length) {
+    if (!salesCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
-
-                <div class="empty-state-icon">
-                    V
-                </div>
-
-                <strong>
-                    Nenhuma venda
-                </strong>
-
-                <p>
-                    As vendas registradas aparecerão aqui.
-                </p>
-
+                <div class="empty-state-icon">V</div>
+                <strong>Nenhuma venda</strong>
+                <p>As vendas registradas aparecerão aqui.</p>
             </div>
         `;
 
@@ -3589,852 +2188,42 @@ function renderSales() {
 
 
     container.innerHTML =
-        sales.map(sale => {
+        salesCache.map(sale => `
 
-            const status =
-                sale.status || "completed";
+            <div class="sale-card">
 
+                <div>
 
-            return `
-                <article class="sale-card">
+                    <strong>
+                        Venda #${sale.sale_number}
+                    </strong>
 
-                    <div class="sale-card-header">
+                    <span>
+                        ${new Date(
+                            sale.sale_date
+                        ).toLocaleDateString("pt-BR")}
+                    </span>
 
-                        <div>
+                </div>
 
-                            <div class="sale-number">
-                                Venda #${escapeHTML(sale.sale_number)}
-                            </div>
 
-                            <div class="sale-date">
-                                ${formatDate(sale.sale_date)}
-                            </div>
-
-                        </div>
-
-                        <span
-                            style="
-                                color:${status === "cancelled"
-                                    ? "#b4235a"
-                                    : "#2f8f62"};
-                                font-size:11px;
-                                font-weight:800;
-                            "
-                        >
-                            ${
-                                status === "cancelled"
-                                    ? "Cancelada"
-                                    : "Concluída"
-                            }
-                        </span>
-
-                    </div>
-
-
-                    <div class="sale-total">
-
-                        <span>
-                            ${escapeHTML(
-                                sale.payment_method ||
-                                "Pagamento"
-                            )}
-                        </span>
-
-                        <strong>
-                            ${money(sale.total)}
-                        </strong>
-
-                    </div>
-
-                </article>
-            `;
-
-        }).join("");
-}
-
-
-/* =========================================================
-   CRIAÇÃO DE VENDA
-   ========================================================= */
-
-function resetSaleForm() {
-
-    const form =
-        $("saleForm");
-
-    if (form) {
-        form.reset();
-    }
-
-
-    $("saleItems").innerHTML = "";
-
-
-    $("saleDiscount").value =
-        "0";
-
-
-    $("saleTotal").textContent =
-        money(0);
-
-
-    clearMessage(
-        $("saleFormMessage")
-    );
-}
-
-
-function addSaleItem() {
-
-    const container =
-        $("saleItems");
-
-    if (!container) {
-        return;
-    }
-
-
-    const availableVariants =
-        state.variants.filter(
-            variant =>
-                variant.is_active !== false &&
-                Number(
-                    variant.stock_quantity || 0
-                ) > 0
-        );
-
-
-    if (!availableVariants.length) {
-
-        alert(
-            "Não existem variações com estoque disponível."
-        );
-
-        return;
-    }
-
-
-    const item =
-        document.createElement("div");
-
-
-    item.className =
-        "sale-item";
-
-
-    item.style.cssText = `
-        padding:12px;
-        border:1px solid #eadfe4;
-        border-radius:14px;
-        background:#fff;
-    `;
-
-
-    const options =
-        availableVariants.map(variant => {
-
-            const product =
-                state.products.find(
-                    p =>
-                        p.id ===
-                        variant.product_id
-                );
-
-
-            const color =
-                getColor(
-                    variant.color_id
-                );
-
-
-            const size =
-                getSize(
-                    variant.size_id
-                );
-
-
-            const label = [
-
-                product?.name,
-
-                color?.name,
-
-                size?.name
-
-            ]
-                .filter(Boolean)
-                .join(" / ");
-
-
-            return `
-                <option
-                    value="${variant.id}"
-                    data-price="${Number(product?.sale_price || 0)}"
-                    data-stock="${Number(variant.stock_quantity || 0)}"
-                >
-                    ${escapeHTML(label)}
-                    — ${money(product?.sale_price)}
-                    — Estoque: ${variant.stock_quantity}
-                </option>
-            `;
-
-        }).join("");
-
-
-    item.innerHTML = `
-
-        <div
-            style="
-                display:grid;
-                grid-template-columns:minmax(0,1fr) 80px 34px;
-                gap:8px;
-                align-items:end;
-            "
-        >
-
-            <div class="form-group">
-
-                <label>
-                    Produto
-                </label>
-
-                <select
-                    class="sale-variant"
-                >
-                    ${options}
-                </select>
+                <strong>
+                    ${formatCurrency(sale.total)}
+                </strong>
 
             </div>
 
-
-            <div class="form-group">
-
-                <label>
-                    Qtd.
-                </label>
-
-                <input
-                    type="number"
-                    class="sale-quantity"
-                    min="1"
-                    value="1"
-                    inputmode="numeric"
-                >
-
-            </div>
-
-
-            <button
-                type="button"
-                class="secondary-button remove-sale-item"
-                style="
-                    width:34px;
-                    min-height:44px;
-                    padding:0;
-                "
-            >
-                ×
-            </button>
-
-        </div>
-
-    `;
-
-
-    container.appendChild(item);
-
-
-    item.querySelector(
-        ".remove-sale-item"
-    ).addEventListener(
-        "click",
-        () => {
-
-            item.remove();
-
-            calculateSaleTotal();
-        }
-    );
-
-
-    item.querySelector(
-        ".sale-variant"
-    ).addEventListener(
-        "change",
-        calculateSaleTotal
-    );
-
-
-    item.querySelector(
-        ".sale-quantity"
-    ).addEventListener(
-        "input",
-        calculateSaleTotal
-    );
-
-
-    calculateSaleTotal();
+        `).join("");
 }
 
 
-function calculateSaleTotal() {
+// =========================================================
+// FINANCEIRO
+// =========================================================
 
-    const items =
-        $$(".sale-item");
+async function loadFinance() {
 
-
-    let subtotal = 0;
-
-
-    items.forEach(item => {
-
-        const select =
-            item.querySelector(
-                ".sale-variant"
-            );
-
-
-        const quantity =
-            Number(
-                item.querySelector(
-                    ".sale-quantity"
-                )?.value || 0
-            );
-
-
-        const option =
-            select?.selectedOptions?.[0];
-
-
-        const price =
-            Number(
-                option?.dataset?.price || 0
-            );
-
-
-        subtotal +=
-            price * quantity;
-    });
-
-
-    const discount =
-        Math.max(
-            0,
-            Number(
-                $("saleDiscount")?.value ||
-                0
-            )
-        );
-
-
-    const total =
-        Math.max(
-            0,
-            subtotal - discount
-        );
-
-
-    if ($("saleTotal")) {
-
-        $("saleTotal").textContent =
-            money(total);
-    }
-
-
-    return {
-        subtotal,
-        discount,
-        total
-    };
-}
-
-
-async function saveSale(event) {
-
-    event.preventDefault();
-
-    if (!state.user) {
-        return;
-    }
-
-
-    const message =
-        $("saleFormMessage");
-
-
-    const button =
-        event.submitter;
-
-
-    clearMessage(message);
-
-
-    const saleItems =
-        $$(".sale-item");
-
-
-    if (!saleItems.length) {
-
-        showMessage(
-            message,
-            "Adicione pelo menos um produto."
-        );
-
-        return;
-    }
-
-
-    const calculated =
-        calculateSaleTotal();
-
-
-    if (calculated.total <= 0) {
-
-        showMessage(
-            message,
-            "O total da venda precisa ser maior que zero."
-        );
-
-        return;
-    }
-
-
-    setButtonLoading(
-        button,
-        true,
-        "Registrando..."
-    );
-
-
-    try {
-
-        const preparedItems = [];
-
-
-        for (
-            const item
-            of saleItems
-        ) {
-
-            const variantId =
-                item.querySelector(
-                    ".sale-variant"
-                )?.value;
-
-
-            const quantity =
-                Number(
-                    item.querySelector(
-                        ".sale-quantity"
-                    )?.value || 0
-                );
-
-
-            const variant =
-                state.variants.find(
-                    v =>
-                        v.id ===
-                        variantId
-                );
-
-
-            if (!variant) {
-                throw new Error(
-                    "Uma das variações selecionadas não foi encontrada."
-                );
-            }
-
-
-            if (
-                quantity <= 0
-            ) {
-
-                throw new Error(
-                    "A quantidade precisa ser maior que zero."
-                );
-            }
-
-
-            if (
-                quantity >
-                Number(
-                    variant.stock_quantity || 0
-                )
-            ) {
-
-                const product =
-                    state.products.find(
-                        p =>
-                            p.id ===
-                            variant.product_id
-                    );
-
-
-                const color =
-                    getColor(
-                        variant.color_id
-                    );
-
-
-                const size =
-                    getSize(
-                        variant.size_id
-                    );
-
-
-                throw new Error(
-                    `Estoque insuficiente para ${product?.name || "produto"} / ${color?.name || ""} / ${size?.name || ""}.`
-                );
-            }
-
-
-            const product =
-                state.products.find(
-                    p =>
-                        p.id ===
-                        variant.product_id
-                );
-
-
-            const color =
-                getColor(
-                    variant.color_id
-                );
-
-
-            const size =
-                getSize(
-                    variant.size_id
-                );
-
-
-            const unitPrice =
-                Number(
-                    product?.sale_price || 0
-                );
-
-
-            preparedItems.push({
-
-                variant,
-
-                product,
-
-                color,
-
-                size,
-
-                quantity,
-
-                unitPrice,
-
-                total:
-                    unitPrice *
-                    quantity
-            });
-        }
-
-
-        const {
-            data: sale,
-            error: saleError
-        } = await supabaseClient
-            .from("sales")
-            .insert({
-
-                user_id:
-                    state.user.id,
-
-                sale_date:
-                    todayISO(),
-
-                subtotal:
-                    calculated.subtotal,
-
-                discount:
-                    calculated.discount,
-
-                total:
-                    calculated.total,
-
-                payment_method:
-                    $("salePaymentMethod")
-                        .value ||
-                    null,
-
-                status:
-                    "completed",
-
-                notes:
-                    $("saleNotes")
-                        .value
-                        .trim() ||
-                    null
-            })
-            .select()
-            .single();
-
-
-        if (saleError) {
-            throw saleError;
-        }
-
-
-        const saleItemsPayload =
-            preparedItems.map(item => ({
-
-                user_id:
-                    state.user.id,
-
-                sale_id:
-                    sale.id,
-
-                product_variant_id:
-                    item.variant.id,
-
-                product_name:
-                    item.product?.name ||
-                    "Produto",
-
-                variant_description:
-                    [
-                        item.color?.name,
-                        item.size?.name
-                    ]
-                        .filter(Boolean)
-                        .join(" / "),
-
-                quantity:
-                    item.quantity,
-
-                unit_price:
-                    item.unitPrice,
-
-                unit_cost:
-                    Number(
-                        item.product?.cost_price ||
-                        0
-                    ),
-
-                discount:
-                    0,
-
-                total:
-                    item.total
-            }));
-
-
-        const {
-            error:
-                itemsError
-        } = await supabaseClient
-            .from("sale_items")
-            .insert(
-                saleItemsPayload
-            );
-
-
-        if (itemsError) {
-
-            await supabaseClient
-                .from("sales")
-                .delete()
-                .eq(
-                    "id",
-                    sale.id
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                );
-
-            throw itemsError;
-        }
-
-
-        /*
-         * Atualiza o estoque.
-         */
-
-        for (
-            const item
-            of preparedItems
-        ) {
-
-            const newQuantity =
-                Number(
-                    item.variant.stock_quantity ||
-                    0
-                ) -
-                item.quantity;
-
-
-            const {
-                error:
-                    stockError
-            } = await supabaseClient
-                .from("product_variants")
-                .update({
-
-                    stock_quantity:
-                        newQuantity
-
-                })
-                .eq(
-                    "id",
-                    item.variant.id
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                );
-
-
-            if (stockError) {
-                throw stockError;
-            }
-
-
-            await supabaseClient
-                .from("inventory_movements")
-                .insert({
-
-                    user_id:
-                        state.user.id,
-
-                    product_variant_id:
-                        item.variant.id,
-
-                    movement_type:
-                        "sale",
-
-                    quantity:
-                        -item.quantity,
-
-                    reference_id:
-                        sale.id,
-
-                    reason:
-                        "Venda",
-
-                    notes:
-                        `Venda #${sale.sale_number}`
-                });
-        }
-
-
-        /*
-         * Registra automaticamente a receita.
-         */
-
-        const {
-            error:
-                financeError
-        } = await supabaseClient
-            .from("financial_transactions")
-            .insert({
-
-                user_id:
-                    state.user.id,
-
-                transaction_type:
-                    "income",
-
-                category:
-                    "Venda",
-
-                description:
-                    `Venda #${sale.sale_number}`,
-
-                amount:
-                    calculated.total,
-
-                transaction_date:
-                    todayISO(),
-
-                payment_method:
-                    $("salePaymentMethod")
-                        .value ||
-                    null,
-
-                reference_id:
-                    sale.id,
-
-                notes:
-                    null
-            });
-
-
-        if (financeError) {
-            throw financeError;
-        }
-
-
-        await loadSales();
-
-        await loadVariants();
-
-        await loadTransactions();
-
-        renderSales();
-
-        renderStock();
-
-        renderFinance();
-
-        renderProducts();
-
-        updateDashboard();
-
-
-        showMessage(
-            message,
-            "Venda registrada com sucesso.",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            closeModal(
-                "saleModal"
-            );
-
-        }, 600);
-
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao registrar venda:",
-            error
-        );
-
-
-        showMessage(
-            message,
-            error.message ||
-            "Não foi possível registrar a venda."
-        );
-
-
-    } finally {
-
-        setButtonLoading(
-            button,
-            false
-        );
-    }
-}
-
-
-/* =========================================================
-   FINANCEIRO
-   ========================================================= */
-
-async function loadTransactions() {
-
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
 
@@ -4445,22 +2234,10 @@ async function loadTransactions() {
     } = await supabaseClient
         .from("financial_transactions")
         .select("*")
-        .eq(
-            "user_id",
-            state.user.id
-        )
-        .order(
-            "transaction_date",
-            {
-                ascending: false
-            }
-        )
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
-        );
+        .eq("user_id", currentUser.id)
+        .order("transaction_date", {
+            ascending: false
+        });
 
 
     if (error) {
@@ -4474,8 +2251,70 @@ async function loadTransactions() {
     }
 
 
-    state.transactions =
+    financeCache =
         data || [];
+
+
+    renderFinance();
+
+    updateFinanceMetrics();
+}
+
+
+function updateFinanceMetrics() {
+
+    const income =
+        financeCache
+            .filter(
+                transaction =>
+                    transaction.transaction_type ===
+                    "income"
+            )
+            .reduce(
+                (sum, transaction) =>
+                    sum + Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+    const expenses =
+        financeCache
+            .filter(
+                transaction =>
+                    transaction.transaction_type ===
+                    "expense"
+            )
+            .reduce(
+                (sum, transaction) =>
+                    sum + Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+    const balance =
+        income - expenses;
+
+
+    if ($("financeIncome")) {
+        $("financeIncome").textContent =
+            formatCurrency(income);
+    }
+
+
+    if ($("financeExpenses")) {
+        $("financeExpenses").textContent =
+            formatCurrency(expenses);
+    }
+
+
+    if ($("financeBalance")) {
+        $("financeBalance").textContent =
+            formatCurrency(balance);
+    }
 }
 
 
@@ -4489,120 +2328,13 @@ function renderFinance() {
     }
 
 
-    const search =
-        (
-            $("financeSearch")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    let transactions =
-        state.transactions;
-
-
-    if (search) {
-
-        transactions =
-            transactions.filter(item => {
-
-                return [
-
-                    item.description,
-
-                    item.category,
-
-                    item.transaction_type,
-
-                    item.payment_method
-
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(search);
-            });
-    }
-
-
-    const income =
-        state.transactions
-            .filter(
-                item =>
-                    item.transaction_type ===
-                    "income"
-            )
-            .reduce(
-                (sum, item) =>
-                    sum +
-                    Number(
-                        item.amount || 0
-                    ),
-                0
-            );
-
-
-    const expenses =
-        state.transactions
-            .filter(
-                item =>
-                    item.transaction_type ===
-                    "expense"
-            )
-            .reduce(
-                (sum, item) =>
-                    sum +
-                    Number(
-                        item.amount || 0
-                    ),
-                0
-            );
-
-
-    const balance =
-        income -
-        expenses;
-
-
-    if ($("financeIncome")) {
-
-        $("financeIncome").textContent =
-            money(income);
-    }
-
-
-    if ($("financeExpenses")) {
-
-        $("financeExpenses").textContent =
-            money(expenses);
-    }
-
-
-    if ($("financeBalance")) {
-
-        $("financeBalance").textContent =
-            money(balance);
-    }
-
-
-    if (!transactions.length) {
+    if (!financeCache.length) {
 
         container.innerHTML = `
             <div class="empty-state">
-
-                <div class="empty-state-icon">
-                    F
-                </div>
-
-                <strong>
-                    Nenhum lançamento
-                </strong>
-
-                <p>
-                    Receitas e despesas aparecerão aqui.
-                </p>
-
+                <div class="empty-state-icon">F</div>
+                <strong>Nenhum lançamento</strong>
+                <p>Receitas e despesas aparecerão aqui.</p>
             </div>
         `;
 
@@ -4611,90 +2343,80 @@ function renderFinance() {
 
 
     container.innerHTML =
-        transactions.map(item => {
+        financeCache.map(transaction => {
 
-            const isIncome =
-                item.transaction_type ===
+            const income =
+                transaction.transaction_type ===
                 "income";
 
 
             return `
-                <article class="finance-item">
 
-                    <div class="finance-item-header">
+                <div class="finance-card">
 
-                        <div>
+                    <div>
 
-                            <div class="finance-item-description">
-                                ${escapeHTML(
-                                    item.description
-                                )}
-                            </div>
+                        <strong>
+                            ${escapeHtml(
+                                transaction.description
+                            )}
+                        </strong>
 
-                            <div class="finance-item-category">
-                                ${escapeHTML(
-                                    item.category ||
-                                    "Sem categoria"
-                                )}
-                                •
-                                ${formatDate(
-                                    item.transaction_date
-                                )}
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            class="
-                                finance-item-value
-                                ${
-                                    isIncome
-                                        ? "finance-income"
-                                        : "finance-expense"
-                                }
-                            "
-                        >
-                            ${isIncome ? "+" : "-"}
-                            ${money(item.amount)}
-                        </div>
+                        <span>
+                            ${escapeHtml(
+                                transaction.category ||
+                                "Sem categoria"
+                            )}
+                        </span>
 
                     </div>
 
-                </article>
+
+                    <strong class="${
+                        income
+                            ? "income"
+                            : "expense"
+                    }">
+
+                        ${income ? "+" : "-"}
+                        ${formatCurrency(
+                            transaction.amount
+                        )}
+
+                    </strong>
+
+                </div>
+
             `;
 
         }).join("");
 }
 
 
-function resetTransactionForm() {
+function openTransactionModal() {
 
     const form =
         $("transactionForm");
 
-    if (form) {
-        form.reset();
+    if (!form) {
+        return;
     }
+
+
+    form.reset();
 
 
     $("transactionDate").value =
         todayISO();
 
 
-    clearMessage(
-        $("transactionFormMessage")
+    showMessage(
+        "transactionFormMessage",
+        ""
     );
-}
 
 
-function openTransactionModal() {
-
-    resetTransactionForm();
-
-    openModal(
-        "transactionModal"
-    );
+    openModal("transactionModal");
 }
 
 
@@ -4702,43 +2424,39 @@ async function saveTransaction(event) {
 
     event.preventDefault();
 
-    if (!state.user) {
+    if (!currentUser) {
         return;
     }
-
-
-    const message =
-        $("transactionFormMessage");
-
-
-    const button =
-        event.submitter;
-
-
-    clearMessage(message);
 
 
     const type =
         $("transactionType").value;
 
+    const category =
+        $("transactionCategory").value.trim();
 
     const description =
-        $("transactionDescription")
-            .value
-            .trim();
-
+        $("transactionDescription").value.trim();
 
     const amount =
         Number(
-            $("transactionAmount").value ||
-            0
+            $("transactionAmount").value || 0
         );
+
+    const date =
+        $("transactionDate").value;
+
+    const paymentMethod =
+        $("transactionPaymentMethod").value;
+
+    const notes =
+        $("transactionNotes").value.trim();
 
 
     if (!type) {
 
         showMessage(
-            message,
+            "transactionFormMessage",
             "Selecione o tipo do lançamento."
         );
 
@@ -4749,7 +2467,7 @@ async function saveTransaction(event) {
     if (!description) {
 
         showMessage(
-            message,
+            "transactionFormMessage",
             "Informe a descrição."
         );
 
@@ -4760,18 +2478,12 @@ async function saveTransaction(event) {
     if (amount <= 0) {
 
         showMessage(
-            message,
+            "transactionFormMessage",
             "Informe um valor maior que zero."
         );
 
         return;
     }
-
-
-    setButtonLoading(
-        button,
-        true
-    );
 
 
     try {
@@ -4781,38 +2493,15 @@ async function saveTransaction(event) {
         } = await supabaseClient
             .from("financial_transactions")
             .insert({
-
-                user_id:
-                    state.user.id,
-
-                transaction_type:
-                    type,
-
-                category:
-                    $("transactionCategory")
-                        .value
-                        .trim() ||
-                    null,
-
+                user_id: currentUser.id,
+                transaction_type: type,
+                category: category || null,
                 description,
-
                 amount,
-
-                transaction_date:
-                    $("transactionDate")
-                        .value ||
-                    todayISO(),
-
+                transaction_date: date,
                 payment_method:
-                    $("transactionPaymentMethod")
-                        .value ||
-                    null,
-
-                notes:
-                    $("transactionNotes")
-                        .value
-                        .trim() ||
-                    null
+                    paymentMethod || null,
+                notes: notes || null
             });
 
 
@@ -4821,74 +2510,63 @@ async function saveTransaction(event) {
         }
 
 
-        await loadTransactions();
+        closeModal("transactionModal");
 
-        renderFinance();
+        await loadFinance();
 
-        updateDashboard();
-
-
-        showMessage(
-            message,
-            "Lançamento salvo com sucesso.",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            closeModal(
-                "transactionModal"
-            );
-
-        }, 500);
-
+        await loadDashboard();
 
     } catch (error) {
 
-        console.error(error);
-
-        showMessage(
-            message,
-            error.message ||
-            "Não foi possível salvar o lançamento."
+        console.error(
+            "Erro ao salvar lançamento:",
+            error
         );
 
-    } finally {
-
-        setButtonLoading(
-            button,
-            false
+        showMessage(
+            "transactionFormMessage",
+            error.message ||
+            "Não foi possível salvar o lançamento."
         );
     }
 }
 
 
-/* =========================================================
-   DASHBOARD
-   ========================================================= */
+// =========================================================
+// DASHBOARD
+// =========================================================
 
-function updateDashboard() {
+async function loadDashboard() {
+
+    if (!currentUser) {
+        return;
+    }
+
+
+    await Promise.all([
+        loadSales(),
+        loadFinance(),
+        loadVariants()
+    ]);
+
 
     const today =
         todayISO();
 
 
     const todaySales =
-        state.sales.filter(
+        salesCache.filter(
             sale =>
-                sale.sale_date ===
-                today &&
-                sale.status !==
-                "cancelled"
+                String(
+                    sale.sale_date || ""
+                ).startsWith(today)
         );
 
 
-    const salesTotal =
+    const todayRevenue =
         todaySales.reduce(
             (sum, sale) =>
-                sum +
-                Number(
+                sum + Number(
                     sale.total || 0
                 ),
             0
@@ -4896,18 +2574,17 @@ function updateDashboard() {
 
 
     const todayExpenses =
-        state.transactions
-            .filter(
-                transaction =>
-                    transaction.transaction_date ===
-                    today &&
-                    transaction.transaction_type ===
-                    "expense"
+        financeCache
+            .filter(transaction =>
+                transaction.transaction_type ===
+                "expense" &&
+                String(
+                    transaction.transaction_date || ""
+                ).startsWith(today)
             )
             .reduce(
                 (sum, transaction) =>
-                    sum +
-                    Number(
+                    sum + Number(
                         transaction.amount || 0
                     ),
                 0
@@ -4915,31 +2592,29 @@ function updateDashboard() {
 
 
     const lowStock =
-        state.variants.filter(
-            variant => {
+        variantsCache.filter(variant => {
 
-                const quantity =
-                    Number(
-                        variant.stock_quantity || 0
-                    );
-
-                const minimum =
-                    Number(
-                        variant.minimum_stock || 0
-                    );
-
-
-                return (
-                    quantity <= minimum
+            const stock =
+                Number(
+                    variant.stock_quantity || 0
                 );
-            }
-        ).length;
+
+            const minimum =
+                Number(
+                    variant.minimum_stock ??
+                    variant.products?.minimum_stock ??
+                    0
+                );
+
+            return stock <= minimum;
+
+        }).length;
 
 
     if ($("metricSales")) {
 
         $("metricSales").textContent =
-            money(salesTotal);
+            formatCurrency(todayRevenue);
     }
 
 
@@ -4960,14 +2635,14 @@ function updateDashboard() {
     if ($("metricExpenses")) {
 
         $("metricExpenses").textContent =
-            money(todayExpenses);
+            formatCurrency(todayExpenses);
     }
 }
 
 
-/* =========================================================
-   MODAIS
-   ========================================================= */
+// =========================================================
+// MODAIS
+// =========================================================
 
 function openModal(id) {
 
@@ -4981,8 +2656,9 @@ function openModal(id) {
 
     modal.hidden = false;
 
-    document.body.style.overflow =
-        "hidden";
+    document.body.classList.add(
+        "modal-open"
+    );
 }
 
 
@@ -4998,545 +2674,273 @@ function closeModal(id) {
 
     modal.hidden = true;
 
-    document.body.style.overflow =
-        "";
+    document.body.classList.remove(
+        "modal-open"
+    );
 }
 
 
-/* =========================================================
-   EVENTOS
-   ========================================================= */
+// =========================================================
+// EVENTOS
+// =========================================================
 
 function bindEvents() {
 
-    /* -----------------------------------------------
-       LOGIN
-       ----------------------------------------------- */
+    // =============================================
+    // LOGIN
+    // =============================================
 
-    $("loginForm")?.addEventListener(
-        "submit",
-        event => {
-
-            event.preventDefault();
-
-            login(
-                $("email").value,
-                $("password").value
-            );
-        }
-    );
+    const loginForm =
+        $("loginForm");
 
 
-    /* -----------------------------------------------
-       LOGOUT
-       ----------------------------------------------- */
+    if (loginForm) {
 
-    $("logoutButton")?.addEventListener(
-        "click",
-        logout
-    );
-
-
-    /* -----------------------------------------------
-       NAVEGAÇÃO
-       ----------------------------------------------- */
-
-    $$(".nav-item").forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                showSection(
-                    button.dataset.section
-                );
-
-            }
+        loginForm.addEventListener(
+            "submit",
+            handleLogin
         );
+    }
 
-    });
+
+    // =============================================
+    // LOGOUT
+    // =============================================
+
+    const logoutButton =
+        $("logoutButton");
 
 
-    /* -----------------------------------------------
-       ACESSOS RÁPIDOS
-       ----------------------------------------------- */
+    if (logoutButton) {
 
-    $$(".quick-action").forEach(button => {
-
-        button.addEventListener(
+        logoutButton.addEventListener(
             "click",
-            () => {
-
-                showSection(
-                    button.dataset.section
-                );
-
-            }
+            handleLogout
         );
+    }
 
-    });
 
+    // =============================================
+    // NAVEGAÇÃO
+    // =============================================
 
-    /* -----------------------------------------------
-       NOVO PRODUTO
-       ----------------------------------------------- */
+    document
+        .querySelectorAll(
+            "[data-section]"
+        )
+        .forEach(button => {
 
-    $("newProductButton")?.addEventListener(
-        "click",
-        () => {
-
-            openProductModal();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       NOVA CATEGORIA
-       ----------------------------------------------- */
-
-    $("newCategoryButton")?.addEventListener(
-        "click",
-        () => {
-
-            openCategoryModal();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       NOVA COR
-       ----------------------------------------------- */
-
-    $("newColorButton")?.addEventListener(
-        "click",
-        () => {
-
-            openColorModal();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       NOVO TAMANHO
-       ----------------------------------------------- */
-
-    $("newSizeButton")?.addEventListener(
-        "click",
-        () => {
-
-            openSizeModal();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       NOVA VENDA
-       ----------------------------------------------- */
-
-    $("newSaleButton")?.addEventListener(
-        "click",
-        () => {
-
-            resetSaleForm();
-
-            openModal(
-                "saleModal"
-            );
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       NOVO LANÇAMENTO
-       ----------------------------------------------- */
-
-    $("newTransactionButton")?.addEventListener(
-        "click",
-        openTransactionModal
-    );
-
-
-    /* -----------------------------------------------
-       FORMULÁRIOS
-       ----------------------------------------------- */
-
-    $("productForm")?.addEventListener(
-        "submit",
-        saveProduct
-    );
-
-
-    $("categoryForm")?.addEventListener(
-        "submit",
-        saveCategory
-    );
-
-
-    $("colorForm")?.addEventListener(
-        "submit",
-        saveColor
-    );
-
-
-    $("sizeForm")?.addEventListener(
-        "submit",
-        saveSize
-    );
-
-
-    $("saleForm")?.addEventListener(
-        "submit",
-        saveSale
-    );
-
-
-    $("transactionForm")?.addEventListener(
-        "submit",
-        saveTransaction
-    );
-
-
-    /* -----------------------------------------------
-       CORES DO PRODUTO
-       ----------------------------------------------- */
-
-    $("productColors")?.addEventListener(
-        "change",
-        event => {
-
-            if (
-                !event.target.matches(
-                    ".product-color-checkbox"
-                )
-            ) {
-                return;
-            }
-
-
-            const id =
-                event.target.value;
-
-
-            if (event.target.checked) {
-
-                state.selectedProductColors.add(
-                    id
-                );
-
-            } else {
-
-                state.selectedProductColors.delete(
-                    id
-                );
-            }
-
-
-            renderProductColors();
-
-            renderVariantPreview();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       TAMANHOS DO PRODUTO
-       ----------------------------------------------- */
-
-    $("productSizes")?.addEventListener(
-        "change",
-        event => {
-
-            if (
-                !event.target.matches(
-                    ".product-size-checkbox"
-                )
-            ) {
-                return;
-            }
-
-
-            const id =
-                event.target.value;
-
-
-            if (event.target.checked) {
-
-                state.selectedProductSizes.add(
-                    id
-                );
-
-            } else {
-
-                state.selectedProductSizes.delete(
-                    id
-                );
-            }
-
-
-            renderProductSizes();
-
-            renderVariantPreview();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       ALTERAÇÃO DE ESTOQUE MÍNIMO
-       ----------------------------------------------- */
-
-    $("productMinimumStock")?.addEventListener(
-        "input",
-        () => {
-
-            renderVariantPreview();
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       COLETAR ESTOQUE DAS VARIAÇÕES
-       ----------------------------------------------- */
-
-    $("productVariantsPreview")?.addEventListener(
-        "input",
-        event => {
-
-            const stockKey =
-                event.target.dataset.variantStock;
-
-
-            const minimumKey =
-                event.target.dataset.variantMinimum;
-
-
-            if (
-                !stockKey &&
-                !minimumKey
-            ) {
-                return;
-            }
-
-
-            const key =
-                stockKey ||
-                minimumKey;
-
-
-            const current =
-                state.productVariantDrafts.get(
-                    key
-                ) || {};
-
-
-            if (stockKey) {
-
-                current.stock_quantity =
-                    Math.max(
-                        0,
-                        Number(
-                            event.target.value ||
-                            0
-                        )
-                    );
-            }
-
-
-            if (minimumKey) {
-
-                current.minimum_stock =
-                    Math.max(
-                        0,
-                        Number(
-                            event.target.value ||
-                            0
-                        )
-                    );
-            }
-
-
-            state.productVariantDrafts.set(
-                key,
-                current
-            );
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       COR — COLOR PICKER
-       ----------------------------------------------- */
-
-    $("colorHex")?.addEventListener(
-        "input",
-        event => {
-
-            const hex =
-                normalizeHex(
-                    event.target.value
-                );
-
-
-            $("colorHexText").value =
-                hex;
-
-
-            $("colorPreview").style.background =
-                hex;
-        }
-    );
-
-
-    $("colorHexText")?.addEventListener(
-        "input",
-        event => {
-
-            let value =
-                event.target.value
-                    .trim();
-
-
-            if (
-                !value.startsWith("#") &&
-                value.length > 0
-            ) {
-                value =
-                    `#${value}`;
-            }
-
-
-            if (
-                /^#[0-9A-Fa-f]{6}$/.test(
-                    value
-                )
-            ) {
-
-                const hex =
-                    value.toUpperCase();
-
-
-                $("colorHex").value =
-                    hex;
-
-
-                $("colorPreview").style.background =
-                    hex;
-            }
-        }
-    );
-
-
-    /* -----------------------------------------------
-       VENDA
-       ----------------------------------------------- */
-
-    $("addSaleItemButton")?.addEventListener(
-        "click",
-        addSaleItem
-    );
-
-
-    $("saleDiscount")?.addEventListener(
-        "input",
-        calculateSaleTotal
-    );
-
-
-    /* -----------------------------------------------
-       BUSCAS
-       ----------------------------------------------- */
-
-    $("productSearch")?.addEventListener(
-        "input",
-        renderProducts
-    );
-
-
-    $("stockSearch")?.addEventListener(
-        "input",
-        renderStock
-    );
-
-
-    $("salesSearch")?.addEventListener(
-        "input",
-        renderSales
-    );
-
-
-    $("financeSearch")?.addEventListener(
-        "input",
-        renderFinance
-    );
-
-
-    /* -----------------------------------------------
-       FECHAR MODAIS
-       ----------------------------------------------- */
-
-    $$("[data-close-modal]").forEach(
-        element => {
-
-            element.addEventListener(
+            button.addEventListener(
                 "click",
                 () => {
 
-                    closeModal(
-                        element.dataset.closeModal
-                    );
+                    const section =
+                        button.dataset.section;
 
-                }
-            );
-
-        }
-    );
-
-
-    /* -----------------------------------------------
-       ESC
-       ----------------------------------------------- */
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (event.key !== "Escape") {
-                return;
-            }
-
-
-            $$(".modal").forEach(
-                modal => {
-
-                    if (!modal.hidden) {
-
-                        closeModal(
-                            modal.id
-                        );
+                    if (section) {
+                        showSection(section);
                     }
 
                 }
             );
 
+        });
+
+
+    // =============================================
+    // NOVOS
+    // =============================================
+
+    $("newProductButton")
+        ?.addEventListener(
+            "click",
+            openProductModal
+        );
+
+
+    $("newCategoryButton")
+        ?.addEventListener(
+            "click",
+            () => openCategoryModal()
+        );
+
+
+    $("newColorButton")
+        ?.addEventListener(
+            "click",
+            () => openColorModal()
+        );
+
+
+    $("newSizeButton")
+        ?.addEventListener(
+            "click",
+            () => openSizeModal()
+        );
+
+
+    $("newSaleButton")
+        ?.addEventListener(
+            "click",
+            () => openModal("saleModal")
+        );
+
+
+    $("newTransactionButton")
+        ?.addEventListener(
+            "click",
+            openTransactionModal
+        );
+
+
+    // =============================================
+    // FORMULÁRIOS
+    // =============================================
+
+    $("productForm")
+        ?.addEventListener(
+            "submit",
+            saveProduct
+        );
+
+
+    $("categoryForm")
+        ?.addEventListener(
+            "submit",
+            saveCategory
+        );
+
+
+    $("colorForm")
+        ?.addEventListener(
+            "submit",
+            saveColor
+        );
+
+
+    $("sizeForm")
+        ?.addEventListener(
+            "submit",
+            saveSize
+        );
+
+
+    $("transactionForm")
+        ?.addEventListener(
+            "submit",
+            saveTransaction
+        );
+
+
+    // =============================================
+    // COLOR PICKER
+    // =============================================
+
+    $("colorHex")
+        ?.addEventListener(
+            "input",
+            syncColorPreview
+        );
+
+
+    $("colorHexText")
+        ?.addEventListener(
+            "input",
+            event => {
+
+                let value =
+                    event.target.value.trim();
+
+                if (
+                    !value.startsWith("#")
+                ) {
+                    value =
+                        "#" + value;
+                }
+
+                if (
+                    /^#[0-9A-Fa-f]{6}$/.test(value)
+                ) {
+
+                    $("colorHex").value =
+                        value;
+
+                    syncColorPreview();
+                }
+            }
+        );
+
+
+    // =============================================
+    // VARIAÇÕES
+    // =============================================
+
+    document.addEventListener(
+        "change",
+        event => {
+
+            if (
+                event.target.matches(
+                    'input[name="productColor"], input[name="productSize"]'
+                )
+            ) {
+
+                updateProductVariantsPreview();
+            }
+
         }
     );
 
 
-    /* -----------------------------------------------
-       CLIQUES NAS LISTAS
-       ----------------------------------------------- */
+    // =============================================
+    // FECHAR MODAIS
+    // =============================================
 
     document.addEventListener(
         "click",
-        async event => {
+        event => {
+
+            const closeButton =
+                event.target.closest(
+                    "[data-close-modal]"
+                );
+
+
+            if (closeButton) {
+
+                closeModal(
+                    closeButton.dataset.closeModal
+                );
+
+                return;
+            }
+
+
+            const modal =
+                event.target.closest(".modal");
+
+
+            if (
+                modal &&
+                event.target === modal
+            ) {
+
+                closeModal(
+                    modal.id
+                );
+            }
+
+        }
+    );
+
+
+    // =============================================
+    // AÇÕES DE CATEGORIA / COR / TAMANHO
+    // =============================================
+
+    document.addEventListener(
+        "click",
+        event => {
 
             const editCategory =
                 event.target.closest(
@@ -5547,7 +2951,7 @@ function bindEvents() {
             if (editCategory) {
 
                 const category =
-                    state.categories.find(
+                    categoriesCache.find(
                         item =>
                             item.id ===
                             editCategory.dataset.editCategory
@@ -5555,9 +2959,7 @@ function bindEvents() {
 
 
                 if (category) {
-                    openCategoryModal(
-                        category
-                    );
+                    openCategoryModal(category);
                 }
 
                 return;
@@ -5572,7 +2974,7 @@ function bindEvents() {
 
             if (deleteCategoryButton) {
 
-                await deleteCategory(
+                deleteCategory(
                     deleteCategoryButton.dataset.deleteCategory
                 );
 
@@ -5589,7 +2991,7 @@ function bindEvents() {
             if (editColor) {
 
                 const color =
-                    state.colors.find(
+                    colorsCache.find(
                         item =>
                             item.id ===
                             editColor.dataset.editColor
@@ -5597,9 +2999,7 @@ function bindEvents() {
 
 
                 if (color) {
-                    openColorModal(
-                        color
-                    );
+                    openColorModal(color);
                 }
 
                 return;
@@ -5614,7 +3014,7 @@ function bindEvents() {
 
             if (deleteColorButton) {
 
-                await deleteColor(
+                deleteColor(
                     deleteColorButton.dataset.deleteColor
                 );
 
@@ -5631,7 +3031,7 @@ function bindEvents() {
             if (editSize) {
 
                 const size =
-                    state.sizes.find(
+                    sizesCache.find(
                         item =>
                             item.id ===
                             editSize.dataset.editSize
@@ -5639,9 +3039,7 @@ function bindEvents() {
 
 
                 if (size) {
-                    openSizeModal(
-                        size
-                    );
+                    openSizeModal(size);
                 }
 
                 return;
@@ -5656,135 +3054,584 @@ function bindEvents() {
 
             if (deleteSizeButton) {
 
-                await deleteSize(
+                deleteSize(
                     deleteSizeButton.dataset.deleteSize
                 );
-
-                return;
-            }
-
-
-            const editProductButton =
-                event.target.closest(
-                    "[data-edit-product]"
-                );
-
-
-            if (editProductButton) {
-
-                const product =
-                    state.products.find(
-                        item =>
-                            item.id ===
-                            editProductButton.dataset.editProduct
-                    );
-
-
-                if (product) {
-
-                    openProductModal(
-                        product
-                    );
-                }
-
-                return;
-            }
-
-
-            const deleteProductButton =
-                event.target.closest(
-                    "[data-delete-product]"
-                );
-
-
-            if (deleteProductButton) {
-
-                await deleteProduct(
-                    deleteProductButton.dataset.deleteProduct
-                );
-
-                return;
             }
 
         }
     );
+
+
+    // =============================================
+    // BUSCAS
+    // =============================================
+
+    $("productSearch")
+        ?.addEventListener(
+            "input",
+            filterProducts
+        );
+
+
+    $("stockSearch")
+        ?.addEventListener(
+            "input",
+            filterStock
+        );
+
+
+    $("salesSearch")
+        ?.addEventListener(
+            "input",
+            filterSales
+        );
+
+
+    $("financeSearch")
+        ?.addEventListener(
+            "input",
+            filterFinance
+        );
 }
 
 
-/* =========================================================
-   AUTH STATE
-   ========================================================= */
+// =========================================================
+// FILTROS
+// =========================================================
 
-function bindAuthState() {
+function filterProducts(event) {
 
-    supabaseClient.auth.onAuthStateChange(
-        async (event, session) => {
-
-            state.session =
-                session;
-
-            state.user =
-                session?.user ||
-                null;
+    const search =
+        event.target.value
+            .toLowerCase()
+            .trim();
 
 
-            updateAuthUI();
+    const filtered =
+        productsCache.filter(product => {
+
+            return (
+                product.name
+                    ?.toLowerCase()
+                    .includes(search)
+            ) ||
+            (
+                product.sku
+                    ?.toLowerCase()
+                    .includes(search)
+            );
+
+        });
 
 
-            if (
-                event === "SIGNED_IN" &&
-                session
-            ) {
-
-                await initializeApp();
-            }
+    renderProductCollection(filtered);
+}
 
 
-            if (
-                event === "SIGNED_OUT"
-            ) {
+function renderProductCollection(products) {
 
-                state.initialized =
-                    false;
+    const container =
+        $("productsList");
 
-                state.categories =
-                    [];
+    if (!container) {
+        return;
+    }
 
-                state.colors =
-                    [];
 
-                state.sizes =
-                    [];
+    if (!products.length) {
 
-                state.products =
-                    [];
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">P</div>
+                <strong>Nenhum produto encontrado</strong>
+                <p>Tente outro termo de busca.</p>
+            </div>
+        `;
 
-                state.variants =
-                    [];
+        return;
+    }
 
-                state.sales =
-                    [];
 
-                state.transactions =
-                    [];
-            }
+    container.innerHTML =
+        products.map(product => `
 
+            <div class="product-card">
+
+                <div class="product-card-info">
+
+                    <strong>
+                        ${escapeHtml(product.name)}
+                    </strong>
+
+                    <span>
+                        ${escapeHtml(product.sku || "Sem SKU")}
+                    </span>
+
+                    <small>
+                        ${escapeHtml(
+                            product.categories?.name ||
+                            "Sem categoria"
+                        )}
+                    </small>
+
+                </div>
+
+                <div class="product-card-price">
+
+                    <strong>
+                        ${formatCurrency(product.sale_price)}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `).join("");
+}
+
+
+function filterStock(event) {
+
+    const search =
+        event.target.value
+            .toLowerCase()
+            .trim();
+
+
+    const filtered =
+        variantsCache.filter(variant => {
+
+            const text = [
+
+                variant.products?.name,
+                variant.colors?.name,
+                variant.sizes?.name
+
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+            return text.includes(search);
+        });
+
+
+    renderStockCollection(filtered);
+}
+
+
+function renderStockCollection(variants) {
+
+    const container =
+        $("stockList");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!variants.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <strong>Nenhum resultado</strong>
+                <p>Nenhuma variação corresponde à busca.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        variants.map(variant => `
+
+            <div class="stock-card">
+
+                <div class="stock-card-info">
+
+                    <strong>
+                        ${escapeHtml(
+                            variant.products?.name ||
+                            "Produto"
+                        )}
+                    </strong>
+
+                    <span>
+                        ${escapeHtml(
+                            variant.colors?.name ||
+                            "Sem cor"
+                        )}
+                        /
+                        ${escapeHtml(
+                            variant.sizes?.name ||
+                            "Sem tamanho"
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="stock-card-quantity">
+
+                    <strong>
+                        ${Number(
+                            variant.stock_quantity || 0
+                        )}
+                    </strong>
+
+                    <small>
+                        unidades
+                    </small>
+
+                </div>
+
+            </div>
+
+        `).join("");
+}
+
+
+function filterSales(event) {
+
+    const search =
+        event.target.value
+            .toLowerCase()
+            .trim();
+
+
+    const filtered =
+        salesCache.filter(sale => {
+
+            return String(
+                sale.sale_number || ""
+            ).includes(search);
+
+        });
+
+
+    const container =
+        $("salesList");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!filtered.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <strong>Nenhuma venda encontrada</strong>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        filtered.map(sale => `
+
+            <div class="sale-card">
+
+                <div>
+
+                    <strong>
+                        Venda #${sale.sale_number}
+                    </strong>
+
+                    <span>
+                        ${new Date(
+                            sale.sale_date
+                        ).toLocaleDateString("pt-BR")}
+                    </span>
+
+                </div>
+
+                <strong>
+                    ${formatCurrency(sale.total)}
+                </strong>
+
+            </div>
+
+        `).join("");
+}
+
+
+function filterFinance(event) {
+
+    const search =
+        event.target.value
+            .toLowerCase()
+            .trim();
+
+
+    const filtered =
+        financeCache.filter(transaction => {
+
+            const text = [
+
+                transaction.description,
+                transaction.category
+
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+            return text.includes(search);
+        });
+
+
+    const container =
+        $("financeList");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!filtered.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <strong>Nenhum lançamento encontrado</strong>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        filtered.map(transaction => {
+
+            const income =
+                transaction.transaction_type ===
+                "income";
+
+
+            return `
+
+                <div class="finance-card">
+
+                    <div>
+
+                        <strong>
+                            ${escapeHtml(
+                                transaction.description
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                transaction.category ||
+                                "Sem categoria"
+                            )}
+                        </span>
+
+                    </div>
+
+                    <strong class="${
+                        income
+                            ? "income"
+                            : "expense"
+                    }">
+
+                        ${income ? "+" : "-"}
+                        ${formatCurrency(
+                            transaction.amount
+                        )}
+
+                    </strong>
+
+                </div>
+
+            `;
+
+        }).join("");
+}
+
+
+// =========================================================
+// CARREGAMENTO INICIAL
+// =========================================================
+
+async function loadProductsPage() {
+
+    await Promise.all([
+        loadCategories(),
+        loadColors(),
+        loadSizes(),
+        loadProducts()
+    ]);
+
+}
+
+
+async function loadInitialData() {
+
+    await Promise.all([
+        loadCategories(),
+        loadColors(),
+        loadSizes(),
+        loadProducts(),
+        loadVariants(),
+        loadSales(),
+        loadFinance()
+    ]);
+
+
+    await loadDashboard();
+}
+
+
+// =========================================================
+// INICIALIZAÇÃO
+// =========================================================
+
+async function checkSession() {
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.getSession();
+
+
+        if (error) {
+            throw error;
         }
-    );
+
+
+        if (data?.session?.user) {
+
+            await showApplication(
+                data.session.user
+            );
+
+        } else {
+
+            const loginScreen =
+                $("loginScreen");
+
+            const appScreen =
+                $("appScreen");
+
+
+            if (loginScreen) {
+                loginScreen.hidden = false;
+            }
+
+            if (appScreen) {
+                appScreen.hidden = true;
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao verificar sessão:",
+            error
+        );
+
+        const loginScreen =
+            $("loginScreen");
+
+        const appScreen =
+            $("appScreen");
+
+
+        if (loginScreen) {
+            loginScreen.hidden = false;
+        }
+
+        if (appScreen) {
+            appScreen.hidden = true;
+        }
+    }
 }
 
 
-/* =========================================================
-   START
-   ========================================================= */
+// =========================================================
+// START
+// =========================================================
 
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
+        console.log(
+            "MabijuFit iniciando..."
+        );
+
+
+        if (
+            typeof supabaseClient ===
+            "undefined"
+        ) {
+
+            console.error(
+                "supabaseClient não encontrado."
+            );
+
+            showMessage(
+                "loginMessage",
+                "Erro de conexão com o sistema."
+            );
+
+            return;
+        }
+
+
         bindEvents();
 
-        bindAuthState();
+
+        supabaseClient.auth.onAuthStateChange(
+            async (event, session) => {
+
+                console.log(
+                    "Auth:",
+                    event
+                );
+
+
+                if (
+                    event === "SIGNED_IN" &&
+                    session?.user
+                ) {
+
+                    await showApplication(
+                        session.user
+                    );
+
+                }
+
+
+                if (
+                    event === "SIGNED_OUT"
+                ) {
+
+                    currentUser = null;
+                    appInitialized = false;
+
+
+                    if ($("appScreen")) {
+                        $("appScreen").hidden = true;
+                    }
+
+                    if ($("loginScreen")) {
+                        $("loginScreen").hidden = false;
+                    }
+                }
+
+            }
+        );
+
 
         await checkSession();
 
