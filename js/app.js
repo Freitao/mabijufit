@@ -475,22 +475,87 @@ function renderCategories() {
 
                 </div>
 
+
                 <div class="category-card-actions">
 
                     <button
                         type="button"
                         class="icon-button"
                         data-edit-category="${category.id}"
+                        aria-label="Editar categoria"
                     >
-                        ✎
+
+                        <svg
+                            class="action-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="m14.5 7.5 2 2"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
                     </button>
+
 
                     <button
                         type="button"
                         class="icon-button danger"
                         data-delete-category="${category.id}"
+                        aria-label="Excluir categoria"
                     >
-                        ×
+
+                        <svg
+                            class="action-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M5 7h14"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M9 7V5.5h6V7"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M7 7.5 8 20h8l1-12.5"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="M10 11v5.5M14 11v5.5"
+                                stroke="currentColor"
+                                stroke-width="1.6"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
                     </button>
 
                 </div>
@@ -790,6 +855,7 @@ function renderColors() {
                             style="background:${escapeHtml(hex)}"
                         ></span>
 
+
                         <div class="color-card-text">
 
                             <strong class="color-card-name">
@@ -811,16 +877,80 @@ function renderColors() {
                             type="button"
                             class="icon-button"
                             data-edit-color="${color.id}"
+                            aria-label="Editar cor"
                         >
-                            ✎
+
+                            <svg
+                                class="action-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                            >
+
+                                <path
+                                    d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="m14.5 7.5 2 2"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
                         </button>
+
 
                         <button
                             type="button"
                             class="icon-button danger"
                             data-delete-color="${color.id}"
+                            aria-label="Excluir cor"
                         >
-                            ×
+
+                            <svg
+                                class="action-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                            >
+
+                                <path
+                                    d="M5 7h14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M9 7V5.5h6V7"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M7 7.5 8 20h8l1-12.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M10 11v5.5M14 11v5.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
                         </button>
 
                     </div>
@@ -1117,6 +1247,7 @@ function renderSizes() {
                         ${escapeHtml(size.name)}
                     </span>
 
+
                     <div>
 
                         <strong class="size-card-name">
@@ -1138,16 +1269,80 @@ function renderSizes() {
                         type="button"
                         class="icon-button"
                         data-edit-size="${size.id}"
+                        aria-label="Editar tamanho"
                     >
-                        ✎
+
+                        <svg
+                            class="action-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="m14.5 7.5 2 2"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
                     </button>
+
 
                     <button
                         type="button"
                         class="icon-button danger"
                         data-delete-size="${size.id}"
+                        aria-label="Excluir tamanho"
                     >
-                        ×
+
+                        <svg
+                            class="action-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M5 7h14"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M9 7V5.5h6V7"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M7 7.5 8 20h8l1-12.5"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="M10 11v5.5M14 11v5.5"
+                                stroke="currentColor"
+                                stroke-width="1.6"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
                     </button>
 
                 </div>
