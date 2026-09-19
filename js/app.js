@@ -10,12 +10,16 @@
 
 const state = {
     user: null,
+
     categories: [],
     colors: [],
     sizes: [],
     products: [],
+    variants: [],
     sales: [],
-    financialTransactions: []
+    financialTransactions: [],
+
+    saleItems: []
 };
 
 /* =========================================================
@@ -38,9 +42,7 @@ function escapeHtml(value) {
 }
 
 function formatCurrency(value) {
-    const number = Number(value || 0);
-
-    return number.toLocaleString("pt-BR", {
+    return Number(value || 0).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
@@ -96,7 +98,7 @@ function showElement(id) {
     const element = $(id);
 
     if (element) {
-        element.classList.remove("hidden");
+        element.hidden = false;
     }
 }
 
@@ -104,7 +106,7 @@ function hideElement(id) {
     const element = $(id);
 
     if (element) {
-        element.classList.add("hidden");
+        element.hidden = true;
     }
 }
 
@@ -148,7 +150,10 @@ function translateDatabaseError(error) {
         return "Este registro está sendo utilizado por outro registro.";
     }
 
-    if (message.includes("not-null")) {
+    if (
+        message.includes("not-null") ||
+        message.includes("null value")
+    ) {
         return "Preencha todos os campos obrigatórios.";
     }
 
@@ -173,53 +178,65 @@ async function checkSession() {
         if (session?.user) {
             state.user = session.user;
 
-            showElement("appScreen");
             hideElement("loginScreen");
+            showElement("appScreen");
 
             await initializeApp();
         } else {
             state.user = null;
 
-            hideElement("appScreen");
             showElement("loginScreen");
+            hideElement("appScreen");
         }
     } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
+        console.error(
+            "Erro ao verificar sessão:",
+            error
+        );
 
         state.user = null;
 
-        hideElement("appScreen");
         showElement("loginScreen");
+        hideElement("appScreen");
     }
 }
 
 async function handleLogin(event) {
     event.preventDefault();
 
-    const email = $("loginEmail")?.value.trim();
-    const password = $("loginPassword")?.value;
-
-    const messageElement = $("loginMessage");
+    const email = $("email")?.value.trim();
+    const password = $("password")?.value;
 
     if (!email || !password) {
-        if (messageElement) {
-            messageElement.textContent =
-                "Informe e-mail e senha.";
-        }
+        setMessage(
+            "loginMessage",
+            "Informe o e-mail e a senha.",
+            "error"
+        );
 
         return;
     }
 
-    if (messageElement) {
-        messageElement.textContent = "Entrando...";
+    const button = $("loginButton");
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Entrando...";
     }
 
+    setMessage(
+        "loginMessage",
+        "Autenticando..."
+    );
+
     try {
-        const { data, error } =
-            await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
 
         if (error) {
             throw error;
@@ -227,29 +244,74 @@ async function handleLogin(event) {
 
         state.user = data.user;
 
-        if (messageElement) {
-            messageElement.textContent = "";
-        }
+        setMessage(
+            "loginMessage",
+            ""
+        );
 
         hideElement("loginScreen");
         showElement("appScreen");
 
         await initializeApp();
     } catch (error) {
-        console.error("Erro no login:", error);
+        console.error(
+            "Erro no login:",
+            error
+        );
 
-        if (messageElement) {
-            messageElement.textContent =
-                "E-mail ou senha inválidos.";
+        setMessage(
+            "loginMessage",
+            translateAuthError(error),
+            "error"
+        );
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Entrar";
         }
     }
+}
+
+function translateAuthError(error) {
+    if (!error) {
+        return "Não foi possível entrar.";
+    }
+
+    const message = (
+        error.message ||
+        ""
+    ).toLowerCase();
+
+    if (
+        message.includes("invalid login credentials")
+    ) {
+        return "E-mail ou senha incorretos.";
+    }
+
+    if (
+        message.includes("email not confirmed")
+    ) {
+        return "O e-mail da conta ainda não foi confirmado.";
+    }
+
+    if (
+        message.includes("too many requests")
+    ) {
+        return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    }
+
+    return error.message ||
+        "Não foi possível realizar o login.";
 }
 
 async function handleLogout() {
     try {
         await supabaseClient.auth.signOut();
     } catch (error) {
-        console.error("Erro ao sair:", error);
+        console.error(
+            "Erro ao sair:",
+            error
+        );
     }
 
     state.user = null;
@@ -262,40 +324,55 @@ async function handleLogout() {
    NAVEGAÇÃO
    ========================================================= */
 
-function showSection(sectionId) {
-    document
-        .querySelectorAll("[data-section]")
-        .forEach((section) => {
-            section.classList.add("hidden");
-        });
+function showSection(sectionName) {
+    const mapping = {
+        home: "homeScreen",
+        products: "productsScreen",
+        stock: "stockScreen",
+        sales: "salesScreen",
+        finance: "financeScreen"
+    };
 
-    const target = $(sectionId);
+    const targetId = mapping[sectionName];
 
-    if (target) {
-        target.classList.remove("hidden");
+    if (!targetId) {
+        return;
     }
 
     document
-        .querySelectorAll("[data-nav]")
+        .querySelectorAll(".module-screen")
+        .forEach((section) => {
+            section.hidden = true;
+        });
+
+    const target = $(targetId);
+
+    if (target) {
+        target.hidden = false;
+    }
+
+    document
+        .querySelectorAll("[data-section]")
         .forEach((button) => {
             button.classList.toggle(
                 "active",
-                button.dataset.nav === sectionId
+                button.dataset.section === sectionName
             );
         });
 }
 
 function setupNavigation() {
     document
-        .querySelectorAll("[data-nav]")
+        .querySelectorAll("[data-section]")
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                const sectionId = button.dataset.nav;
-
-                if (sectionId) {
-                    showSection(sectionId);
+            button.addEventListener(
+                "click",
+                () => {
+                    showSection(
+                        button.dataset.section
+                    );
                 }
-            });
+            );
         });
 }
 
@@ -310,7 +387,7 @@ function openModal(id) {
         return;
     }
 
-    modal.classList.remove("hidden");
+    modal.hidden = false;
 
     if (id === "productModal") {
         resetProductForm();
@@ -328,12 +405,12 @@ function openModal(id) {
         resetSizeForm();
     }
 
-    if (id === "transactionModal") {
-        resetTransactionForm();
-    }
-
     if (id === "saleModal") {
         resetSaleForm();
+    }
+
+    if (id === "transactionModal") {
+        resetTransactionForm();
     }
 }
 
@@ -341,7 +418,7 @@ function closeModal(id) {
     const modal = $(id);
 
     if (modal) {
-        modal.classList.add("hidden");
+        modal.hidden = true;
     }
 }
 
@@ -349,21 +426,30 @@ function setupModalCloseButtons() {
     document
         .querySelectorAll("[data-close-modal]")
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                closeModal(button.dataset.closeModal);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    closeModal(
+                        button.dataset.closeModal
+                    );
+                }
+            );
         });
 
     document
         .querySelectorAll(".modal-overlay")
         .forEach((overlay) => {
-            overlay.addEventListener("click", () => {
-                const modal = overlay.closest(".modal");
+            overlay.addEventListener(
+                "click",
+                () => {
+                    const modal =
+                        overlay.closest(".modal");
 
-                if (modal) {
-                    modal.classList.add("hidden");
+                    if (modal) {
+                        modal.hidden = true;
+                    }
                 }
-            });
+            );
         });
 }
 
@@ -376,14 +462,21 @@ async function loadCategories() {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("categories")
         .select("*")
         .eq("user_id", state.user.id)
         .order("name");
 
     if (error) {
-        console.error("Erro ao carregar categorias:", error);
+        console.error(
+            "Erro ao carregar categorias:",
+            error
+        );
+
         return;
     }
 
@@ -403,71 +496,102 @@ function renderCategories() {
     if (!state.categories.length) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhuma categoria cadastrada.
+                <strong>
+                    Nenhuma categoria cadastrada
+                </strong>
+
+                <p>
+                    Crie categorias para organizar seus produtos.
+                </p>
             </div>
         `;
 
         return;
     }
 
-    container.innerHTML = state.categories
-        .map((category) => {
-            return `
-                <div class="category-card">
-                    <div class="category-card-info">
-                        <div class="category-card-name">
-                            ${escapeHtml(category.name)}
+    container.innerHTML =
+        state.categories
+            .map((category) => {
+                return `
+                    <div class="category-card">
+
+                        <div class="category-card-info">
+
+                            <div class="category-card-name">
+                                ${escapeHtml(
+                                    category.name
+                                )}
+                            </div>
+
+                            ${
+                                category.description
+                                    ? `
+                                        <div class="category-card-description">
+                                            ${escapeHtml(
+                                                category.description
+                                            )}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
                         </div>
 
-                        ${
-                            category.description
-                                ? `
-                                    <div class="category-card-description">
-                                        ${escapeHtml(category.description)}
-                                    </div>
-                                `
-                                : ""
-                        }
-                    </div>
+                        <div class="category-card-actions">
 
-                    <div class="category-card-actions">
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Editar"
-                            data-edit-category="${category.id}"
-                        >
-                            ✎
-                        </button>
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-edit-category="${category.id}"
+                                title="Editar"
+                            >
+                                ✎
+                            </button>
 
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Excluir"
-                            data-delete-category="${category.id}"
-                        >
-                            ×
-                        </button>
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-delete-category="${category.id}"
+                                title="Excluir"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
                     </div>
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
 
     container
-        .querySelectorAll("[data-edit-category]")
+        .querySelectorAll(
+            "[data-edit-category]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                editCategory(button.dataset.editCategory);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    editCategory(
+                        button.dataset.editCategory
+                    );
+                }
+            );
         });
 
     container
-        .querySelectorAll("[data-delete-category]")
+        .querySelectorAll(
+            "[data-delete-category]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                deleteCategory(button.dataset.deleteCategory);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    deleteCategory(
+                        button.dataset.deleteCategory
+                    );
+                }
+            );
         });
 }
 
@@ -481,13 +605,21 @@ function populateCategorySelect() {
     const currentValue = select.value;
 
     select.innerHTML = `
-        <option value="">Selecione uma categoria</option>
+        <option value="">
+            Selecione
+        </option>
+
         ${state.categories
-            .filter((category) => category.is_active !== false)
+            .filter(
+                (category) =>
+                    category.is_active !== false
+            )
             .map(
                 (category) => `
                     <option value="${category.id}">
-                        ${escapeHtml(category.name)}
+                        ${escapeHtml(
+                            category.name
+                        )}
                     </option>
                 `
             )
@@ -514,13 +646,17 @@ function resetCategoryForm() {
         $("categoryActive").checked = true;
     }
 
-    setMessage("categoryFormMessage");
+    setMessage(
+        "categoryFormMessage",
+        ""
+    );
 }
 
 function editCategory(id) {
-    const category = state.categories.find(
-        (item) => item.id === id
-    );
+    const category =
+        state.categories.find(
+            (item) => item.id === id
+        );
 
     if (!category) {
         return;
@@ -528,23 +664,19 @@ function editCategory(id) {
 
     openModal("categoryModal");
 
+    $("categoryName").value =
+        category.name || "";
+
+    $("categoryDescription").value =
+        category.description || "";
+
     if ($("categoryId")) {
-        $("categoryId").value = category.id;
+        $("categoryId").value =
+            category.id;
     }
 
-    if ($("categoryName")) {
-        $("categoryName").value = category.name || "";
-    }
-
-    if ($("categoryDescription")) {
-        $("categoryDescription").value =
-            category.description || "";
-    }
-
-    if ($("categoryActive")) {
-        $("categoryActive").checked =
-            category.is_active !== false;
-    }
+    $("categoryActive").checked =
+        category.is_active !== false;
 }
 
 async function handleCategorySubmit(event) {
@@ -554,12 +686,16 @@ async function handleCategorySubmit(event) {
         return;
     }
 
-    const id = $("categoryId")?.value || "";
-    const name = $("categoryName")?.value.trim();
+    const name =
+        $("categoryName")?.value.trim();
+
     const description =
-        $("categoryDescription")?.value.trim() || "";
+        $("categoryDescription")
+            ?.value.trim() || "";
+
     const isActive =
-        $("categoryActive")?.checked !== false;
+        $("categoryActive")
+            ?.checked !== false;
 
     if (!name) {
         setMessage(
@@ -571,11 +707,16 @@ async function handleCategorySubmit(event) {
         return;
     }
 
+    const id =
+        $("categoryId")?.value || "";
+
     try {
         setMessage(
             "categoryFormMessage",
             "Salvando..."
         );
+
+        let result;
 
         const payload = {
             name,
@@ -583,26 +724,32 @@ async function handleCategorySubmit(event) {
             is_active: isActive
         };
 
-        let result;
-
         if (id) {
-            result = await supabaseClient
-                .from("categories")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", state.user.id);
+            result =
+                await supabaseClient
+                    .from("categories")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
         } else {
-            result = await supabaseClient
-                .from("categories")
-                .insert({
-                    ...payload,
-                    user_id: state.user.id
-                });
+            result =
+                await supabaseClient
+                    .from("categories")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            state.user.id
+                    });
         }
 
         if (result.error) {
             throw result.error;
         }
+
+        await loadCategories();
 
         setMessage(
             "categoryFormMessage",
@@ -610,11 +757,13 @@ async function handleCategorySubmit(event) {
             "success"
         );
 
-        await loadCategories();
-
-        setTimeout(() => {
-            closeModal("categoryModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "categoryModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -627,28 +776,33 @@ async function handleCategorySubmit(event) {
 }
 
 async function deleteCategory(id) {
-    const category = state.categories.find(
-        (item) => item.id === id
-    );
+    const category =
+        state.categories.find(
+            (item) => item.id === id
+        );
 
     if (!category) {
         return;
     }
 
-    const confirmed = confirm(
-        `Excluir a categoria "${category.name}"?`
-    );
-
-    if (!confirmed) {
+    if (
+        !confirm(
+            `Excluir a categoria "${category.name}"?`
+        )
+    ) {
         return;
     }
 
     try {
-        const { error } = await supabaseClient
-            .from("categories")
-            .delete()
-            .eq("id", id)
-            .eq("user_id", state.user.id);
+        const { error } =
+            await supabaseClient
+                .from("categories")
+                .delete()
+                .eq("id", id)
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
 
         if (error) {
             throw error;
@@ -658,7 +812,9 @@ async function deleteCategory(id) {
     } catch (error) {
         console.error(error);
 
-        alert(translateDatabaseError(error));
+        alert(
+            translateDatabaseError(error)
+        );
     }
 }
 
@@ -671,21 +827,27 @@ async function loadColors() {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("colors")
         .select("*")
         .eq("user_id", state.user.id)
         .order("name");
 
     if (error) {
-        console.error("Erro ao carregar cores:", error);
+        console.error(
+            "Erro ao carregar cores:",
+            error
+        );
+
         return;
     }
 
     state.colors = data || [];
 
     renderColors();
-    populateColorSelects();
 }
 
 function renderColors() {
@@ -698,142 +860,117 @@ function renderColors() {
     if (!state.colors.length) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhuma cor cadastrada.
+
+                <div class="empty-state-icon">
+                    C
+                </div>
+
+                <strong>
+                    Nenhuma cor cadastrada
+                </strong>
+
+                <p>
+                    Cadastre as cores utilizadas nos produtos.
+                </p>
+
             </div>
         `;
 
         return;
     }
 
-    container.innerHTML = state.colors
-        .map((color) => {
-            const hex = normalizeHexColor(color.hex_code);
+    container.innerHTML =
+        state.colors
+            .map((color) => {
+                const hex =
+                    normalizeHexColor(
+                        color.hex_code
+                    );
 
-            return `
-                <div class="color-card">
-                    <div class="color-card-info">
-                        <div
-                            class="color-card-swatch"
-                            style="background-color: ${escapeHtml(hex)}"
-                        ></div>
+                return `
+                    <div class="color-card">
 
-                        <div class="color-card-text">
-                            <div class="color-card-name">
-                                ${escapeHtml(color.name)}
+                        <div class="color-card-info">
+
+                            <div
+                                class="color-card-swatch"
+                                style="background-color:${hex}"
+                            ></div>
+
+                            <div class="color-card-text">
+
+                                <div class="color-card-name">
+                                    ${escapeHtml(
+                                        color.name
+                                    )}
+                                </div>
+
+                                <div class="color-card-code">
+                                    ${escapeHtml(
+                                        hex
+                                    )}
+                                </div>
+
                             </div>
 
-                            <div class="color-card-code">
-                                ${escapeHtml(hex)}
-                            </div>
                         </div>
-                    </div>
 
-                    <div class="color-card-actions">
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Editar"
-                            data-edit-color="${color.id}"
-                        >
-                            ✎
-                        </button>
+                        <div class="color-card-actions">
 
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Excluir"
-                            data-delete-color="${color.id}"
-                        >
-                            ×
-                        </button>
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-edit-color="${color.id}"
+                                title="Editar"
+                            >
+                                ✎
+                            </button>
+
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-delete-color="${color.id}"
+                                title="Excluir"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
                     </div>
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
 
     container
-        .querySelectorAll("[data-edit-color]")
+        .querySelectorAll(
+            "[data-edit-color]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                editColor(button.dataset.editColor);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    editColor(
+                        button.dataset.editColor
+                    );
+                }
+            );
         });
 
     container
-        .querySelectorAll("[data-delete-color]")
+        .querySelectorAll(
+            "[data-delete-color]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                deleteColor(button.dataset.deleteColor);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    deleteColor(
+                        button.dataset.deleteColor
+                    );
+                }
+            );
         });
-}
-
-function populateColorSelects() {
-    document
-        .querySelectorAll("[data-color-select]")
-        .forEach((select) => {
-            const currentValue = select.value;
-
-            select.innerHTML = `
-                <option value="">Selecione uma cor</option>
-
-                ${state.colors
-                    .filter(
-                        (color) =>
-                            color.is_active !== false
-                    )
-                    .map(
-                        (color) => `
-                            <option value="${color.id}">
-                                ${escapeHtml(color.name)}
-                            </option>
-                        `
-                    )
-                    .join("")}
-            `;
-
-            if (currentValue) {
-                select.value = currentValue;
-            }
-        });
-}
-
-function updateColorPreview() {
-    const colorPicker = $("colorHex");
-    const colorText = $("colorHexText");
-    const preview = $("colorPreview");
-
-    if (!colorPicker || !colorText) {
-        return;
-    }
-
-    const hex = normalizeHexColor(colorPicker.value);
-
-    colorText.value = hex;
-
-    if (preview) {
-        preview.style.backgroundColor = hex;
-    }
-}
-
-function updateColorFromText() {
-    const colorPicker = $("colorHex");
-    const colorText = $("colorHexText");
-    const preview = $("colorPreview");
-
-    if (!colorPicker || !colorText) {
-        return;
-    }
-
-    const value = normalizeHexColor(colorText.value);
-
-    colorText.value = value;
-    colorPicker.value = value;
-
-    if (preview) {
-        preview.style.backgroundColor = value;
-    }
 }
 
 function resetColorForm() {
@@ -847,8 +984,8 @@ function resetColorForm() {
         $("colorId").value = "";
     }
 
-    if ($("colorActive")) {
-        $("colorActive").checked = true;
+    if ($("colorName")) {
+        $("colorName").value = "";
     }
 
     if ($("colorHex")) {
@@ -856,7 +993,8 @@ function resetColorForm() {
     }
 
     if ($("colorHexText")) {
-        $("colorHexText").value = "#D96B8A";
+        $("colorHexText").value =
+            "#D96B8A";
     }
 
     if ($("colorPreview")) {
@@ -864,13 +1002,83 @@ function resetColorForm() {
             "#D96B8A";
     }
 
-    setMessage("colorFormMessage");
+    if ($("colorActive")) {
+        $("colorActive").checked = true;
+    }
+
+    setMessage(
+        "colorFormMessage",
+        ""
+    );
+}
+
+function updateColorPreview() {
+    const picker = $("colorHex");
+    const text = $("colorHexText");
+    const preview = $("colorPreview");
+
+    if (!picker) {
+        return;
+    }
+
+    const hex =
+        normalizeHexColor(
+            picker.value
+        );
+
+    if (text) {
+        text.value = hex;
+    }
+
+    if (preview) {
+        preview.style.backgroundColor =
+            hex;
+    }
+}
+
+function updateColorFromText() {
+    const picker = $("colorHex");
+    const text = $("colorHexText");
+    const preview = $("colorPreview");
+
+    if (!text) {
+        return;
+    }
+
+    let value =
+        text.value.trim();
+
+    if (!value.startsWith("#")) {
+        value = `#${value}`;
+    }
+
+    if (
+        !/^#[0-9a-fA-F]{6}$/.test(
+            value
+        )
+    ) {
+        return;
+    }
+
+    value = value.toUpperCase();
+
+    if (picker) {
+        picker.value = value;
+    }
+
+    text.value = value;
+
+    if (preview) {
+        preview.style.backgroundColor =
+            value;
+    }
 }
 
 function editColor(id) {
-    const color = state.colors.find(
-        (item) => item.id === id
-    );
+    const color =
+        state.colors.find(
+            (item) => item.id === id
+        );
 
     if (!color) {
         return;
@@ -878,26 +1086,34 @@ function editColor(id) {
 
     openModal("colorModal");
 
-    const hex = normalizeHexColor(color.hex_code);
+    const hex =
+        normalizeHexColor(
+            color.hex_code
+        );
 
     if ($("colorId")) {
-        $("colorId").value = color.id;
+        $("colorId").value =
+            color.id;
     }
 
     if ($("colorName")) {
-        $("colorName").value = color.name || "";
+        $("colorName").value =
+            color.name || "";
     }
 
     if ($("colorHex")) {
-        $("colorHex").value = hex;
+        $("colorHex").value =
+            hex;
     }
 
     if ($("colorHexText")) {
-        $("colorHexText").value = hex;
+        $("colorHexText").value =
+            hex;
     }
 
     if ($("colorPreview")) {
-        $("colorPreview").style.backgroundColor = hex;
+        $("colorPreview").style.backgroundColor =
+            hex;
     }
 
     if ($("colorActive")) {
@@ -913,15 +1129,18 @@ async function handleColorSubmit(event) {
         return;
     }
 
-    const id = $("colorId")?.value || "";
-    const name = $("colorName")?.value.trim();
-    const hexCode = normalizeHexColor(
-        $("colorHexText")?.value ||
-            $("colorHex")?.value ||
-            "#000000"
-    );
+    const name =
+        $("colorName")?.value.trim();
+
+    const hex =
+        normalizeHexColor(
+            $("colorHexText")?.value ||
+            $("colorHex")?.value
+        );
+
     const isActive =
-        $("colorActive")?.checked !== false;
+        $("colorActive")
+            ?.checked !== false;
 
     if (!name) {
         setMessage(
@@ -933,6 +1152,9 @@ async function handleColorSubmit(event) {
         return;
     }
 
+    const id =
+        $("colorId")?.value || "";
+
     try {
         setMessage(
             "colorFormMessage",
@@ -941,30 +1163,38 @@ async function handleColorSubmit(event) {
 
         const payload = {
             name,
-            hex_code: hexCode,
+            hex_code: hex,
             is_active: isActive
         };
 
         let result;
 
         if (id) {
-            result = await supabaseClient
-                .from("colors")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", state.user.id);
+            result =
+                await supabaseClient
+                    .from("colors")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
         } else {
-            result = await supabaseClient
-                .from("colors")
-                .insert({
-                    ...payload,
-                    user_id: state.user.id
-                });
+            result =
+                await supabaseClient
+                    .from("colors")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            state.user.id
+                    });
         }
 
         if (result.error) {
             throw result.error;
         }
+
+        await loadColors();
 
         setMessage(
             "colorFormMessage",
@@ -972,11 +1202,13 @@ async function handleColorSubmit(event) {
             "success"
         );
 
-        await loadColors();
-
-        setTimeout(() => {
-            closeModal("colorModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "colorModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -989,28 +1221,33 @@ async function handleColorSubmit(event) {
 }
 
 async function deleteColor(id) {
-    const color = state.colors.find(
-        (item) => item.id === id
-    );
+    const color =
+        state.colors.find(
+            (item) => item.id === id
+        );
 
     if (!color) {
         return;
     }
 
-    const confirmed = confirm(
-        `Excluir a cor "${color.name}"?`
-    );
-
-    if (!confirmed) {
+    if (
+        !confirm(
+            `Excluir a cor "${color.name}"?`
+        )
+    ) {
         return;
     }
 
     try {
-        const { error } = await supabaseClient
-            .from("colors")
-            .delete()
-            .eq("id", id)
-            .eq("user_id", state.user.id);
+        const { error } =
+            await supabaseClient
+                .from("colors")
+                .delete()
+                .eq("id", id)
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
 
         if (error) {
             throw error;
@@ -1020,7 +1257,9 @@ async function deleteColor(id) {
     } catch (error) {
         console.error(error);
 
-        alert(translateDatabaseError(error));
+        alert(
+            translateDatabaseError(error)
+        );
     }
 }
 
@@ -1033,7 +1272,10 @@ async function loadSizes() {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("sizes")
         .select("*")
         .eq("user_id", state.user.id)
@@ -1045,14 +1287,17 @@ async function loadSizes() {
         });
 
     if (error) {
-        console.error("Erro ao carregar tamanhos:", error);
+        console.error(
+            "Erro ao carregar tamanhos:",
+            error
+        );
+
         return;
     }
 
     state.sizes = data || [];
 
     renderSizes();
-    populateSizeSelects();
 }
 
 function renderSizes() {
@@ -1065,103 +1310,114 @@ function renderSizes() {
     if (!state.sizes.length) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhum tamanho cadastrado.
+
+                <div class="empty-state-icon">
+                    T
+                </div>
+
+                <strong>
+                    Nenhum tamanho cadastrado
+                </strong>
+
+                <p>
+                    Cadastre os tamanhos utilizados nos produtos.
+                </p>
+
             </div>
         `;
 
         return;
     }
 
-    container.innerHTML = state.sizes
-        .map((size) => {
-            return `
-                <div class="size-card">
-                    <div class="size-card-info">
-                        <div class="size-badge">
-                            ${escapeHtml(size.name)}
-                        </div>
+    container.innerHTML =
+        state.sizes
+            .map((size) => {
+                return `
+                    <div class="size-card">
 
-                        <div>
-                            <div class="size-card-name">
-                                Tamanho ${escapeHtml(size.name)}
-                            </div>
+                        <div class="size-card-info">
 
-                            <div class="size-card-order">
-                                Ordem: ${Number(
-                                    size.display_order || 0
+                            <div class="size-badge">
+                                ${escapeHtml(
+                                    size.name
                                 )}
                             </div>
+
+                            <div>
+
+                                <div class="size-card-name">
+                                    Tamanho ${escapeHtml(
+                                        size.name
+                                    )}
+                                </div>
+
+                                <div class="size-card-order">
+                                    Ordem:
+                                    ${Number(
+                                        size.display_order ||
+                                            0
+                                    )}
+                                </div>
+
+                            </div>
+
                         </div>
-                    </div>
 
-                    <div class="size-card-actions">
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Editar"
-                            data-edit-size="${size.id}"
-                        >
-                            ✎
-                        </button>
+                        <div class="size-card-actions">
 
-                        <button
-                            class="icon-button"
-                            type="button"
-                            title="Excluir"
-                            data-delete-size="${size.id}"
-                        >
-                            ×
-                        </button>
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-edit-size="${size.id}"
+                                title="Editar"
+                            >
+                                ✎
+                            </button>
+
+                            <button
+                                type="button"
+                                class="icon-button"
+                                data-delete-size="${size.id}"
+                                title="Excluir"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
                     </div>
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
 
     container
-        .querySelectorAll("[data-edit-size]")
+        .querySelectorAll(
+            "[data-edit-size]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                editSize(button.dataset.editSize);
-            });
+            button.addEventListener(
+                "click",
+                () => {
+                    editSize(
+                        button.dataset.editSize
+                    );
+                }
+            );
         });
 
     container
-        .querySelectorAll("[data-delete-size]")
+        .querySelectorAll(
+            "[data-delete-size]"
+        )
         .forEach((button) => {
-            button.addEventListener("click", () => {
-                deleteSize(button.dataset.deleteSize);
-            });
-        });
-}
-
-function populateSizeSelects() {
-    document
-        .querySelectorAll("[data-size-select]")
-        .forEach((select) => {
-            const currentValue = select.value;
-
-            select.innerHTML = `
-                <option value="">Selecione um tamanho</option>
-
-                ${state.sizes
-                    .filter(
-                        (size) =>
-                            size.is_active !== false
-                    )
-                    .map(
-                        (size) => `
-                            <option value="${size.id}">
-                                ${escapeHtml(size.name)}
-                            </option>
-                        `
-                    )
-                    .join("")}
-            `;
-
-            if (currentValue) {
-                select.value = currentValue;
-            }
+            button.addEventListener(
+                "click",
+                () => {
+                    deleteSize(
+                        button.dataset.deleteSize
+                    );
+                }
+            );
         });
 }
 
@@ -1184,13 +1440,17 @@ function resetSizeForm() {
         $("sizeActive").checked = true;
     }
 
-    setMessage("sizeFormMessage");
+    setMessage(
+        "sizeFormMessage",
+        ""
+    );
 }
 
 function editSize(id) {
-    const size = state.sizes.find(
-        (item) => item.id === id
-    );
+    const size =
+        state.sizes.find(
+            (item) => item.id === id
+        );
 
     if (!size) {
         return;
@@ -1199,16 +1459,18 @@ function editSize(id) {
     openModal("sizeModal");
 
     if ($("sizeId")) {
-        $("sizeId").value = size.id;
+        $("sizeId").value =
+            size.id;
     }
 
     if ($("sizeName")) {
-        $("sizeName").value = size.name || "";
+        $("sizeName").value =
+            size.name || "";
     }
 
     if ($("sizeDisplayOrder")) {
         $("sizeDisplayOrder").value =
-            size.display_order ?? 0;
+            size.display_order || 0;
     }
 
     if ($("sizeActive")) {
@@ -1224,13 +1486,18 @@ async function handleSizeSubmit(event) {
         return;
     }
 
-    const id = $("sizeId")?.value || "";
-    const name = $("sizeName")?.value.trim();
-    const displayOrder = Number(
-        $("sizeDisplayOrder")?.value || 0
-    );
+    const name =
+        $("sizeName")?.value.trim();
+
+    const displayOrder =
+        Number(
+            $("sizeDisplayOrder")
+                ?.value || 0
+        );
+
     const isActive =
-        $("sizeActive")?.checked !== false;
+        $("sizeActive")
+            ?.checked !== false;
 
     if (!name) {
         setMessage(
@@ -1242,6 +1509,9 @@ async function handleSizeSubmit(event) {
         return;
     }
 
+    const id =
+        $("sizeId")?.value || "";
+
     try {
         setMessage(
             "sizeFormMessage",
@@ -1250,30 +1520,39 @@ async function handleSizeSubmit(event) {
 
         const payload = {
             name,
-            display_order: displayOrder,
+            display_order:
+                displayOrder,
             is_active: isActive
         };
 
         let result;
 
         if (id) {
-            result = await supabaseClient
-                .from("sizes")
-                .update(payload)
-                .eq("id", id)
-                .eq("user_id", state.user.id);
+            result =
+                await supabaseClient
+                    .from("sizes")
+                    .update(payload)
+                    .eq("id", id)
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
         } else {
-            result = await supabaseClient
-                .from("sizes")
-                .insert({
-                    ...payload,
-                    user_id: state.user.id
-                });
+            result =
+                await supabaseClient
+                    .from("sizes")
+                    .insert({
+                        ...payload,
+                        user_id:
+                            state.user.id
+                    });
         }
 
         if (result.error) {
             throw result.error;
         }
+
+        await loadSizes();
 
         setMessage(
             "sizeFormMessage",
@@ -1281,11 +1560,13 @@ async function handleSizeSubmit(event) {
             "success"
         );
 
-        await loadSizes();
-
-        setTimeout(() => {
-            closeModal("sizeModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "sizeModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -1298,28 +1579,33 @@ async function handleSizeSubmit(event) {
 }
 
 async function deleteSize(id) {
-    const size = state.sizes.find(
-        (item) => item.id === id
-    );
+    const size =
+        state.sizes.find(
+            (item) => item.id === id
+        );
 
     if (!size) {
         return;
     }
 
-    const confirmed = confirm(
-        `Excluir o tamanho "${size.name}"?`
-    );
-
-    if (!confirmed) {
+    if (
+        !confirm(
+            `Excluir o tamanho "${size.name}"?`
+        )
+    ) {
         return;
     }
 
     try {
-        const { error } = await supabaseClient
-            .from("sizes")
-            .delete()
-            .eq("id", id)
-            .eq("user_id", state.user.id);
+        const { error } =
+            await supabaseClient
+                .from("sizes")
+                .delete()
+                .eq("id", id)
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
 
         if (error) {
             throw error;
@@ -1329,7 +1615,9 @@ async function deleteSize(id) {
     } catch (error) {
         console.error(error);
 
-        alert(translateDatabaseError(error));
+        alert(
+            translateDatabaseError(error)
+        );
     }
 }
 
@@ -1342,7 +1630,10 @@ async function loadProducts() {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("products")
         .select(`
             *,
@@ -1357,7 +1648,11 @@ async function loadProducts() {
         });
 
     if (error) {
-        console.error("Erro ao carregar produtos:", error);
+        console.error(
+            "Erro ao carregar produtos:",
+            error
+        );
+
         return;
     }
 
@@ -1376,74 +1671,101 @@ function renderProducts() {
     if (!state.products.length) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhum produto cadastrado.
+
+                <div class="empty-state-icon">
+                    P
+                </div>
+
+                <strong>
+                    Nenhum produto cadastrado
+                </strong>
+
+                <p>
+                    Cadastre seu primeiro produto
+                    para começar a controlar o estoque.
+                </p>
+
             </div>
         `;
 
         return;
     }
 
-    container.innerHTML = state.products
-        .map((product) => {
-            return `
-                <div class="product-card">
-                    <div class="product-card-top">
-                        <div>
-                            <div class="product-card-name">
-                                ${escapeHtml(product.name)}
+    container.innerHTML =
+        state.products
+            .map((product) => {
+                return `
+                    <div class="product-card">
+
+                        <div class="product-card-top">
+
+                            <div>
+
+                                <div class="product-card-name">
+                                    ${escapeHtml(
+                                        product.name
+                                    )}
+                                </div>
+
+                                <div class="product-card-category">
+                                    ${
+                                        product.categories
+                                            ?.name
+                                            ? escapeHtml(
+                                                  product
+                                                      .categories
+                                                      .name
+                                              )
+                                            : "Sem categoria"
+                                    }
+                                </div>
+
                             </div>
 
-                            <div class="product-card-category">
-                                ${
-                                    product.categories?.name
-                                        ? escapeHtml(
-                                              product
-                                                  .categories
-                                                  .name
-                                          )
-                                        : "Sem categoria"
-                                }
+                            <div class="product-card-price">
+                                ${formatCurrency(
+                                    product.sale_price
+                                )}
                             </div>
+
                         </div>
 
-                        <div class="product-card-price">
-                            ${formatCurrency(
-                                product.sale_price
-                            )}
+                        <div class="product-card-meta">
+
+                            ${
+                                product.sku
+                                    ? `
+                                        <span class="product-meta-badge">
+                                            SKU:
+                                            ${escapeHtml(
+                                                product.sku
+                                            )}
+                                        </span>
+                                    `
+                                    : ""
+                            }
+
+                            <span class="product-meta-badge">
+                                Custo:
+                                ${formatCurrency(
+                                    product.cost_price
+                                )}
+                            </span>
+
+                            <span class="product-meta-badge">
+                                Estoque mínimo:
+                                ${Number(
+                                    product.minimum_stock ||
+                                        0
+                                )}
+                            </span>
+
                         </div>
+
                     </div>
-
-                    <div class="product-card-meta">
-                        ${
-                            product.sku
-                                ? `
-                                    <span class="product-meta-badge">
-                                        SKU: ${escapeHtml(
-                                            product.sku
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                        <span class="product-meta-badge">
-                            Custo:
-                            ${formatCurrency(
-                                product.cost_price
-                            )}
-                        </span>
-
-                        <span class="product-meta-badge">
-                            Estoque mínimo:
-                            ${Number(
-                                product.minimum_stock || 0
-                            )}
-                        </span>
-                    </div>
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
 }
 
 function resetProductForm() {
@@ -1453,15 +1775,17 @@ function resetProductForm() {
         form.reset();
     }
 
-    if ($("productId")) {
-        $("productId").value = "";
-    }
-
     if ($("productActive")) {
-        $("productActive").checked = true;
+        $("productActive").checked =
+            true;
     }
 
-    setMessage("productFormMessage");
+    setMessage(
+        "productFormMessage",
+        ""
+    );
+
+    populateCategorySelect();
 }
 
 async function handleProductSubmit(event) {
@@ -1471,32 +1795,57 @@ async function handleProductSubmit(event) {
         return;
     }
 
-    const name = $("productName")?.value.trim();
-    const sku = $("productSku")?.value.trim() || "";
+    const name =
+        $("productName")?.value.trim();
+
+    const sku =
+        $("productSku")
+            ?.value.trim() || "";
+
     const description =
-        $("productDescription")?.value.trim() || "";
+        $("productDescription")
+            ?.value.trim() || "";
+
     const categoryId =
-        $("productCategory")?.value || null;
+        $("productCategory")
+            ?.value || null;
 
-    const costPrice = Number(
-        $("productCostPrice")?.value || 0
-    );
+    const costPrice =
+        Number(
+            $("productCostPrice")
+                ?.value || 0
+        );
 
-    const salePrice = Number(
-        $("productSalePrice")?.value || 0
-    );
+    const salePrice =
+        Number(
+            $("productSalePrice")
+                ?.value || 0
+        );
 
-    const minimumStock = Number(
-        $("productMinimumStock")?.value || 0
-    );
+    const minimumStock =
+        Number(
+            $("productMinimumStock")
+                ?.value || 0
+        );
 
     const isActive =
-        $("productActive")?.checked !== false;
+        $("productActive")
+            ?.checked !== false;
 
     if (!name) {
         setMessage(
             "productFormMessage",
             "Informe o nome do produto.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (salePrice < 0) {
+        setMessage(
+            "productFormMessage",
+            "Informe um preço de venda válido.",
             "error"
         );
 
@@ -1509,23 +1858,33 @@ async function handleProductSubmit(event) {
             "Salvando..."
         );
 
-        const { error } = await supabaseClient
-            .from("products")
-            .insert({
-                user_id: state.user.id,
-                category_id: categoryId,
-                name,
-                sku,
-                description,
-                cost_price: costPrice,
-                sale_price: salePrice,
-                minimum_stock: minimumStock,
-                is_active: isActive
-            });
+        const { error } =
+            await supabaseClient
+                .from("products")
+                .insert({
+                    user_id:
+                        state.user.id,
+                    category_id:
+                        categoryId,
+                    name,
+                    sku,
+                    description,
+                    cost_price:
+                        costPrice,
+                    sale_price:
+                        salePrice,
+                    minimum_stock:
+                        minimumStock,
+                    is_active:
+                        isActive
+                });
 
         if (error) {
             throw error;
         }
+
+        await loadProducts();
+        await loadDashboard();
 
         setMessage(
             "productFormMessage",
@@ -1533,11 +1892,13 @@ async function handleProductSubmit(event) {
             "success"
         );
 
-        await loadProducts();
-
-        setTimeout(() => {
-            closeModal("productModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "productModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -1554,13 +1915,17 @@ async function handleProductSubmit(event) {
    ========================================================= */
 
 async function loadStock() {
-    const container = $("stockList");
-
-    if (!container || !state.user) {
+    if (!state.user) {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const container =
+        $("stockList");
+
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("product_variants")
         .select(`
             *,
@@ -1584,83 +1949,204 @@ async function loadStock() {
         });
 
     if (error) {
-        console.error("Erro ao carregar estoque:", error);
+        console.error(
+            "Erro ao carregar estoque:",
+            error
+        );
 
-        container.innerHTML = `
-            <div class="empty-state">
-                Não foi possível carregar o estoque.
-            </div>
-        `;
-
-        return;
-    }
-
-    if (!data?.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Nenhuma variação de produto cadastrada.
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = data
-        .map((variant) => {
-            const quantity = Number(
-                variant.stock_quantity || 0
-            );
-
-            const minimum = Number(
-                variant.minimum_stock || 0
-            );
-
-            let className = "";
-
-            if (quantity === 0) {
-                className = "out-stock";
-            } else if (quantity <= minimum) {
-                className = "low-stock";
-            }
-
-            return `
-                <div class="stock-card ${className}">
-                    <div>
-                        <strong>
-                            ${escapeHtml(
-                                variant.products?.name ||
-                                    "Produto"
-                            )}
-                        </strong>
-
-                        <div class="stock-label">
-                            ${
-                                variant.colors?.name
-                                    ? escapeHtml(
-                                          variant.colors
-                                              .name
-                                      )
-                                    : ""
-                            }
-
-                            ${
-                                variant.sizes?.name
-                                    ? ` / ${escapeHtml(
-                                          variant.sizes
-                                              .name
-                                      )}`
-                                    : ""
-                            }
-                        </div>
-                    </div>
-
-                    <div class="stock-quantity">
-                        ${quantity}
-                    </div>
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    Não foi possível carregar o estoque.
                 </div>
             `;
-        })
-        .join("");
+        }
+
+        return;
+    }
+
+    state.variants = data || [];
+
+    renderStock();
+}
+
+function renderStock() {
+    const container =
+        $("stockList");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.variants.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    E
+                </div>
+
+                <strong>
+                    Estoque vazio
+                </strong>
+
+                <p>
+                    As variações dos produtos aparecerão aqui.
+                </p>
+
+            </div>
+        `;
+
+        updateStockMetrics([]);
+
+        return;
+    }
+
+    container.innerHTML =
+        state.variants
+            .map((variant) => {
+                const quantity =
+                    Number(
+                        variant.stock_quantity ||
+                            0
+                    );
+
+                const minimum =
+                    Number(
+                        variant.minimum_stock ||
+                            0
+                    );
+
+                let className = "";
+
+                if (quantity === 0) {
+                    className =
+                        "out-stock";
+                } else if (
+                    quantity <= minimum
+                ) {
+                    className =
+                        "low-stock";
+                }
+
+                return `
+                    <div class="stock-card ${className}">
+
+                        <div>
+
+                            <strong>
+                                ${escapeHtml(
+                                    variant
+                                        .products
+                                        ?.name ||
+                                        "Produto"
+                                )}
+                            </strong>
+
+                            <div class="stock-label">
+
+                                ${
+                                    variant
+                                        .colors
+                                        ?.name
+                                        ? escapeHtml(
+                                              variant
+                                                  .colors
+                                                  .name
+                                          )
+                                        : ""
+                                }
+
+                                ${
+                                    variant
+                                        .sizes
+                                        ?.name
+                                        ? ` / ${escapeHtml(
+                                              variant
+                                                  .sizes
+                                                  .name
+                                          )}`
+                                        : ""
+                                }
+
+                            </div>
+
+                        </div>
+
+                        <div class="stock-quantity">
+                            ${quantity}
+                        </div>
+
+                    </div>
+                `;
+            })
+            .join("");
+
+    updateStockMetrics(
+        state.variants
+    );
+}
+
+function updateStockMetrics(variants) {
+    const total =
+        variants.reduce(
+            (sum, item) =>
+                sum +
+                Number(
+                    item.stock_quantity ||
+                        0
+                ),
+            0
+        );
+
+    const low =
+        variants.filter((item) => {
+            const quantity =
+                Number(
+                    item.stock_quantity ||
+                        0
+                );
+
+            const minimum =
+                Number(
+                    item.minimum_stock ||
+                        0
+                );
+
+            return (
+                quantity > 0 &&
+                quantity <= minimum
+            );
+        }).length;
+
+    const zero =
+        variants.filter(
+            (item) =>
+                Number(
+                    item.stock_quantity ||
+                        0
+                ) === 0
+        ).length;
+
+    if ($("stockTotal")) {
+        $("stockTotal").textContent =
+            total;
+    }
+
+    if ($("stockLow")) {
+        $("stockLow").textContent =
+            low;
+    }
+
+    if ($("stockZero")) {
+        $("stockZero").textContent =
+            zero;
+    }
+
+    if ($("metricLowStock")) {
+        $("metricLowStock").textContent =
+            low;
+    }
 }
 
 /* =========================================================
@@ -1668,27 +2154,153 @@ async function loadStock() {
    ========================================================= */
 
 function resetSaleForm() {
-    const form = $("saleForm");
+    const form =
+        $("saleForm");
 
     if (form) {
         form.reset();
     }
 
-    if ($("saleId")) {
-        $("saleId").value = "";
+    state.saleItems = [];
+
+    renderSaleItems();
+    updateSaleTotal();
+
+    setMessage(
+        "saleFormMessage",
+        ""
+    );
+}
+
+function renderSaleItems() {
+    const container =
+        $("saleItems");
+
+    if (!container) {
+        return;
     }
 
-    setMessage("saleFormMessage");
-
-    const items = $("saleItems");
-
-    if (items) {
-        items.innerHTML = `
+    if (!state.saleItems.length) {
+        container.innerHTML = `
             <div class="empty-state">
-                Nenhum item adicionado.
+
+                <strong>
+                    Nenhum item
+                </strong>
+
+                <p>
+                    Adicione produtos à venda.
+                </p>
+
             </div>
         `;
+
+        return;
     }
+
+    container.innerHTML =
+        state.saleItems
+            .map((item, index) => {
+                return `
+                    <div class="sale-item">
+
+                        <div class="sale-item-header">
+
+                            <div class="sale-item-name">
+                                ${escapeHtml(
+                                    item.name
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                class="sale-item-remove"
+                                data-remove-sale-item="${index}"
+                            >
+                                Remover
+                            </button>
+
+                        </div>
+
+                        <div class="sale-item-meta">
+                            Quantidade:
+                            ${item.quantity}
+
+                            •
+                            ${formatCurrency(
+                                item.unit_price
+                            )}
+
+                            •
+                            ${formatCurrency(
+                                item.total
+                            )}
+                        </div>
+
+                    </div>
+                `;
+            })
+            .join("");
+
+    container
+        .querySelectorAll(
+            "[data-remove-sale-item]"
+        )
+        .forEach((button) => {
+            button.addEventListener(
+                "click",
+                () => {
+                    const index =
+                        Number(
+                            button.dataset
+                                .removeSaleItem
+                        );
+
+                    state.saleItems.splice(
+                        index,
+                        1
+                    );
+
+                    renderSaleItems();
+                    updateSaleTotal();
+                }
+            );
+        });
+}
+
+function updateSaleTotal() {
+    const subtotal =
+        state.saleItems.reduce(
+            (sum, item) =>
+                sum +
+                Number(
+                    item.total || 0
+                ),
+            0
+        );
+
+    const discount =
+        Number(
+            $("saleDiscount")
+                ?.value || 0
+        );
+
+    const total =
+        Math.max(
+            0,
+            subtotal - discount
+        );
+
+    if ($("saleTotal")) {
+        $("saleTotal").textContent =
+            formatCurrency(total);
+    }
+
+    return {
+        subtotal,
+        discount,
+        total
+    };
 }
 
 async function handleSaleSubmit(event) {
@@ -1699,14 +2311,25 @@ async function handleSaleSubmit(event) {
     }
 
     const paymentMethod =
-        $("salePaymentMethod")?.value || "";
-
-    const discount = Number(
-        $("saleDiscount")?.value || 0
-    );
+        $("salePaymentMethod")
+            ?.value || "";
 
     const notes =
-        $("saleNotes")?.value.trim() || "";
+        $("saleNotes")
+            ?.value.trim() || "";
+
+    if (!paymentMethod) {
+        setMessage(
+            "saleFormMessage",
+            "Selecione a forma de pagamento.",
+            "error"
+        );
+
+        return;
+    }
+
+    const totals =
+        updateSaleTotal();
 
     try {
         setMessage(
@@ -1714,21 +2337,24 @@ async function handleSaleSubmit(event) {
             "Registrando venda..."
         );
 
-        /*
-         * Nesta etapa registramos a venda principal.
-         * Os itens e a baixa automática de estoque entram
-         * na etapa de variações.
-         */
-
-        const { data, error } = await supabaseClient
+        const {
+            data: sale,
+            error
+        } = await supabaseClient
             .from("sales")
             .insert({
-                user_id: state.user.id,
-                subtotal: 0,
-                discount,
-                total: 0,
-                payment_method: paymentMethod,
-                status: "completed",
+                user_id:
+                    state.user.id,
+                subtotal:
+                    totals.subtotal,
+                discount:
+                    totals.discount,
+                total:
+                    totals.total,
+                payment_method:
+                    paymentMethod,
+                status:
+                    "completed",
                 notes
             })
             .select()
@@ -1738,10 +2364,18 @@ async function handleSaleSubmit(event) {
             throw error;
         }
 
+        /*
+         * Os sale_items serão implementados junto
+         * com o sistema completo de variações.
+         */
+
         console.log(
             "Venda criada:",
-            data
+            sale
         );
+
+        await loadSales();
+        await loadDashboard();
 
         setMessage(
             "saleFormMessage",
@@ -1749,12 +2383,13 @@ async function handleSaleSubmit(event) {
             "success"
         );
 
-        await loadSales();
-        await loadDashboard();
-
-        setTimeout(() => {
-            closeModal("saleModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "saleModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -1767,13 +2402,14 @@ async function handleSaleSubmit(event) {
 }
 
 async function loadSales() {
-    const container = $("salesList");
-
-    if (!container || !state.user) {
+    if (!state.user) {
         return;
     }
 
-    const { data, error } = await supabaseClient
+    const {
+        data,
+        error
+    } = await supabaseClient
         .from("sales")
         .select("*")
         .eq("user_id", state.user.id)
@@ -1783,17 +2419,23 @@ async function loadSales() {
         .limit(50);
 
     if (error) {
-        console.error("Erro ao carregar vendas:", error);
+        console.error(
+            "Erro ao carregar vendas:",
+            error
+        );
+
         return;
     }
 
     state.sales = data || [];
 
     renderSales();
+    updateSalesMetrics();
 }
 
 function renderSales() {
-    const container = $("salesList");
+    const container =
+        $("salesList");
 
     if (!container) {
         return;
@@ -1802,48 +2444,114 @@ function renderSales() {
     if (!state.sales.length) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhuma venda registrada.
+
+                <div class="empty-state-icon">
+                    V
+                </div>
+
+                <strong>
+                    Nenhuma venda
+                </strong>
+
+                <p>
+                    As vendas registradas aparecerão aqui.
+                </p>
+
             </div>
         `;
 
         return;
     }
 
-    container.innerHTML = state.sales
-        .map((sale) => {
-            return `
-                <div class="sale-card">
-                    <div class="sale-card-header">
-                        <div>
-                            <div class="sale-number">
-                                Venda #${sale.sale_number}
+    container.innerHTML =
+        state.sales
+            .map((sale) => {
+                return `
+                    <div class="sale-card">
+
+                        <div class="sale-card-header">
+
+                            <div>
+
+                                <div class="sale-number">
+                                    Venda #${sale.sale_number}
+                                </div>
+
+                                <div class="sale-date">
+                                    ${formatDateTime(
+                                        sale.sale_date
+                                    )}
+                                </div>
+
                             </div>
 
-                            <div class="sale-date">
-                                ${formatDateTime(
-                                    sale.sale_date
+                            <div class="sale-total">
+                                ${formatCurrency(
+                                    sale.total
                                 )}
                             </div>
+
                         </div>
 
-                        <div class="sale-total">
-                            ${formatCurrency(
-                                sale.total
+                        <div class="sale-payment">
+                            Pagamento:
+                            ${escapeHtml(
+                                sale.payment_method ||
+                                    "-"
                             )}
                         </div>
-                    </div>
 
-                    <div class="sale-payment">
-                        Pagamento:
-                        ${escapeHtml(
-                            sale.payment_method ||
-                                "-"
-                        )}
                     </div>
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
+}
+
+function updateSalesMetrics() {
+    const today =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    const todaySales =
+        state.sales.filter((sale) => {
+            return (
+                String(
+                    sale.sale_date
+                ).slice(0, 10) ===
+                today
+            );
+        });
+
+    const total =
+        todaySales.reduce(
+            (sum, sale) =>
+                sum +
+                Number(
+                    sale.total || 0
+                ),
+            0
+        );
+
+    if ($("salesToday")) {
+        $("salesToday").textContent =
+            formatCurrency(total);
+    }
+
+    if ($("salesOrdersToday")) {
+        $("salesOrdersToday").textContent =
+            todaySales.length;
+    }
+
+    if ($("metricSales")) {
+        $("metricSales").textContent =
+            formatCurrency(total);
+    }
+
+    if ($("metricOrders")) {
+        $("metricOrders").textContent =
+            todaySales.length;
+    }
 }
 
 /* =========================================================
@@ -1851,17 +2559,24 @@ function renderSales() {
    ========================================================= */
 
 function resetTransactionForm() {
-    const form = $("transactionForm");
+    const form =
+        $("transactionForm");
 
     if (form) {
         form.reset();
     }
 
-    if ($("transactionId")) {
-        $("transactionId").value = "";
+    if ($("transactionDate")) {
+        $("transactionDate").value =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
     }
 
-    setMessage("transactionFormMessage");
+    setMessage(
+        "transactionFormMessage",
+        ""
+    );
 }
 
 async function handleTransactionSubmit(event) {
@@ -1872,31 +2587,52 @@ async function handleTransactionSubmit(event) {
     }
 
     const type =
-        $("transactionType")?.value || "expense";
+        $("transactionType")
+            ?.value || "";
 
     const category =
-        $("transactionCategory")?.value.trim() || "";
+        $("transactionCategory")
+            ?.value.trim() || "";
 
     const description =
-        $("transactionDescription")?.value.trim() ||
-        "";
+        $("transactionDescription")
+            ?.value.trim() || "";
 
-    const amount = Number(
-        $("transactionAmount")?.value || 0
-    );
+    const amount =
+        Number(
+            $("transactionAmount")
+                ?.value || 0
+        );
 
     const date =
-        $("transactionDate")?.value ||
-        new Date().toISOString().slice(0, 10);
+        $("transactionDate")
+            ?.value ||
+        new Date()
+            .toISOString()
+            .slice(0, 10);
 
     const paymentMethod =
-        $("transactionPaymentMethod")?.value ||
-        "";
+        $("transactionPaymentMethod")
+            ?.value || "";
 
     const notes =
-        $("transactionNotes")?.value.trim() || "";
+        $("transactionNotes")
+            ?.value.trim() || "";
 
-    if (!description || amount <= 0) {
+    if (!type) {
+        setMessage(
+            "transactionFormMessage",
+            "Selecione o tipo de lançamento.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        !description ||
+        amount <= 0
+    ) {
         setMessage(
             "transactionFormMessage",
             "Informe descrição e valor válido.",
@@ -1912,22 +2648,32 @@ async function handleTransactionSubmit(event) {
             "Salvando..."
         );
 
-        const { error } = await supabaseClient
-            .from("financial_transactions")
-            .insert({
-                user_id: state.user.id,
-                transaction_type: type,
-                category,
-                description,
-                amount,
-                transaction_date: date,
-                payment_method: paymentMethod,
-                notes
-            });
+        const { error } =
+            await supabaseClient
+                .from(
+                    "financial_transactions"
+                )
+                .insert({
+                    user_id:
+                        state.user.id,
+                    transaction_type:
+                        type,
+                    category,
+                    description,
+                    amount,
+                    transaction_date:
+                        date,
+                    payment_method:
+                        paymentMethod,
+                    notes
+                });
 
         if (error) {
             throw error;
         }
+
+        await loadFinancialTransactions();
+        await loadDashboard();
 
         setMessage(
             "transactionFormMessage",
@@ -1935,12 +2681,13 @@ async function handleTransactionSubmit(event) {
             "success"
         );
 
-        await loadFinancialTransactions();
-        await loadDashboard();
-
-        setTimeout(() => {
-            closeModal("transactionModal");
-        }, 400);
+        setTimeout(
+            () =>
+                closeModal(
+                    "transactionModal"
+                ),
+            500
+        );
     } catch (error) {
         console.error(error);
 
@@ -1953,22 +2700,34 @@ async function handleTransactionSubmit(event) {
 }
 
 async function loadFinancialTransactions() {
-    const container = $("financeList");
-
-    if (!container || !state.user) {
+    if (!state.user) {
         return;
     }
 
-    const { data, error } = await supabaseClient
-        .from("financial_transactions")
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from(
+            "financial_transactions"
+        )
         .select("*")
-        .eq("user_id", state.user.id)
-        .order("transaction_date", {
-            ascending: false
-        })
-        .order("created_at", {
-            ascending: false
-        })
+        .eq(
+            "user_id",
+            state.user.id
+        )
+        .order(
+            "transaction_date",
+            {
+                ascending: false
+            }
+        )
+        .order(
+            "created_at",
+            {
+                ascending: false
+            }
+        )
         .limit(50);
 
     if (error) {
@@ -1980,22 +2739,41 @@ async function loadFinancialTransactions() {
         return;
     }
 
-    state.financialTransactions = data || [];
+    state.financialTransactions =
+        data || [];
 
     renderFinancialTransactions();
+    updateFinanceMetrics();
 }
 
 function renderFinancialTransactions() {
-    const container = $("financeList");
+    const container =
+        $("financeList");
 
     if (!container) {
         return;
     }
 
-    if (!state.financialTransactions.length) {
+    if (
+        !state
+            .financialTransactions
+            .length
+    ) {
         container.innerHTML = `
             <div class="empty-state">
-                Nenhum lançamento financeiro.
+
+                <div class="empty-state-icon">
+                    F
+                </div>
+
+                <strong>
+                    Nenhum lançamento
+                </strong>
+
+                <p>
+                    Receitas e despesas aparecerão aqui.
+                </p>
+
             </div>
         `;
 
@@ -2003,57 +2781,140 @@ function renderFinancialTransactions() {
     }
 
     container.innerHTML =
-        state.financialTransactions
-            .map((transaction) => {
-                const isIncome =
-                    transaction.transaction_type ===
-                    "income";
+        state
+            .financialTransactions
+            .map(
+                (transaction) => {
+                    const isIncome =
+                        transaction
+                            .transaction_type ===
+                        "income";
 
-                return `
-                    <div class="finance-card">
-                        <div class="finance-card-header">
-                            <div>
-                                <div class="finance-description">
-                                    ${escapeHtml(
-                                        transaction.description
-                                    )}
+                    return `
+                        <div class="finance-card">
+
+                            <div class="finance-card-header">
+
+                                <div>
+
+                                    <div class="finance-description">
+                                        ${escapeHtml(
+                                            transaction.description
+                                        )}
+                                    </div>
+
+                                    <div class="finance-meta">
+                                        ${formatDate(
+                                            transaction.transaction_date
+                                        )}
+
+                                        ${
+                                            transaction.category
+                                                ? ` • ${escapeHtml(
+                                                      transaction.category
+                                                  )}`
+                                                : ""
+                                        }
+                                    </div>
+
                                 </div>
 
-                                <div class="finance-meta">
-                                    ${formatDate(
-                                        transaction.transaction_date
-                                    )}
+                                <div class="finance-amount ${
+                                    isIncome
+                                        ? "income"
+                                        : "expense"
+                                }">
 
                                     ${
-                                        transaction.category
-                                            ? ` • ${escapeHtml(
-                                                  transaction.category
-                                              )}`
-                                            : ""
+                                        isIncome
+                                            ? "+"
+                                            : "-"
                                     }
+
+                                    ${formatCurrency(
+                                        transaction.amount
+                                    )}
+
                                 </div>
+
                             </div>
 
-                            <div class="finance-amount ${
-                                isIncome
-                                    ? "income"
-                                    : "expense"
-                            }">
-                                ${
-                                    isIncome
-                                        ? "+"
-                                        : "-"
-                                }
-
-                                ${formatCurrency(
-                                    transaction.amount
-                                )}
-                            </div>
                         </div>
-                    </div>
-                `;
-            })
+                    `;
+                }
+            )
             .join("");
+}
+
+function updateFinanceMetrics() {
+    const today =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    const todayTransactions =
+        state.financialTransactions.filter(
+            (transaction) =>
+                String(
+                    transaction.transaction_date
+                ).slice(0, 10) ===
+                today
+        );
+
+    const income =
+        todayTransactions
+            .filter(
+                (item) =>
+                    item.transaction_type ===
+                    "income"
+            )
+            .reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.amount || 0
+                    ),
+                0
+            );
+
+    const expenses =
+        todayTransactions
+            .filter(
+                (item) =>
+                    item.transaction_type ===
+                    "expense"
+            )
+            .reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.amount || 0
+                    ),
+                0
+            );
+
+    const balance =
+        income - expenses;
+
+    if ($("financeIncome")) {
+        $("financeIncome").textContent =
+            formatCurrency(income);
+    }
+
+    if ($("financeExpenses")) {
+        $("financeExpenses").textContent =
+            formatCurrency(expenses);
+    }
+
+    if ($("financeBalance")) {
+        $("financeBalance").textContent =
+            formatCurrency(balance);
+    }
+
+    if ($("metricExpenses")) {
+        $("metricExpenses").textContent =
+            formatCurrency(expenses);
+    }
 }
 
 /* =========================================================
@@ -2066,120 +2927,146 @@ async function loadDashboard() {
     }
 
     try {
-        const [
-            productsResult,
-            salesResult,
-            financeResult
-        ] = await Promise.all([
-            supabaseClient
-                .from("products")
-                .select("id", {
-                    count: "exact",
-                    head: true
-                })
-                .eq("user_id", state.user.id)
-                .eq("is_active", true),
+        const {
+            data: sales
+        } = await supabaseClient
+            .from("sales")
+            .select(
+                "total,sale_date,status"
+            )
+            .eq(
+                "user_id",
+                state.user.id
+            )
+            .eq(
+                "status",
+                "completed"
+            );
 
-            supabaseClient
-                .from("sales")
-                .select("total")
-                .eq("user_id", state.user.id)
-                .eq("status", "completed"),
-
-            supabaseClient
-                .from("financial_transactions")
-                .select(
-                    "transaction_type, amount"
+        const {
+            data: transactions
+        } =
+            await supabaseClient
+                .from(
+                    "financial_transactions"
                 )
-                .eq("user_id", state.user.id)
-        ]);
+                .select(
+                    "transaction_type,amount,transaction_date"
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
 
-        const productCount =
-            productsResult.count || 0;
+        const {
+            count: productCount
+        } =
+            await supabaseClient
+                .from("products")
+                .select(
+                    "id",
+                    {
+                        count:
+                            "exact",
+                        head: true
+                    }
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .eq(
+                    "is_active",
+                    true
+                );
 
-        const sales =
-            salesResult.data || [];
+        const allSales =
+            sales || [];
 
-        const transactions =
-            financeResult.data || [];
+        const allTransactions =
+            transactions || [];
 
-        const totalSales = sales.reduce(
-            (sum, sale) =>
-                sum + Number(sale.total || 0),
-            0
-        );
+        const today =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
 
-        const income = transactions
-            .filter(
-                (item) =>
-                    item.transaction_type ===
-                    "income"
-            )
-            .reduce(
-                (sum, item) =>
-                    sum + Number(item.amount || 0),
+        const todaySales =
+            allSales.filter(
+                (sale) =>
+                    String(
+                        sale.sale_date
+                    ).slice(0, 10) ===
+                    today
+            );
+
+        const todayTransactions =
+            allTransactions.filter(
+                (transaction) =>
+                    String(
+                        transaction.transaction_date
+                    ).slice(0, 10) ===
+                    today
+            );
+
+        const salesTotal =
+            todaySales.reduce(
+                (sum, sale) =>
+                    sum +
+                    Number(
+                        sale.total || 0
+                    ),
                 0
             );
 
-        const expenses = transactions
-            .filter(
-                (item) =>
-                    item.transaction_type ===
-                    "expense"
-            )
-            .reduce(
-                (sum, item) =>
-                    sum + Number(item.amount || 0),
-                0
-            );
+        const expenses =
+            todayTransactions
+                .filter(
+                    (item) =>
+                        item.transaction_type ===
+                        "expense"
+                )
+                .reduce(
+                    (sum, item) =>
+                        sum +
+                        Number(
+                            item.amount || 0
+                        ),
+                    0
+                );
 
-        setDashboardValue(
-            [
-                "dashboardProducts",
-                "totalProducts"
-            ],
-            productCount
-        );
+        if ($("metricSales")) {
+            $("metricSales").textContent =
+                formatCurrency(
+                    salesTotal
+                );
+        }
 
-        setDashboardValue(
-            [
-                "dashboardSales",
-                "totalSales"
-            ],
-            formatCurrency(totalSales)
-        );
+        if ($("metricOrders")) {
+            $("metricOrders").textContent =
+                todaySales.length;
+        }
 
-        setDashboardValue(
-            [
-                "dashboardIncome",
-                "totalIncome"
-            ],
-            formatCurrency(income)
-        );
+        if ($("metricExpenses")) {
+            $("metricExpenses").textContent =
+                formatCurrency(
+                    expenses
+                );
+        }
 
-        setDashboardValue(
-            [
-                "dashboardExpenses",
-                "totalExpenses"
-            ],
-            formatCurrency(expenses)
-        );
+        if ($("totalProducts")) {
+            $("totalProducts").textContent =
+                productCount || 0;
+        }
+
+        updateSalesMetrics();
+        updateFinanceMetrics();
     } catch (error) {
         console.error(
-            "Erro ao carregar dashboard:",
+            "Erro no dashboard:",
             error
         );
     }
-}
-
-function setDashboardValue(ids, value) {
-    ids.forEach((id) => {
-        const element = $(id);
-
-        if (element) {
-            element.textContent = value;
-        }
-    });
 }
 
 /* =========================================================
@@ -2187,6 +3074,9 @@ function setDashboardValue(ids, value) {
    ========================================================= */
 
 function setupEvents() {
+
+    /* LOGIN */
+
     $("loginForm")?.addEventListener(
         "submit",
         handleLogin
@@ -2197,78 +3087,154 @@ function setupEvents() {
         handleLogout
     );
 
-    $("newCategoryButton")?.addEventListener(
-        "click",
-        () => openModal("categoryModal")
-    );
 
-    $("newColorButton")?.addEventListener(
-        "click",
-        () => openModal("colorModal")
-    );
-
-    $("newSizeButton")?.addEventListener(
-        "click",
-        () => openModal("sizeModal")
-    );
-
-    $("newProductButton")?.addEventListener(
-        "click",
-        () => openModal("productModal")
-    );
-
-    $("newSaleButton")?.addEventListener(
-        "click",
-        () => openModal("saleModal")
-    );
-
-    $("newTransactionButton")?.addEventListener(
-        "click",
-        () => openModal("transactionModal")
-    );
-
-    $("categoryForm")?.addEventListener(
-        "submit",
-        handleCategorySubmit
-    );
-
-    $("colorForm")?.addEventListener(
-        "submit",
-        handleColorSubmit
-    );
-
-    $("sizeForm")?.addEventListener(
-        "submit",
-        handleSizeSubmit
-    );
-
-    $("productForm")?.addEventListener(
-        "submit",
-        handleProductSubmit
-    );
-
-    $("saleForm")?.addEventListener(
-        "submit",
-        handleSaleSubmit
-    );
-
-    $("transactionForm")?.addEventListener(
-        "submit",
-        handleTransactionSubmit
-    );
-
-    $("colorHex")?.addEventListener(
-        "input",
-        updateColorPreview
-    );
-
-    $("colorHexText")?.addEventListener(
-        "input",
-        updateColorFromText
-    );
+    /* NAVEGAÇÃO */
 
     setupNavigation();
+
+
+    /* MODAIS */
+
     setupModalCloseButtons();
+
+
+    /* CATEGORIAS */
+
+    $("newCategoryButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "categoryModal"
+                )
+        );
+
+    $("categoryForm")
+        ?.addEventListener(
+            "submit",
+            handleCategorySubmit
+        );
+
+
+    /* CORES */
+
+    $("newColorButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "colorModal"
+                )
+        );
+
+    $("colorForm")
+        ?.addEventListener(
+            "submit",
+            handleColorSubmit
+        );
+
+    $("colorHex")
+        ?.addEventListener(
+            "input",
+            updateColorPreview
+        );
+
+    $("colorHexText")
+        ?.addEventListener(
+            "input",
+            updateColorFromText
+        );
+
+
+    /* TAMANHOS */
+
+    $("newSizeButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "sizeModal"
+                )
+        );
+
+    $("sizeForm")
+        ?.addEventListener(
+            "submit",
+            handleSizeSubmit
+        );
+
+
+    /* PRODUTOS */
+
+    $("newProductButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "productModal"
+                )
+        );
+
+    $("productForm")
+        ?.addEventListener(
+            "submit",
+            handleProductSubmit
+        );
+
+
+    /* VENDAS */
+
+    $("newSaleButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "saleModal"
+                )
+        );
+
+    $("saleForm")
+        ?.addEventListener(
+            "submit",
+            handleSaleSubmit
+        );
+
+    $("saleDiscount")
+        ?.addEventListener(
+            "input",
+            updateSaleTotal
+        );
+
+
+    /* FINANCEIRO */
+
+    $("newTransactionButton")
+        ?.addEventListener(
+            "click",
+            () =>
+                openModal(
+                    "transactionModal"
+                )
+        );
+
+    $("transactionForm")
+        ?.addEventListener(
+            "submit",
+            handleTransactionSubmit
+        );
+
+
+    /* ADICIONAR ITEM DE VENDA */
+
+    $("addSaleItemButton")
+        ?.addEventListener(
+            "click",
+            () => {
+                alert(
+                    "O cadastro de variações de produtos será implementado na próxima etapa."
+                );
+            }
+        );
 }
 
 /* =========================================================
@@ -2276,7 +3242,20 @@ function setupEvents() {
    ========================================================= */
 
 async function initializeApp() {
-    console.log("Inicializando MabijuFit...");
+    console.log(
+        "Inicializando MabijuFit..."
+    );
+
+    if ($("userName")) {
+        const fullName =
+            state.user?.user_metadata
+                ?.full_name ||
+            state.user?.email ||
+            "MabijuFit";
+
+        $("userName").textContent =
+            fullName;
+    }
 
     await Promise.all([
         loadCategories(),
@@ -2289,9 +3268,11 @@ async function initializeApp() {
         loadDashboard()
     ]);
 
-    showSection("dashboardSection");
+    showSection("home");
 
-    console.log("MabijuFit inicializado.");
+    console.log(
+        "MabijuFit inicializado."
+    );
 }
 
 /* =========================================================
@@ -2308,11 +3289,19 @@ document.addEventListener(
 
 supabaseClient.auth.onAuthStateChange(
     async (event, session) => {
-        if (event === "SIGNED_OUT") {
+
+        if (
+            event === "SIGNED_OUT"
+        ) {
             state.user = null;
 
-            hideElement("appScreen");
-            showElement("loginScreen");
+            hideElement(
+                "appScreen"
+            );
+
+            showElement(
+                "loginScreen"
+            );
 
             return;
         }
@@ -2321,10 +3310,16 @@ supabaseClient.auth.onAuthStateChange(
             event === "SIGNED_IN" &&
             session?.user
         ) {
-            state.user = session.user;
+            state.user =
+                session.user;
 
-            hideElement("loginScreen");
-            showElement("appScreen");
+            hideElement(
+                "loginScreen"
+            );
+
+            showElement(
+                "appScreen"
+            );
 
             await initializeApp();
         }
