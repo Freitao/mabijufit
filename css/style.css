@@ -1127,23 +1127,57 @@ textarea::placeholder {
    ========================================================= */
 
 .category-card {
-    padding: 15px;
+    min-height: 78px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 14px 15px;
 }
 
-.category-card-title {
+.category-card-info {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.category-card-info strong {
     color: var(--black);
 
     font-size: 15px;
     font-weight: 800;
+
+    line-height: 1.25;
 }
 
-.category-card-description {
-    margin-top: 4px;
-
+.category-card-info span {
     color: var(--gray-500);
 
     font-size: 12px;
-    line-height: 1.4;
+
+    line-height: 1.35;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.category-card-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    flex-shrink: 0;
 }
 
 
@@ -1153,6 +1187,14 @@ textarea::placeholder {
 
 .product-card {
     overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 15px;
 }
 
 .product-card-image {
@@ -1166,39 +1208,60 @@ textarea::placeholder {
 }
 
 .product-card-info {
-    padding: 15px;
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
 }
 
-.product-card-title {
+.product-card-info strong {
     color: var(--black);
 
     font-size: 15px;
     font-weight: 800;
+
+    line-height: 1.25;
 }
 
-.product-card-sku {
-    margin-top: 3px;
-
+.product-card-info span {
     color: var(--gray-500);
 
     font-size: 11px;
 }
 
-.product-card-price {
-    margin-top: 8px;
-
+.product-card-info small {
     color: var(--pink-600);
 
-    font-size: 18px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.product-card-price {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 3px;
+}
+
+.product-card-price strong {
+    color: var(--pink-600);
+
+    font-size: 15px;
     font-weight: 850;
 }
 
-.product-card-stock {
-    margin-top: 6px;
+.product-card-price small {
+    color: var(--gray-500);
 
-    color: var(--gray-700);
-
-    font-size: 12px;
+    font-size: 10px;
 }
 
 
@@ -1226,6 +1289,105 @@ textarea::placeholder {
 
     font-size: 11px;
     font-weight: 700;
+}
+
+
+/* =========================================================
+   BOTÕES DE EDITAR / EXCLUIR
+   ========================================================= */
+
+.category-card-actions button,
+.color-card-actions button,
+.size-card-actions button {
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+    min-height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border:
+        1px solid var(--gray-200);
+
+    border-radius: 12px;
+
+    background: var(--gray-100);
+
+    color: var(--gray-700);
+
+    font-size: 0;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.category-card-actions button::before,
+.color-card-actions button::before,
+.size-card-actions button::before {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.category-card-actions button[data-edit-category]::before,
+.color-card-actions button[data-edit-color]::before,
+.size-card-actions button[data-edit-size]::before {
+    content: "✎";
+}
+
+.category-card-actions button[data-delete-category]::before,
+.color-card-actions button[data-delete-color]::before,
+.size-card-actions button[data-delete-size]::before {
+    content: "×";
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.category-card-actions button:hover,
+.color-card-actions button:hover,
+.size-card-actions button:hover {
+    background: var(--pink-100);
+
+    border-color: var(--pink-200);
+
+    color: var(--pink-600);
+}
+
+.category-card-actions button:active,
+.color-card-actions button:active,
+.size-card-actions button:active {
+    transform: scale(0.93);
+}
+
+.category-card-actions button.danger,
+.color-card-actions button.danger,
+.size-card-actions button.danger {
+    background: #fff4f5;
+
+    border-color: #f4d9df;
+
+    color: var(--red);
+}
+
+.category-card-actions button.danger:hover,
+.color-card-actions button.danger:hover,
+.size-card-actions button.danger:hover {
+    background: #fbe7eb;
+
+    border-color: #efc2cc;
+
+    color: #b84e5d;
 }
 
 
@@ -1403,104 +1565,77 @@ textarea::placeholder {
 }
 
 .variation-options {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(92px, 1fr)
+        );
 
     gap: 8px;
 }
 
 
-/*
-   Estrutura esperada:
-   .variation-option
-      input
-      label
-*/
-
-.variation-option {
-    position: relative;
-}
-
-.variation-option input {
-    position: absolute;
-
-    width: 1px;
-    height: 1px;
-
-    opacity: 0;
-
-    pointer-events: none;
-}
-
-.variation-option label {
-    min-width: 44px;
-    min-height: 38px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0 12px;
-
-    border:
-        1px solid var(--pink-200);
-
-    border-radius: 11px;
-
-    background: var(--white);
-    color: var(--gray-700);
-
-    font-size: 13px;
-    font-weight: 750;
-
-    cursor: pointer;
-}
-
-.variation-option input:checked + label {
-    background: var(--pink-500);
-    border-color: var(--pink-500);
-
-    color: var(--white);
-}
-
-
-/*
-   Compatibilidade com estrutura gerada
-   diretamente pelo JavaScript.
-*/
+/* =========================================================
+   SELETORES DE COR E TAMANHO
+   ========================================================= */
 
 #productColors,
 #productSizes {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(88px, 1fr)
+        );
 
     gap: 8px;
 }
 
 #productColors label,
 #productSizes label {
-    min-width: 44px;
-    min-height: 38px;
+    position: relative;
 
-    display: inline-flex;
+    min-width: 0;
+    min-height: 46px;
+
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    padding: 0 12px;
+    gap: 7px;
+
+    padding: 8px 10px;
 
     border:
-        1px solid var(--pink-200);
+        1.5px solid var(--gray-200);
 
-    border-radius: 11px;
+    border-radius: 13px;
 
     background: var(--white);
-
     color: var(--gray-700);
 
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 750;
 
     cursor: pointer;
+
+    transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease,
+        box-shadow 0.16s ease;
+
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#productColors label:active,
+#productSizes label:active {
+    transform: scale(0.97);
 }
 
 #productColors input[type="checkbox"],
@@ -1513,6 +1648,131 @@ textarea::placeholder {
     opacity: 0;
 
     pointer-events: none;
+}
+
+
+/* Estado selecionado */
+
+#productColors label:has(input:checked),
+#productSizes label:has(input:checked) {
+    border-color: var(--pink-500);
+
+    background: var(--pink-100);
+
+    color: var(--pink-600);
+
+    box-shadow:
+        0 0 0 2px
+        rgba(230, 160, 184, 0.12);
+}
+
+
+/* Indicador visual */
+
+#productColors label::after,
+#productSizes label::after {
+    content: "✓";
+
+    position: absolute;
+
+    top: -6px;
+    right: -6px;
+
+    width: 20px;
+    height: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--pink-500);
+    color: var(--white);
+
+    font-size: 11px;
+    font-weight: 900;
+
+    opacity: 0;
+
+    transform: scale(0.5);
+
+    transition:
+        opacity 0.16s ease,
+        transform 0.16s ease;
+}
+
+#productColors label:has(input:checked)::after,
+#productSizes label:has(input:checked)::after {
+    opacity: 1;
+
+    transform: scale(1);
+}
+
+
+/* Bolinha da cor */
+
+.variation-color-dot {
+    width: 18px;
+    height: 18px;
+
+    min-width: 18px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    border:
+        1px solid rgba(0, 0, 0, 0.10);
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(255, 255, 255, 0.45),
+        0 1px 3px
+        rgba(0, 0, 0, 0.08);
+}
+
+
+/* Branco */
+
+.variation-color-dot[style*="#FFFFFF"],
+.variation-color-dot[style*="#ffffff"] {
+    border-color:
+        rgba(0, 0, 0, 0.16);
+}
+
+
+/* Tamanho */
+
+#productSizes label {
+    min-height: 48px;
+}
+
+#productSizes .size-badge {
+    width: auto;
+    height: auto;
+
+    min-width: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: transparent;
+    color: inherit;
+
+    font-size: 13px;
+    font-weight: 850;
+}
+
+
+/* Texto auxiliar */
+
+.variation-heading p {
+    margin-top: 3px;
 }
 
 
@@ -1980,6 +2240,16 @@ textarea::placeholder {
 
         min-width: 40px;
     }
+
+    .category-card-actions button,
+    .color-card-actions button,
+    .size-card-actions button {
+        width: 38px;
+        height: 38px;
+
+        min-width: 38px;
+        min-height: 38px;
+    }
 }
 
 
@@ -2036,6 +2306,24 @@ textarea::placeholder {
 
     .quick-action > strong {
         font-size: 13px;
+    }
+
+    .category-card {
+        padding: 12px;
+    }
+
+    .category-card-actions {
+        gap: 5px;
+    }
+
+    .category-card-actions button,
+    .color-card-actions button,
+    .size-card-actions button {
+        width: 36px;
+        height: 36px;
+
+        min-width: 36px;
+        min-height: 36px;
     }
 }
 
@@ -2203,398 +2491,4 @@ textarea:disabled {
 
 .w-full {
     width: 100% !important;
-}
-/* =========================================================
-   MABIJUFIT — AJUSTE DOS CARDS
-   ========================================================= */
-
-
-/* =========================================================
-   CATEGORIAS
-   ========================================================= */
-
-.category-card {
-    min-height: 72px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-
-    padding: 13px 14px;
-}
-
-.category-card-info {
-    min-width: 0;
-
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-}
-
-.category-card-info strong {
-    color: var(--black);
-
-    font-size: 15px;
-    font-weight: 800;
-
-    line-height: 1.2;
-}
-
-.category-card-info span {
-    color: var(--gray-500);
-
-    font-size: 12px;
-
-    line-height: 1.35;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-}
-
-.category-card-actions {
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    flex-shrink: 0;
-}
-
-
-/* =========================================================
-   PRODUTOS
-   ========================================================= */
-
-.product-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 14px;
-
-    padding: 15px;
-}
-
-.product-card-info {
-    min-width: 0;
-
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-}
-
-.product-card-info strong {
-    color: var(--black);
-
-    font-size: 15px;
-    font-weight: 800;
-
-    line-height: 1.25;
-}
-
-.product-card-info span {
-    color: var(--gray-500);
-
-    font-size: 11px;
-}
-
-.product-card-info small {
-    color: var(--pink-600);
-
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.product-card-price {
-    flex-shrink: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    align-items: flex-end;
-
-    gap: 3px;
-}
-
-.product-card-price strong {
-    color: var(--pink-600);
-
-    font-size: 15px;
-    font-weight: 850;
-}
-
-.product-card-price small {
-    color: var(--gray-500);
-
-    font-size: 10px;
-}
-
-
-/* =========================================================
-   CORES
-   ========================================================= */
-
-.color-card {
-    min-height: 68px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-
-    padding: 11px 12px;
-}
-
-.color-card-info {
-    min-width: 0;
-
-    flex: 1;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-}
-
-.color-card-swatch {
-    width: 42px;
-    height: 42px;
-
-    min-width: 42px;
-
-    display: block;
-
-    border-radius: 50%;
-
-    border: 1px solid rgba(0, 0, 0, 0.08);
-
-    box-shadow:
-        inset 0 0 0 2px
-        rgba(255, 255, 255, 0.45),
-        0 2px 6px
-        rgba(0, 0, 0, 0.07);
-}
-
-.color-card-text {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-}
-
-.color-card-name {
-    color: var(--black);
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.color-card-code {
-    color: var(--gray-500);
-
-    font-size: 10px;
-
-    font-family:
-        ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Monaco,
-        Consolas,
-        monospace;
-}
-
-.color-card-actions {
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    flex-shrink: 0;
-}
-
-
-/* =========================================================
-   TAMANHOS
-   ========================================================= */
-
-.size-card {
-    min-height: 68px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-
-    padding: 11px 12px;
-}
-
-.size-card-info {
-    min-width: 0;
-
-    flex: 1;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-}
-
-.size-card-info > div {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-}
-
-.size-badge {
-    width: 42px;
-    height: 42px;
-
-    min-width: 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: var(--pink-100);
-    color: var(--pink-600);
-
-    font-size: 13px;
-    font-weight: 850;
-}
-
-.size-card-name {
-    color: var(--black);
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.size-card-order {
-    color: var(--gray-500);
-
-    font-size: 10px;
-}
-
-.size-card-actions {
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    flex-shrink: 0;
-}
-
-
-/* =========================================================
-   BOTÕES DOS CARDS
-   ========================================================= */
-
-.category-card-actions button,
-.color-card-actions button,
-.size-card-actions button {
-    width: 36px;
-    height: 36px;
-
-    min-width: 36px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border: 0;
-
-    border-radius: 10px;
-
-    background: var(--gray-100);
-
-    color: var(--gray-700);
-
-    font-size: 14px;
-
-    cursor: pointer;
-}
-
-.category-card-actions button:hover,
-.color-card-actions button:hover,
-.size-card-actions button:hover {
-    background: var(--pink-100);
-
-    color: var(--pink-600);
-}
-
-.category-card-actions .danger:hover,
-.color-card-actions .danger:hover,
-.size-card-actions .danger:hover {
-    background: #fde8ed;
-
-    color: #c44563;
-}
-
-
-/* =========================================================
-   CELULAR
-   ========================================================= */
-
-@media (max-width: 420px) {
-
-    .category-card,
-    .product-card,
-    .color-card,
-    .size-card {
-        border-radius: 16px;
-    }
-
-    .category-card {
-        padding: 12px;
-    }
-
-    .category-card-info strong,
-    .product-card-info strong {
-        font-size: 14px;
-    }
-
-    .product-card {
-        padding: 13px;
-    }
-
-    .product-card-price strong {
-        font-size: 14px;
-    }
-
-    .color-card,
-    .size-card {
-        padding: 10px 11px;
-    }
-
-    .category-card-actions button,
-    .color-card-actions button,
-    .size-card-actions button {
-        width: 34px;
-        height: 34px;
-
-        min-width: 34px;
-    }
 }
