@@ -106,14 +106,10 @@ async function handleLogin(event) {
 
 
         showLoginMessage(
-            "Login realizado com sucesso."
-        );
+    "Login realizado com sucesso."
+);
 
-
-        /*
-         * O dashboard será criado na próxima etapa.
-         * Por enquanto apenas confirmamos a autenticação.
-         */
+showAppScreen(data.user);
 
     } catch (error) {
 
@@ -214,7 +210,80 @@ function getLoginErrorMessage(error) {
 
     return "Não foi possível realizar o login.";
 }
+// =========================================================
+// NAVEGAÇÃO ENTRE LOGIN E APLICAÇÃO
+// =========================================================
 
+function showAppScreen(user) {
+
+    const loginScreen =
+        document.getElementById("loginScreen");
+
+    const appScreen =
+        document.getElementById("appScreen");
+
+    const userName =
+        document.getElementById("userName");
+
+
+    if (loginScreen) {
+        loginScreen.hidden = true;
+    }
+
+
+    if (appScreen) {
+        appScreen.hidden = false;
+    }
+
+
+    if (userName) {
+
+        const name =
+            user?.user_metadata?.full_name;
+
+        userName.textContent =
+            name || "MabijuFit";
+    }
+}
+
+
+// =========================================================
+// LOGOUT
+// =========================================================
+
+function setupLogout() {
+
+    const button =
+        document.getElementById("logoutButton");
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            const { error } =
+                await supabaseClient.auth.signOut();
+
+
+            if (error) {
+
+                console.error(
+                    "Erro ao sair:",
+                    error
+                );
+
+                return;
+            }
+
+
+            window.location.reload();
+        }
+    );
+}
 
 // =========================================================
 // SERVICE WORKER
