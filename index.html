@@ -43,7 +43,9 @@
     <title>MabijuFit</title>
 
 
-    <!-- PWA -->
+    <!-- =====================================================
+         PWA
+         ===================================================== -->
 
     <link
         rel="manifest"
@@ -62,7 +64,9 @@
     >
 
 
-    <!-- CSS -->
+    <!-- =====================================================
+         CSS
+         ===================================================== -->
 
     <link
         rel="stylesheet"
@@ -232,7 +236,7 @@
 
 
         <!-- =================================================
-             INÍCIO / DASHBOARD
+             INÍCIO
              ================================================= -->
 
         <section
@@ -254,7 +258,6 @@
                     </h2>
 
                 </div>
-
 
 
                 <!-- MÉTRICAS -->
@@ -282,7 +285,6 @@
                     </article>
 
 
-
                     <article class="metric-card">
 
                         <span class="metric-label">
@@ -303,7 +305,6 @@
                     </article>
 
 
-
                     <article class="metric-card">
 
                         <span class="metric-label">
@@ -322,7 +323,6 @@
                         </small>
 
                     </article>
-
 
 
                     <article class="metric-card">
@@ -381,7 +381,6 @@
                         </button>
 
 
-
                         <button
                             type="button"
                             class="quick-action"
@@ -399,7 +398,6 @@
                         </button>
 
 
-
                         <button
                             type="button"
                             class="quick-action"
@@ -415,7 +413,6 @@
                             </span>
 
                         </button>
-
 
 
                         <button
@@ -492,7 +489,6 @@
             hidden
         >
 
-
             <header class="module-header">
 
                 <div>
@@ -517,7 +513,6 @@
                 </button>
 
             </header>
-
 
 
             <div class="module-content">
@@ -625,6 +620,126 @@
                 </section>
 
 
+
+                <!-- =================================================
+                     CORES
+                     ================================================= -->
+
+                <section class="categories-section">
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h2>
+                                Cores
+                            </h2>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            id="newColorButton"
+                            class="module-add-button secondary-add-button"
+                        >
+                            + Cor
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="colorsList"
+                        class="categories-list"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                C
+                            </div>
+
+                            <strong>
+                                Nenhuma cor cadastrada
+                            </strong>
+
+                            <p>
+                                Cadastre as cores utilizadas
+                                nos produtos.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================================
+                     TAMANHOS
+                     ================================================= -->
+
+                <section class="categories-section">
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="module-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h2>
+                                Tamanhos
+                            </h2>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            id="newSizeButton"
+                            class="module-add-button secondary-add-button"
+                        >
+                            + Tamanho
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="sizesList"
+                        class="categories-list"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                T
+                            </div>
+
+                            <strong>
+                                Nenhum tamanho cadastrado
+                            </strong>
+
+                            <p>
+                                Cadastre os tamanhos
+                                utilizados nos produtos.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
             </div>
 
         </section>
@@ -660,8 +775,6 @@
 
             <div class="module-content">
 
-
-                <!-- RESUMO DO ESTOQUE -->
 
                 <div class="metrics-grid">
 
@@ -729,9 +842,6 @@
                 </div>
 
 
-
-                <!-- BUSCA ESTOQUE -->
-
                 <div class="search-box">
 
                     <input
@@ -743,9 +853,6 @@
 
                 </div>
 
-
-
-                <!-- LISTA -->
 
                 <div
                     id="stockList"
@@ -816,10 +923,7 @@
             <div class="module-content">
 
 
-                <!-- RESUMO -->
-
                 <div class="metrics-grid">
-
 
                     <article class="metric-card">
 
@@ -863,9 +967,6 @@
                 </div>
 
 
-
-                <!-- BUSCA -->
-
                 <div class="search-box">
 
                     <input
@@ -877,9 +978,6 @@
 
                 </div>
 
-
-
-                <!-- LISTA -->
 
                 <div
                     id="salesList"
@@ -950,8 +1048,6 @@
             <div class="module-content">
 
 
-                <!-- RESUMO -->
-
                 <div class="metrics-grid">
 
 
@@ -1014,11 +1110,9 @@
 
                     </article>
 
+
                 </div>
 
-
-
-                <!-- BUSCA -->
 
                 <div class="search-box">
 
@@ -1031,9 +1125,6 @@
 
                 </div>
 
-
-
-                <!-- LISTA -->
 
                 <div
                     id="financeList"
@@ -1107,14 +1198,11 @@
                 </header>
 
 
-
                 <form
                     id="productForm"
                     class="modal-form"
                 >
 
-
-                    <!-- INFORMAÇÕES -->
 
                     <div class="form-section">
 
@@ -1199,8 +1287,6 @@
 
 
 
-                    <!-- PREÇOS -->
-
                     <div class="form-section">
 
                         <h3>
@@ -1273,8 +1359,6 @@
 
 
 
-                    <!-- STATUS -->
-
                     <div class="form-section">
 
                         <h3>
@@ -1298,7 +1382,6 @@
                         </label>
 
                     </div>
-
 
 
                     <div
@@ -1470,6 +1553,301 @@
 
 
         <!-- =================================================
+             MODAL — COR
+             ================================================= -->
+
+        <div
+            id="colorModal"
+            class="modal"
+            hidden
+        >
+
+            <div class="modal-overlay"></div>
+
+
+            <section class="modal-card">
+
+                <header class="modal-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            VARIAÇÕES
+                        </span>
+
+                        <h2>
+                            Nova cor
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="modal-close"
+                        data-close-modal="colorModal"
+                        aria-label="Fechar"
+                    >
+                        ×
+                    </button>
+
+                </header>
+
+
+                <form
+                    id="colorForm"
+                    class="modal-form"
+                >
+
+                    <div class="form-group">
+
+                        <label for="colorName">
+                            Nome da cor
+                        </label>
+
+                        <input
+                            type="text"
+                            id="colorName"
+                            name="name"
+                            placeholder="Ex.: Rosa"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="colorHex">
+                            Código da cor
+                        </label>
+
+                        <div class="color-input-row">
+
+                            <input
+                                type="color"
+                                id="colorHex"
+                                name="hex_code"
+                                value="#d477a2"
+                            >
+
+                            <input
+                                type="text"
+                                id="colorHexText"
+                                placeholder="#D477A2"
+                                value="#D477A2"
+                                maxlength="7"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="color-preview-wrapper">
+
+                        <span>
+                            Prévia
+                        </span>
+
+                        <div
+                            id="colorPreview"
+                            class="color-preview"
+                            style="background:#D477A2;"
+                        ></div>
+
+                    </div>
+
+
+                    <label class="checkbox-field">
+
+                        <input
+                            type="checkbox"
+                            id="colorActive"
+                            name="is_active"
+                            checked
+                        >
+
+                        <span>
+                            Cor ativa
+                        </span>
+
+                    </label>
+
+
+                    <div
+                        id="colorFormMessage"
+                        class="form-message"
+                        aria-live="polite"
+                    ></div>
+
+
+                    <div class="modal-actions">
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-close-modal="colorModal"
+                        >
+                            Cancelar
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="primary-button"
+                            id="saveColorButton"
+                        >
+                            Salvar cor
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MODAL — TAMANHO
+             ================================================= -->
+
+        <div
+            id="sizeModal"
+            class="modal"
+            hidden
+        >
+
+            <div class="modal-overlay"></div>
+
+
+            <section class="modal-card">
+
+                <header class="modal-header">
+
+                    <div>
+
+                        <span class="module-eyebrow">
+                            VARIAÇÕES
+                        </span>
+
+                        <h2>
+                            Novo tamanho
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="modal-close"
+                        data-close-modal="sizeModal"
+                        aria-label="Fechar"
+                    >
+                        ×
+                    </button>
+
+                </header>
+
+
+                <form
+                    id="sizeForm"
+                    class="modal-form"
+                >
+
+                    <div class="form-group">
+
+                        <label for="sizeName">
+                            Tamanho
+                        </label>
+
+                        <input
+                            type="text"
+                            id="sizeName"
+                            name="name"
+                            placeholder="Ex.: M"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="sizeDisplayOrder">
+                            Ordem de exibição
+                        </label>
+
+                        <input
+                            type="number"
+                            id="sizeDisplayOrder"
+                            name="display_order"
+                            min="0"
+                            step="1"
+                            inputmode="numeric"
+                            value="0"
+                        >
+
+                    </div>
+
+
+                    <label class="checkbox-field">
+
+                        <input
+                            type="checkbox"
+                            id="sizeActive"
+                            name="is_active"
+                            checked
+                        >
+
+                        <span>
+                            Tamanho ativo
+                        </span>
+
+                    </label>
+
+
+                    <div
+                        id="sizeFormMessage"
+                        class="form-message"
+                        aria-live="polite"
+                    ></div>
+
+
+                    <div class="modal-actions">
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-close-modal="sizeModal"
+                        >
+                            Cancelar
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="primary-button"
+                            id="saveSizeButton"
+                        >
+                            Salvar tamanho
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </div>
+
+
+
+        <!-- =================================================
              MODAL — VENDA
              ================================================= -->
 
@@ -1516,7 +1894,6 @@
                     class="modal-form"
                 >
 
-
                     <div class="form-section">
 
                         <h3>
@@ -1553,7 +1930,6 @@
                         </button>
 
                     </div>
-
 
 
                     <div class="form-section">
@@ -1734,7 +2110,6 @@
                     id="transactionForm"
                     class="modal-form"
                 >
-
 
                     <div class="form-group">
 
@@ -2042,13 +2417,7 @@
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
 ></script>
 
-
 <script src="js/supabase.js"></script>
-
-
-<!-- =====================================================
-     APLICAÇÃO
-     ===================================================== -->
 
 <script src="js/app.js"></script>
 
