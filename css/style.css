@@ -45,7 +45,42 @@
 
     --bottom-nav-height: 76px;
 }
+/* CORREÇÃO DO ATRIBUTO HIDDEN */
+[hidden] {
+    display: none !important;
+}
 
+/* CORREÇÃO DOS ATALHOS RÁPIDOS */
+.quick-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.quick-action > :first-child {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: var(--pink-100);
+    color: var(--pink-600);
+
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.quick-action > :last-child {
+    flex: 1;
+
+    font-size: 16px;
+    font-weight: 800;
+}
 
 /* =========================================================
    RESET
