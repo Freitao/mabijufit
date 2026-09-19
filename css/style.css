@@ -1006,3 +1006,10 @@ body {
         border-radius: 18px 18px 0 0;
     }
 }
+/* =========================================================
+   CONTROLE DE ELEMENTOS OCULTOS
+   ========================================================= */
+
+[hidden] {
+    display: none !important;
+}
