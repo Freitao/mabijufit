@@ -24,6 +24,27 @@ let financeCache = [];
 // Variações que estão sendo cadastradas no produto atual.
 let productVariationsDraft = [];
 
+// Fotos que estão sendo cadastradas no produto atual.
+let productPhotosDraft = [];
+
+// Object URLs utilizados somente para pré-visualização.
+// Devem ser revogados quando deixarem de ser necessários.
+let productPhotoPreviewUrls = [];
+
+
+// =========================================================
+// CONFIGURAÇÃO DE FOTOS
+// =========================================================
+
+const PRODUCT_IMAGE_MAX_SIZE =
+    8 * 1024 * 1024;
+
+const PRODUCT_IMAGE_MAX_DIMENSION =
+    1600;
+
+const PRODUCT_IMAGE_INITIAL_QUALITY =
+    0.82;
+
 
 // =========================================================
 // HELPERS
@@ -136,6 +157,890 @@ function getAuthErrorMessage(error) {
 
     return error?.message ||
         "Não foi possível entrar. Tente novamente.";
+}
+
+
+// =========================================================
+// FOTOS DOS PRODUTOS
+// =========================================================
+
+function revokeProductPhotoPreviewUrls() {
+
+    productPhotoPreviewUrls.forEach(url => {
+
+        try {
+            URL.revokeObjectURL(url);
+        } catch (error) {
+
+            console.error(
+                "Erro ao liberar preview da imagem:",
+                error
+            );
+        }
+
+    });
+
+    productPhotoPreviewUrls = [];
+}
+
+
+function clearProductPhotosDraft() {
+
+    revokeProductPhotoPreviewUrls();
+
+    productPhotosDraft = [];
+
+    const input =
+        $("productPhotoInput");
+
+    if (input) {
+        input.value = "";
+    }
+
+    const preview =
+        $("productPhotoPreview");
+
+    if (preview) {
+        preview.innerHTML = "";
+    }
+}
+
+
+function renderProductPhotoPreview() {
+
+    const container =
+        $("productPhotoPreview");
+
+    if (!container) {
+        return;
+    }
+
+
+    revokeProductPhotoPreviewUrls();
+
+
+    if (!productPhotosDraft.length) {
+
+        container.innerHTML = "";
+
+        return;
+    }
+
+
+    const fragment =
+        document.createDocumentFragment();
+
+
+    productPhotosDraft.forEach((file, index) => {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "product-photo-preview-item";
+
+
+        const image =
+            document.createElement("img");
+
+        image.alt =
+            `Pré-visualização da foto ${index + 1}`;
+
+        image.loading =
+            "lazy";
+
+
+        const url =
+            URL.createObjectURL(file);
+
+        productPhotoPreviewUrls.push(url);
+
+        image.src = url;
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "product-photo-preview-info";
+
+
+        const name =
+            document.createElement("span");
+
+        name.className =
+            "product-photo-preview-name";
+
+        name.textContent =
+            file.name || `Foto ${index + 1}`;
+
+
+        const order =
+            document.createElement("small");
+
+        order.textContent =
+            index === 0
+                ? "Foto principal"
+                : `Foto ${index + 1}`;
+
+
+        info.appendChild(name);
+        info.appendChild(order);
+
+
+        item.appendChild(image);
+        item.appendChild(info);
+
+
+        fragment.appendChild(item);
+
+    });
+
+
+    container.innerHTML = "";
+
+    container.appendChild(fragment);
+}
+
+
+function handleProductPhotoSelection(event) {
+
+    const files =
+        Array.from(
+            event.target.files || []
+        );
+
+
+    if (!files.length) {
+
+        clearProductPhotosDraft();
+
+        return;
+    }
+
+
+    const invalidFiles =
+        files.filter(
+            file =>
+                !file.type ||
+                !file.type.startsWith("image/")
+        );
+
+
+    const validFiles =
+        files.filter(
+            file =>
+                file.type &&
+                file.type.startsWith("image/")
+        );
+
+
+    productPhotosDraft =
+        validFiles;
+
+
+    renderProductPhotoPreview();
+
+
+    if (invalidFiles.length) {
+
+        showMessage(
+            "productFormMessage",
+            `${invalidFiles.length} arquivo(s) não são imagens válidas e foram ignorados.`
+        );
+
+        return;
+    }
+
+
+    showMessage(
+        "productFormMessage",
+        validFiles.length === 1
+            ? "1 foto selecionada."
+            : `${validFiles.length} fotos selecionadas.`,
+        "success"
+    );
+}
+
+
+async function loadImageForOptimization(file) {
+
+    /*
+     * Primeiro tenta utilizar createImageBitmap quando disponível.
+     *
+     * imageOrientation: "from-image" ajuda a respeitar a orientação
+     * registrada pelo aparelho quando o navegador oferece suporte.
+     */
+    if (
+        typeof createImageBitmap ===
+        "function"
+    ) {
+
+        try {
+
+            const bitmap =
+                await createImageBitmap(
+                    file,
+                    {
+                        imageOrientation: "from-image"
+                    }
+                );
+
+            return {
+                source: bitmap,
+                width: bitmap.width,
+                height: bitmap.height,
+                close: () => {
+
+                    try {
+                        bitmap.close();
+                    } catch (error) {
+                        // Não interromper o processamento.
+                    }
+
+                }
+            };
+
+        } catch (error) {
+
+            console.warn(
+                "createImageBitmap não conseguiu processar a imagem. Tentando Image:",
+                error
+            );
+        }
+    }
+
+
+    /*
+     * Fallback utilizando HTMLImageElement.
+     *
+     * Se o navegador não conseguir decodificar o formato,
+     * especialmente alguns HEIC/HEIF, esta etapa poderá falhar.
+     */
+    const objectUrl =
+        URL.createObjectURL(file);
+
+
+    try {
+
+        const image =
+            await new Promise(
+                (resolve, reject) => {
+
+                    const img =
+                        new Image();
+
+
+                    img.onload =
+                        () => resolve(img);
+
+
+                    img.onerror =
+                        () => reject(
+                            new Error(
+                                "O navegador não conseguiu decodificar esta imagem."
+                            )
+                        );
+
+
+                    img.src =
+                        objectUrl;
+                }
+            );
+
+
+        return {
+            source: image,
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+            close: () => {}
+        };
+
+    } finally {
+
+        URL.revokeObjectURL(objectUrl);
+    }
+}
+
+
+function canvasToBlob(canvas, quality) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            canvas.toBlob(
+                blob => {
+
+                    if (!blob) {
+
+                        reject(
+                            new Error(
+                                "Não foi possível gerar a imagem otimizada."
+                            )
+                        );
+
+                        return;
+                    }
+
+                    resolve(blob);
+
+                },
+                "image/jpeg",
+                quality
+            );
+
+        }
+    );
+}
+
+
+async function optimizeProductImage(file) {
+
+    if (!file) {
+        throw new Error("Arquivo de imagem inválido.");
+    }
+
+
+    if (
+        !file.type ||
+        !file.type.startsWith("image/")
+    ) {
+        throw new Error(
+            "O arquivo selecionado não é uma imagem válida."
+        );
+    }
+
+
+    const image =
+        await loadImageForOptimization(file);
+
+
+    try {
+
+        const originalWidth =
+            Number(image.width || 0);
+
+        const originalHeight =
+            Number(image.height || 0);
+
+
+        if (
+            !originalWidth ||
+            !originalHeight
+        ) {
+
+            throw new Error(
+                "Não foi possível identificar as dimensões da imagem."
+            );
+        }
+
+
+        /*
+         * Primeira dimensão alvo.
+         * A maior dimensão fica em aproximadamente 1600 px.
+         */
+        const initialScale =
+            Math.min(
+                1,
+                PRODUCT_IMAGE_MAX_DIMENSION /
+                Math.max(
+                    originalWidth,
+                    originalHeight
+                )
+            );
+
+
+        let dimensions = {
+            width: Math.max(
+                1,
+                Math.round(
+                    originalWidth *
+                    initialScale
+                )
+            ),
+            height: Math.max(
+                1,
+                Math.round(
+                    originalHeight *
+                    initialScale
+                )
+            )
+        };
+
+
+        /*
+         * Tentativas progressivas.
+         *
+         * Primeiro reduz somente a qualidade.
+         * Caso ainda não seja suficiente, reduz também a dimensão.
+         */
+        const qualityAttempts = [
+            PRODUCT_IMAGE_INITIAL_QUALITY,
+            0.76,
+            0.70,
+            0.64,
+            0.58,
+            0.52,
+            0.46,
+            0.40,
+            0.34,
+            0.28
+        ];
+
+
+        const dimensionAttempts = [
+            1600,
+            1400,
+            1200,
+            1000,
+            900,
+            800
+        ];
+
+
+        let lastBlob = null;
+        let lastDimensions = dimensions;
+
+
+        for (
+            let dimensionIndex = 0;
+            dimensionIndex < dimensionAttempts.length;
+            dimensionIndex++
+        ) {
+
+            const maxDimension =
+                dimensionAttempts[dimensionIndex];
+
+
+            const scale =
+                Math.min(
+                    1,
+                    maxDimension /
+                    Math.max(
+                        originalWidth,
+                        originalHeight
+                    )
+                );
+
+
+            dimensions = {
+                width: Math.max(
+                    1,
+                    Math.round(
+                        originalWidth *
+                        scale
+                    )
+                ),
+                height: Math.max(
+                    1,
+                    Math.round(
+                        originalHeight *
+                        scale
+                    )
+                )
+            };
+
+
+            const canvas =
+                document.createElement("canvas");
+
+
+            canvas.width =
+                dimensions.width;
+
+            canvas.height =
+                dimensions.height;
+
+
+            const context =
+                canvas.getContext(
+                    "2d",
+                    {
+                        alpha: false
+                    }
+                );
+
+
+            if (!context) {
+
+                throw new Error(
+                    "O navegador não conseguiu preparar o processamento da imagem."
+                );
+            }
+
+
+            /*
+             * Configurações simples para evitar artefatos desnecessários.
+             */
+            context.imageSmoothingEnabled =
+                true;
+
+            context.imageSmoothingQuality =
+                "high";
+
+
+            context.drawImage(
+                image.source,
+                0,
+                0,
+                dimensions.width,
+                dimensions.height
+            );
+
+
+            for (
+                let qualityIndex = 0;
+                qualityIndex < qualityAttempts.length;
+                qualityIndex++
+            ) {
+
+                const quality =
+                    qualityAttempts[qualityIndex];
+
+
+                const blob =
+                    await canvasToBlob(
+                        canvas,
+                        quality
+                    );
+
+
+                lastBlob =
+                    blob;
+
+                lastDimensions =
+                    dimensions;
+
+
+                if (
+                    blob.size <=
+                    PRODUCT_IMAGE_MAX_SIZE
+                ) {
+
+                    return new File(
+                        [blob],
+                        createOptimizedImageName(
+                            file.name
+                        ),
+                        {
+                            type: "image/jpeg",
+                            lastModified:
+                                Date.now()
+                        }
+                    );
+                }
+            }
+        }
+
+
+        /*
+         * Se chegou aqui, todas as tentativas razoáveis
+         * ficaram acima do limite.
+         */
+        if (
+            lastBlob &&
+            lastBlob.size <=
+            PRODUCT_IMAGE_MAX_SIZE
+        ) {
+
+            return new File(
+                [lastBlob],
+                createOptimizedImageName(
+                    file.name
+                ),
+                {
+                    type: "image/jpeg",
+                    lastModified:
+                        Date.now()
+                }
+            );
+        }
+
+
+        throw new Error(
+            "Não foi possível reduzir esta imagem para menos de 8 MB."
+        );
+
+    } finally {
+
+        if (image?.close) {
+            image.close();
+        }
+    }
+}
+
+
+function createOptimizedImageName(originalName) {
+
+    const baseName =
+        String(
+            originalName || "produto"
+        )
+        .replace(
+            /\.[^/.]+$/,
+            ""
+        )
+        .replace(
+            /[^a-zA-Z0-9_-]+/g,
+            "-"
+        )
+        .replace(
+            /^-+|-+$/g,
+            ""
+        );
+
+
+    const safeBaseName =
+        baseName ||
+        "produto";
+
+
+    return `${safeBaseName}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 10)}.jpg`;
+}
+
+
+function createProductImageStoragePath(
+    productId,
+    file,
+    index
+) {
+
+    const safeName =
+        createOptimizedImageName(
+            file?.name ||
+            `foto-${index + 1}`
+        );
+
+
+    return [
+        currentUser.id,
+        "products",
+        productId,
+        `${Date.now()}-${index}-${safeName}`
+    ].join("/");
+}
+
+
+async function uploadProductImages(
+    productId
+) {
+
+    if (
+        !currentUser ||
+        !productId
+    ) {
+        return {
+            uploaded: [],
+            failed: []
+        };
+    }
+
+
+    if (!productPhotosDraft.length) {
+
+        return {
+            uploaded: [],
+            failed: []
+        };
+    }
+
+
+    const uploaded = [];
+    const failed = [];
+
+
+    for (
+        let index = 0;
+        index < productPhotosDraft.length;
+        index++
+    ) {
+
+        const originalFile =
+            productPhotosDraft[index];
+
+
+        try {
+
+            showMessage(
+                "productFormMessage",
+                `Processando foto ${index + 1} de ${productPhotosDraft.length}...`,
+                "success"
+            );
+
+
+            const optimizedFile =
+                await optimizeProductImage(
+                    originalFile
+                );
+
+
+            if (
+                optimizedFile.size >
+                PRODUCT_IMAGE_MAX_SIZE
+            ) {
+
+                throw new Error(
+                    "A imagem otimizada ainda ultrapassou o limite de 8 MB."
+                );
+            }
+
+
+            const path =
+                createProductImageStoragePath(
+                    productId,
+                    optimizedFile,
+                    index
+                );
+
+
+            showMessage(
+                "productFormMessage",
+                `Enviando foto ${index + 1} de ${productPhotosDraft.length}...`,
+                "success"
+            );
+
+
+            const {
+                error: uploadError
+            } = await supabaseClient
+                .storage
+                .from("product-images")
+                .upload(
+                    path,
+                    optimizedFile,
+                    {
+                        upsert: false,
+                        contentType: "image/jpeg",
+                        cacheControl: "31536000"
+                    }
+                );
+
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+
+            const {
+                data: publicUrlData
+            } = supabaseClient
+                .storage
+                .from("product-images")
+                .getPublicUrl(path);
+
+
+            const publicUrl =
+                publicUrlData?.publicUrl ||
+                "";
+
+
+            if (!publicUrl) {
+
+                /*
+                 * O upload já aconteceu, portanto tenta remover
+                 * o arquivo caso a URL pública não esteja disponível.
+                 */
+                try {
+
+                    await supabaseClient
+                        .storage
+                        .from("product-images")
+                        .remove([path]);
+
+                } catch (cleanupError) {
+
+                    console.error(
+                        "Erro ao limpar arquivo após falha de URL pública:",
+                        cleanupError
+                    );
+                }
+
+
+                throw new Error(
+                    "A imagem foi enviada, mas não foi possível obter sua URL pública."
+                );
+            }
+
+
+            const {
+                error: imageInsertError
+            } = await supabaseClient
+                .from("product_images")
+                .insert({
+                    user_id: currentUser.id,
+                    product_id: productId,
+                    storage_path: path,
+                    public_url: publicUrl,
+                    is_primary: index === 0,
+                    display_order: index
+                });
+
+
+            if (imageInsertError) {
+
+                /*
+                 * O arquivo foi enviado, mas o registro no banco falhou.
+                 * Tenta remover o arquivo para evitar lixo no Storage.
+                 */
+                try {
+
+                    await supabaseClient
+                        .storage
+                        .from("product-images")
+                        .remove([path]);
+
+                } catch (cleanupError) {
+
+                    console.error(
+                        "Erro ao limpar imagem após falha no registro:",
+                        cleanupError
+                    );
+                }
+
+
+                throw imageInsertError;
+            }
+
+
+            uploaded.push({
+                path,
+                publicUrl,
+                displayOrder: index,
+                isPrimary: index === 0
+            });
+
+        } catch (error) {
+
+            console.error(
+                `Erro ao processar a foto ${index + 1}:`,
+                error
+            );
+
+
+            failed.push({
+                index,
+                fileName:
+                    originalFile?.name ||
+                    `Foto ${index + 1}`,
+                error
+            });
+
+
+            /*
+             * Não interrompe as demais imagens.
+             * Uma foto problemática não deve impedir
+             * o processamento das próximas.
+             */
+        }
+    }
+
+
+    return {
+        uploaded,
+        failed
+    };
 }
 
 
@@ -327,6 +1232,9 @@ async function handleLogout() {
 
     currentUser = null;
     appInitialized = false;
+
+
+    clearProductPhotosDraft();
 
 
     const appScreen = $("appScreen");
@@ -1903,6 +2811,13 @@ function resetProductForm() {
     }
 
 
+    /*
+     * Limpa primeiro os recursos das fotos,
+     * incluindo Object URLs.
+     */
+    clearProductPhotosDraft();
+
+
     form.reset();
 
 
@@ -2029,9 +2944,14 @@ async function saveProduct(event) {
 
 
     let createdProductId = null;
+    let productAndVariantsCreated = false;
 
 
     try {
+
+        // =============================================
+        // CRIA O PRODUTO
+        // =============================================
 
         const {
             data: product,
@@ -2063,7 +2983,8 @@ async function saveProduct(event) {
 
 
         // =============================================
-        // CRIA SOMENTE AS VARIAÇÕES ADICIONADAS PELO USUÁRIO
+        // CRIA SOMENTE AS VARIAÇÕES ADICIONADAS
+        // PELO USUÁRIO
         // =============================================
 
         if (productVariationsDraft.length) {
@@ -2101,15 +3022,83 @@ async function saveProduct(event) {
         }
 
 
+        /*
+         * Neste ponto produto + variações foram criados
+         * com sucesso.
+         *
+         * A partir daqui, falha em fotos NÃO deve remover
+         * o produto nem suas variações.
+         */
+        productAndVariantsCreated = true;
+
+
+        // =============================================
+        // FOTOS
+        // =============================================
+
+        let photoResult = {
+            uploaded: [],
+            failed: []
+        };
+
+
+        if (productPhotosDraft.length) {
+
+            photoResult =
+                await uploadProductImages(
+                    product.id
+                );
+        }
+
+
+        // =============================================
+        // FINALIZAÇÃO
+        // =============================================
+
         closeModal("productModal");
 
         productVariationsDraft = [];
+
+        clearProductPhotosDraft();
+
 
         await loadProducts();
 
         await loadStock();
 
         await loadDashboard();
+
+
+        /*
+         * Se alguma foto falhou, o produto continua salvo.
+         * Apenas informamos o usuário sobre as imagens que
+         * não conseguiram ser processadas/enviadas.
+         */
+        if (photoResult.failed.length) {
+
+            const failedNames =
+                photoResult.failed
+                    .map(item => item.fileName)
+                    .join(", ");
+
+
+            alert(
+                `Produto salvo com sucesso, mas ${photoResult.failed.length} foto(s) não puderam ser processadas ou enviadas.\n\n` +
+                `Foto(s): ${failedNames}`
+            );
+
+        } else if (photoResult.uploaded.length) {
+
+            /*
+             * Não é necessário alertar em caso de sucesso total.
+             * O produto já foi atualizado normalmente.
+             */
+
+            console.log(
+                `Produto criado com ${photoResult.uploaded.length} foto(s).`
+            );
+        }
+
 
     } catch (error) {
 
@@ -2119,9 +3108,16 @@ async function saveProduct(event) {
         );
 
 
-        // Se o produto foi criado mas as variações falharam,
-        // tenta remover o produto para evitar cadastro incompleto.
-        if (createdProductId) {
+        /*
+         * SOMENTE desfaz o produto quando o erro aconteceu
+         * antes de produto + variações estarem concluídos.
+         *
+         * Erros de fotos não entram neste rollback.
+         */
+        if (
+            createdProductId &&
+            !productAndVariantsCreated
+        ) {
 
             const {
                 error: cleanupError
@@ -3135,6 +4131,17 @@ function bindEvents() {
 
 
     // =============================================
+    // FOTOS DO PRODUTO
+    // =============================================
+
+    $("productPhotoInput")
+        ?.addEventListener(
+            "change",
+            handleProductPhotoSelection
+        );
+
+
+    // =============================================
     // COLOR PICKER
     // =============================================
 
@@ -3981,6 +4988,8 @@ document.addEventListener(
 
                     currentUser = null;
                     appInitialized = false;
+
+                    clearProductPhotosDraft();
 
 
                     if ($("appScreen")) {
