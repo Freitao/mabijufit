@@ -1,7 +1,7 @@
 /* =========================================================
    MABIJUFIT
    STYLE.CSS — VERSÃO CONSOLIDADA
-   Compatível com o APP.JS atual
+   Ajustada para o APP.JS atual
    ========================================================= */
 
 
@@ -39,16 +39,20 @@
 
     --success: #5f9f78;
     --success-light: #edf8f1;
+
     --warning: #c58b45;
     --warning-light: #fff7e9;
+
     --danger: #c45f72;
     --danger-light: #fff0f3;
+
     --info: #658ca8;
     --info-light: #eef6fb;
 
     --background: #fffafc;
     --surface: #ffffff;
     --border: #f0dce3;
+
     --text: #2d2528;
     --text-muted: #7b6d72;
 
@@ -108,6 +112,12 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+}
+
+/* Bloqueia a rolagem da página enquanto qualquer modal estiver aberto. */
+body.modal-open {
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 button,
@@ -398,7 +408,9 @@ input[type="color"] {
     min-height: 100vh;
     min-height: 100dvh;
     padding-bottom: calc(
-        var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px
+        var(--bottom-nav-height) +
+        env(safe-area-inset-bottom) +
+        16px
     );
 }
 
@@ -806,7 +818,7 @@ input[type="color"] {
 
 
 /* =========================================================
-   PRODUTOS — CATÁLOGO
+   PRODUTOS
    ========================================================= */
 
 .products-grid {
@@ -866,7 +878,6 @@ input[type="color"] {
     object-position: center;
 }
 
-.product-card-image-wrapper .product-image-placeholder,
 .product-image-placeholder {
     width: 100%;
     height: 100%;
@@ -974,7 +985,7 @@ input[type="color"] {
 
 
 /* =========================================================
-   MINIATURAS / IMAGENS
+   MINIATURAS
    ========================================================= */
 
 .product-thumbnail {
@@ -1991,42 +2002,208 @@ input[type="color"] {
 
 
 /* =========================================================
-   MODAIS
+   MODAIS — ESTRUTURA PRINCIPAL
    ========================================================= */
 
-.modal-overlay,
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
+/*
+   IMPORTANTE:
+
+   O .modal é o próprio overlay controlado pelo APP.JS.
+
+   Portanto ele NÃO pode participar do fluxo normal da página.
+   O posicionamento deve ser FIXED e ocupar a viewport inteira.
+
+   O .modal-content é apenas a caixa interna do modal.
+*/
+
+.modal {
+    position: fixed !important;
+    inset: 0 !important;
+
     z-index: 1000;
+
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+
+    margin: 0;
     padding:
         max(12px, env(safe-area-inset-top))
-        12px
-        max(12px, env(safe-area-inset-bottom));
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(43, 29, 34, 0.46);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
 
-.modal,
-.modal-content {
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-    max-height: calc(100dvh - 24px);
-    margin: auto;
-    padding: 18px;
+    background: rgba(43, 29, 34, 0.48);
+
     overflow-x: hidden;
     overflow-y: auto;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    animation: modalOverlayIn 0.18s ease-out;
+}
+
+/*
+   Não permitir que o atributo hidden seja sobrescrito
+   por display:flex do .modal.
+*/
+.modal[hidden],
+.modal.hidden {
+    display: none !important;
+}
+
+/*
+   Caixa interna.
+   Ela é quem recebe a rolagem quando o conteúdo é maior
+   que a altura disponível.
+*/
+.modal-content {
+    position: relative;
+
+    width: 100%;
+    max-width: 600px;
+
+    max-height:
+        calc(
+            100dvh
+            - env(safe-area-inset-top)
+            - env(safe-area-inset-bottom)
+            - 24px
+        );
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
+
     box-shadow: var(--shadow-lg);
+
     overscroll-behavior: contain;
 }
+
+/*
+   O corpo é a área que efetivamente rola.
+   Isso evita que um formulário grande aumente o modal
+   para fora da viewport.
+*/
+.modal-body {
+    min-width: 0;
+    min-height: 0;
+
+    flex: 1 1 auto;
+
+    padding: 18px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/*
+   Caso o conteúdo seja diretamente filho do modal-content,
+   mantém espaçamento adequado sem quebrar a estrutura.
+*/
+.modal-content > form {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   CABEÇALHO DO MODAL
+   ========================================================= */
+
+.modal-header {
+    position: relative;
+
+    flex: 0 0 auto;
+
+    min-width: 0;
+
+    padding: 15px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+    min-width: 0;
+    margin: 0;
+
+    color: var(--gray-800);
+    font-size: 18px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+.modal-close {
+    flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   AÇÕES DO MODAL
+   ========================================================= */
+
+.modal-actions,
+.modal-footer {
+    flex: 0 0 auto;
+
+    padding:
+        12px
+        18px
+        max(12px, env(safe-area-inset-bottom));
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    background: var(--white);
+    border-top: 1px solid var(--border);
+}
+
+/*
+   Quando .modal-actions estiver dentro do .modal-body,
+   ainda deve manter os botões acessíveis.
+*/
+.modal-body .modal-actions {
+    padding:
+        14px
+        0
+        max(4px, env(safe-area-inset-bottom));
+
+    margin-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   MODAIS ESPECÍFICOS
+   ========================================================= */
 
 .productModal,
 .saleModal,
@@ -2034,55 +2211,96 @@ input[type="color"] {
 .colorModal,
 .sizeModal,
 .transactionModal {
+    position: fixed !important;
+    inset: 0 !important;
     z-index: 1000;
 }
 
-.modal-header {
-    position: sticky;
-    top: -18px;
-    z-index: 2;
-    margin: -18px -18px 16px;
-    padding: 15px 18px;
+/*
+   Alguns modais podem receber conteúdo grande.
+   O mesmo comportamento é mantido em todos eles.
+*/
+.productModal .modal-content,
+.saleModal .modal-content,
+.categoryModal .modal-content,
+.colorModal .modal-content,
+.sizeModal .modal-content,
+.transactionModal .modal-content {
+    max-height:
+        calc(
+            100dvh
+            - env(safe-area-inset-top)
+            - env(safe-area-inset-bottom)
+            - 24px
+        );
+}
+
+
+/* =========================================================
+   ANIMAÇÃO DOS MODAIS
+   ========================================================= */
+
+@keyframes modalOverlayIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalContentIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content {
+    animation: modalContentIn 0.18s ease-out;
+}
+
+
+/* =========================================================
+   COMPATIBILIDADE COM ESTRUTURAS ANTIGAS DE OVERLAY
+   ========================================================= */
+
+.modal-overlay,
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    justify-content: center;
+
+    background: rgba(43, 29, 34, 0.46);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
-.modal-title {
-    min-width: 0;
-    margin: 0;
-    color: var(--gray-800);
-    font-size: 18px;
-    font-weight: 750;
-}
-
-.modal-close {
-    flex: 0 0 auto;
-}
-
-.modal-body {
-    min-width: 0;
-}
-
-.modal-footer {
-    position: sticky;
-    bottom: -18px;
-    z-index: 2;
-    margin: 18px -18px -18px;
-    padding: 12px 18px;
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.96);
-    border-top: 1px solid var(--border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+.modal-overlay[hidden],
+.modal-overlay.hidden,
+.modal-backdrop[hidden],
+.modal-backdrop.hidden {
+    display: none !important;
 }
 
 
@@ -2176,40 +2394,52 @@ input[type="color"] {
     left: 0;
     right: 0;
     bottom: 0;
+
     z-index: 90;
+
     width: 100%;
     height: var(--bottom-nav-height);
+
     padding:
         6px
         6px
         max(6px, env(safe-area-inset-bottom));
+
     display: flex;
     align-items: stretch;
     justify-content: center;
     gap: 3px;
+
     background: rgba(255, 255, 255, 0.97);
     border-top: 1px solid var(--border);
     box-shadow: 0 -4px 18px rgba(113, 67, 81, 0.08);
+
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
 
 .nav-item {
     position: relative;
+
     min-width: 0;
     flex: 1 1 0;
     max-width: 110px;
     min-height: 54px;
+
     padding: 5px 4px;
+
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
+
     color: var(--gray-400);
     background: transparent;
     border-radius: 12px;
+
     cursor: pointer;
+
     transition:
         background var(--transition),
         color var(--transition),
@@ -2234,8 +2464,10 @@ input[type="color"] {
     content: "";
     position: absolute;
     bottom: 3px;
+
     width: 22px;
     height: 3px;
+
     background: var(--pink-500);
     border-radius: var(--radius-pill);
 }
@@ -2259,7 +2491,59 @@ input[type="color"] {
 
 
 /* =========================================================
-   RESPONSIVIDADE — TELAS MUITO PEQUENAS
+   PROTEÇÕES DE LAYOUT
+   ========================================================= */
+
+.product-card *,
+.stock-card *,
+.sale-product-picker-item *,
+.sale-variant-picker-item *,
+.sale-draft-item *,
+.category-card *,
+.color-card *,
+.size-card *,
+.modal * {
+    min-width: 0;
+}
+
+.product-card img,
+.stock-card img,
+.sale-product-picker-item img,
+.sale-draft-item img {
+    max-width: 100%;
+}
+
+.product-card-name,
+.product-card-sku,
+.product-card-category,
+.product-card-details,
+.sale-product-picker-name,
+.sale-product-picker-meta,
+.sale-draft-item-name,
+.sale-draft-item-variant,
+.stock-card-name,
+.stock-card-meta,
+.category-card-name,
+.color-card-name {
+    overflow-wrap: anywhere;
+}
+
+.sale-management,
+.sale-product-picker,
+.sale-product-picker-list,
+.sale-summary,
+.sale-payment,
+.sale-notes,
+.product-variation-form,
+.product-existing-photos,
+.product-photo-preview {
+    min-width: 0;
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE — ATÉ 359PX
    ========================================================= */
 
 @media (max-width: 359px) {
@@ -2331,6 +2615,44 @@ input[type="color"] {
     .nav-label {
         font-size: 8px;
     }
+
+    /*
+       Em telas extremamente pequenas, deixa uma pequena
+       margem para o modal sem impedir a rolagem interna.
+    */
+    .modal {
+        padding:
+            max(8px, env(safe-area-inset-top))
+            max(8px, env(safe-area-inset-right))
+            max(8px, env(safe-area-inset-bottom))
+            max(8px, env(safe-area-inset-left));
+    }
+
+    .modal-content {
+        max-height:
+            calc(
+                100dvh
+                - env(safe-area-inset-top)
+                - env(safe-area-inset-bottom)
+                - 16px
+            );
+
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 13px 14px;
+    }
+
+    .modal-body {
+        padding: 14px;
+    }
+
+    .modal-actions,
+    .modal-footer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
 }
 
 
@@ -2380,7 +2702,7 @@ input[type="color"] {
 
 
 /* =========================================================
-   TABLET
+   TABLET — 700PX+
    ========================================================= */
 
 @media (min-width: 700px) {
@@ -2428,15 +2750,32 @@ input[type="color"] {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .modal,
     .modal-content {
-        max-height: calc(100dvh - 40px);
+        max-width: 650px;
+    }
+
+    .modal {
+        padding:
+            max(20px, env(safe-area-inset-top))
+            max(20px, env(safe-area-inset-right))
+            max(20px, env(safe-area-inset-bottom))
+            max(20px, env(safe-area-inset-left));
+    }
+
+    .modal-content {
+        max-height:
+            calc(
+                100dvh
+                - env(safe-area-inset-top)
+                - env(safe-area-inset-bottom)
+                - 40px
+            );
     }
 }
 
 
 /* =========================================================
-   DESKTOP
+   DESKTOP — 1000PX+
    ========================================================= */
 
 @media (min-width: 1000px) {
@@ -2480,6 +2819,10 @@ input[type="color"] {
 
     .sale-variant-picker {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .modal-content {
+        max-width: 700px;
     }
 }
 
@@ -2588,59 +2931,7 @@ textarea:focus-visible,
 
 
 /* =========================================================
-   PROTEÇÕES DE LAYOUT
-   ========================================================= */
-
-.product-card *,
-.stock-card *,
-.sale-product-picker-item *,
-.sale-variant-picker-item *,
-.sale-draft-item *,
-.category-card *,
-.color-card *,
-.size-card * {
-    min-width: 0;
-}
-
-.product-card img,
-.stock-card img,
-.sale-product-picker-item img,
-.sale-draft-item img {
-    max-width: 100%;
-}
-
-.product-card-name,
-.product-card-sku,
-.product-card-category,
-.product-card-details,
-.sale-product-picker-name,
-.sale-product-picker-meta,
-.sale-draft-item-name,
-.sale-draft-item-variant,
-.stock-card-name,
-.stock-card-meta,
-.category-card-name,
-.color-card-name {
-    overflow-wrap: anywhere;
-}
-
-.sale-management,
-.sale-product-picker,
-.sale-product-picker-list,
-.sale-summary,
-.sale-payment,
-.sale-notes,
-.modal-body,
-.product-variation-form,
-.product-existing-photos,
-.product-photo-preview {
-    min-width: 0;
-    max-width: 100%;
-}
-
-
-/* =========================================================
-   AJUSTE DE ÁREA SEGURA MOBILE
+   ÁREA SEGURA MOBILE
    ========================================================= */
 
 @supports (height: 100dvh) {
