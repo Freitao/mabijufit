@@ -1,148 +1,44 @@
-// =========================================================
-// MABIJUFIT — SERVICE WORKER
-// =========================================================
-
-const CACHE_NAME = "mabijufit-v3";
-
+// Somente o shell local é armazenado. Supabase e autenticação exigem rede.
+const CACHE_NAME = "mabijufit-v5";
 const APP_FILES = [
-    "./",
-    "./index.html",
-    "./css/style.css",
-    "./js/app.js",
-    "./js/supabase.js",
-    "./manifest.json",
-    "./assets/icons/icon-192.png",
-    "./assets/icons/icon-512.png"
+    "./", "./index.html", "./css/style.css", "./js/app.js",
+    "./js/supabase.js", "./manifest.json",
+    "./assets/icons/icon-192.png", "./assets/icons/icon-512.png"
 ];
+const APP_URLS = new Set(APP_FILES.map(path => new URL(path, self.registration.scope).href));
 
-
-// =========================================================
-// INSTALAÇÃO
-// =========================================================
-
-self.addEventListener("install", (event) => {
-
-    event.waitUntil(
-
-        caches
-            .open(CACHE_NAME)
-            .then((cache) => {
-
-                return cache.addAll(APP_FILES);
-
-            })
-
-    );
-
+self.addEventListener("install", event => {
+    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));
     self.skipWaiting();
 });
 
-
-// =========================================================
-// ATIVAÇÃO
-// =========================================================
-
-self.addEventListener("activate", (event) => {
-
-    event.waitUntil(
-
-        caches
-            .keys()
-            .then((cacheNames) => {
-
-                return Promise.all(
-
-                    cacheNames
-                        .filter(
-                            (cacheName) =>
-                                cacheName !== CACHE_NAME
-                        )
-                        .map(
-                            (cacheName) =>
-                                caches.delete(cacheName)
-                        )
-
-                );
-
-            })
-
-    );
-
-    self.clients.claim();
+self.addEventListener("activate", event => {
+    event.waitUntil((async () => {
+        const names = await caches.keys();
+        await Promise.all(names.filter(name => name.startsWith("mabijufit-") && name !== CACHE_NAME)
+            .map(name => caches.delete(name)));
+        await self.clients.claim();
+    })());
 });
 
+self.addEventListener("fetch", event => {
+    const url = new URL(event.request.url);
+    if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
+    url.search = "";
+    if (!APP_URLS.has(url.href)) return;
 
-// =========================================================
-// REQUISIÇÕES
-// =========================================================
-
-self.addEventListener("fetch", (event) => {
-
-    if (event.request.method !== "GET") {
-        return;
-    }
-
-
-    const requestURL =
-        new URL(event.request.url);
-
-
-    // -----------------------------------------------------
-    // Não interferir em requisições externas.
-    // Ex.: Supabase, CDN etc.
-    // -----------------------------------------------------
-
-    if (
-        requestURL.origin !== self.location.origin
-    ) {
-        return;
-    }
-
-
-    event.respondWith(
-
-        fetch(event.request)
-
-            .then((networkResponse) => {
-
-                if (
-                    !networkResponse ||
-                    networkResponse.status !== 200
-                ) {
-                    throw new Error(
-                        "Resposta de rede inválida."
-                    );
-                }
-
-
-                const responseClone =
-                    networkResponse.clone();
-
-
-                caches
-                    .open(CACHE_NAME)
-                    .then((cache) => {
-
-                        cache.put(
-                            event.request,
-                            responseClone
-                        );
-
-                    });
-
-
-                return networkResponse;
-
-            })
-
-            .catch(() => {
-
-                return caches.match(
-                    event.request
-                );
-
-            })
-
-    );
-
+    const response = (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        try {
+            const network = await fetch(event.request);
+            if (network.ok) await cache.put(url.href, network.clone());
+            return network;
+        } catch {
+            return await cache.match(url.href) || new Response("Sem conexão. Abra o aplicativo conectado para preparar o cache.", {
+                status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" }
+            });
+        }
+    })();
+    event.respondWith(response);
+    event.waitUntil(response.then(() => undefined));
 });

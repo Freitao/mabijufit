@@ -2,12 +2,12 @@
 
 <meta  
     name="viewport"  
-    content="width=device-width, initial-scale=1.0"  
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
 >  
 
 <meta  
     name="theme-color"  
-    content="#d47799"  
+    content="#c96f8c"
 >  
 
 <meta  
@@ -111,7 +111,7 @@
 
             <div  
                 id="loginMessage"  
-                class="form-message"  
+                class="form-message" aria-live="polite"
             ></div>  
 
         </form>  
@@ -144,26 +144,32 @@
 
     <header class="app-header">  
 
-        <div>  
+        <div class="app-header-inner">
 
-            <span class="app-greeting">  
-                Olá,  
-            </span>  
+            <div class="header-profile">
 
-            <strong id="userName">  
-                MabijuFit  
-            </strong>  
+                <div class="header-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-4 4 2 10 8 15 6-5 12-11 8-15Z"/></svg></div>
 
-        </div>  
+                <div class="header-user-copy">
+
+                    <span class="app-greeting">Olá,</span>
+
+                    <strong id="userName" title="MabijuFit">MabijuFit</strong>
+
+                </div>
+
+            </div>
 
 
-        <button  
-            id="logoutButton"  
-            type="button"  
-            class="logout-button"  
-        >  
-            Sair  
-        </button>  
+            <button
+                id="logoutButton"
+                type="button"
+                class="logout-button"
+            >
+                Sair
+            </button>
+
+        </div>
 
     </header>  
 
@@ -250,7 +256,7 @@
                     </strong>  
 
                     <small>  
-                        Produtos  
+                        Variações
                     </small>  
 
                 </article>  
@@ -292,8 +298,11 @@
                         data-section="products"  
                     >  
 
-                        <span>  
-                            P  
+                        <span class="quick-action-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M6 8h12l1 13H5L6 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <path d="M9 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
                         </span>  
 
                         <strong>  
@@ -309,8 +318,11 @@
                         data-section="stock"  
                     >  
 
-                        <span>  
-                            E  
+                        <span class="quick-action-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <path d="M3 7.5v9L12 21l9-4.5v-9M12 12v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            </svg>
                         </span>  
 
                         <strong>  
@@ -326,8 +338,12 @@
                         data-section="sales"  
                     >  
 
-                        <span>  
-                            V  
+                        <span class="quick-action-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="10" cy="20" r="1.3" fill="currentColor"/>
+                                <circle cx="18" cy="20" r="1.3" fill="currentColor"/>
+                            </svg>
                         </span>  
 
                         <strong>  
@@ -343,8 +359,10 @@
                         data-section="finance"  
                     >  
 
-                        <span>  
-                            F  
+                        <span class="quick-action-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M4 19V10M10 19V5M16 19v-7M22 19V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
                         </span>  
 
                         <strong>  
@@ -372,9 +390,7 @@
                     class="empty-state"  
                 >  
 
-                    <div class="empty-state-icon">  
-                        M  
-                    </div>  
+                    <div class="empty-state-icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h14v18H5ZM9 8h6M9 12h6"/></svg></div>
 
                     <strong>  
                         Nenhuma atividade ainda  
@@ -418,19 +434,29 @@
                 </div>  
 
 
-                <button  
-                    id="newProductButton"  
-                    type="button"  
-                    class="primary-button small"  
-                >  
-                    + Novo  
-                </button>  
+                <div class="section-actions">
+                    <button
+                        type="button"
+                        class="secondary-button small"
+                        data-section="settings"
+                    >
+                        Cadastros
+                    </button>
+
+                    <button
+                        id="newProductButton"
+                        type="button"
+                        class="primary-button small"
+                    >
+                        + Novo
+                    </button>
+                </div>
 
             </div>  
 
 
             <input  
-                id="productSearch"  
+                id="productSearch" aria-label="Buscar produtos"
                 type="search"  
                 class="search-input"  
                 placeholder="Buscar produto..."  
@@ -440,14 +466,33 @@
 
             <div  
                 id="productsList"  
-                class="cards-list"  
+                class="cards-list products-grid"
             ></div>  
 
+        </section>
 
 
-            <!-- =========================================  
-                 CATEGORIAS  
-                 ========================================= -->  
+        <!-- =============================================
+             CADASTROS AUXILIARES
+             ============================================= -->
+
+        <section
+            id="settingsScreen"
+            class="app-section"
+            hidden
+        >
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-eyebrow">CONFIGURAÇÕES</span>
+                    <h2>Cadastros auxiliares</h2>
+                    <p>Organize as opções usadas nos produtos e variações.</p>
+                </div>
+
+                <button type="button" class="secondary-button small" data-section="products">
+                    Voltar
+                </button>
+            </div>
 
             <div class="section-block">  
 
@@ -479,7 +524,7 @@
 
                 <div  
                     id="categoriesList"  
-                    class="cards-list"  
+                    class="cards-list categories-grid"
                 ></div>  
 
             </div>  
@@ -520,7 +565,7 @@
 
                 <div  
                     id="colorsList"  
-                    class="cards-list"  
+                    class="cards-list colors-grid"
                 ></div>  
 
             </div>  
@@ -561,7 +606,7 @@
 
                 <div  
                     id="sizesList"  
-                    class="cards-list"  
+                    class="cards-list sizes-grid"
                 ></div>  
 
             </div>  
@@ -655,7 +700,7 @@
 
 
             <input  
-                id="stockSearch"  
+                id="stockSearch" aria-label="Buscar no estoque"
                 type="search"  
                 class="search-input"  
                 placeholder="Buscar no estoque..."  
@@ -664,7 +709,7 @@
 
             <div  
                 id="stockList"  
-                class="cards-list"  
+                class="cards-list stock-list"
             ></div>  
 
         </section>  
@@ -748,7 +793,7 @@
 
 
             <input  
-                id="salesSearch"  
+                id="salesSearch" aria-label="Buscar vendas"
                 type="search"  
                 class="search-input"  
                 placeholder="Buscar venda..."  
@@ -757,7 +802,7 @@
 
             <div  
                 id="salesList"  
-                class="cards-list"  
+                class="cards-list sales-list"
             ></div>  
 
         </section>  
@@ -801,6 +846,18 @@
             </div>  
 
 
+            <div class="list-toolbar">
+                <label for="financePeriod">Período</label>
+                <select id="financePeriod">
+                    <option value="today">Hoje</option>
+                    <option value="7days">Últimos 7 dias</option>
+                    <option value="30days">Últimos 30 dias</option>
+                    <option value="month" selected>Este mês</option>
+                    <option value="all">Todo o histórico</option>
+                </select>
+            </div>
+
+
             <div class="metrics-grid">  
 
 
@@ -814,8 +871,8 @@
                         R$ 0,00  
                     </strong>  
 
-                    <small>  
-                        Período  
+                    <small id="financeIncomePeriod">
+                        Este mês
                     </small>  
 
                 </article>  
@@ -831,8 +888,8 @@
                         R$ 0,00  
                     </strong>  
 
-                    <small>  
-                        Período  
+                    <small id="financeExpensesPeriod">
+                        Este mês
                     </small>  
 
                 </article>  
@@ -848,8 +905,8 @@
                         R$ 0,00  
                     </strong>  
 
-                    <small>  
-                        Período  
+                    <small id="financeBalancePeriod">
+                        Este mês
                     </small>  
 
                 </article>  
@@ -858,7 +915,7 @@
 
 
             <input  
-                id="financeSearch"  
+                id="financeSearch" aria-label="Buscar lançamentos"
                 type="search"  
                 class="search-input"  
                 placeholder="Buscar lançamento..."  
@@ -867,7 +924,7 @@
 
             <div  
                 id="financeList"  
-                class="cards-list"  
+                class="cards-list finance-list"
             ></div>  
 
         </section>  
@@ -881,7 +938,7 @@
          NAVEGAÇÃO INFERIOR  
          ================================================= -->  
 
-    <nav class="bottom-navigation">  
+    <nav class="bottom-navigation" aria-label="Navegação principal">
 
 <button  
     type="button"  
@@ -1066,6 +1123,9 @@
     id="productModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="productModalTitle"
 >  
 
     <div class="modal-content">  
@@ -1078,7 +1138,7 @@
                     CATÁLOGO  
                 </span>  
 
-                <h2>  
+                <h2 id="productModalTitle" data-modal-title>
                     Novo produto  
                 </h2>  
 
@@ -1089,6 +1149,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="productModal"  
+                aria-label="Fechar produto"
             >  
                 ×  
             </button>  
@@ -1268,14 +1329,9 @@
 </div>  
 
 
-<label  
-    class="product-photo-upload"  
-    for="productPhotoInput"  
->  
+<label class="product-photo-upload" for="productPhotoInput">
 
-    <div class="product-photo-upload-icon">  
-        📷  
-    </div>  
+    <span class="product-photo-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h4l2-3h4l2 3h4v15H4Z"/><circle cx="12" cy="13" r="4"/></svg></span>
 
     <strong>  
         Adicionar fotos  
@@ -1293,10 +1349,11 @@
     type="file"  
     accept="image/*"  
     multiple  
-    hidden  
+    class="sr-only"
 >  
 
 
+<div id="productExistingPhotos" class="product-existing-photos"></div>
 <div  
     id="productPhotoPreview"  
     class="product-photo-preview"  
@@ -1426,7 +1483,7 @@
         type="button"  
         class="secondary-button"  
     >  
-        ⚡ Gerar várias combinações  
+         Gerar várias combinações
     </button>  
 
     <p>  
@@ -1438,7 +1495,7 @@
 </div>  
                 <div  
                     id="productFormMessage"  
-                    class="form-message"  
+                    class="form-message" aria-live="polite"
                 ></div>  <div class="modal-actions">  
 
                 <button  
@@ -1475,6 +1532,9 @@
     id="categoryModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="categoryModalTitle"
 >  
 
     <div class="modal-content">  
@@ -1487,7 +1547,7 @@
                     ORGANIZAÇÃO  
                 </span>  
 
-                <h2>  
+                <h2 id="categoryModalTitle">
                     Categoria  
                 </h2>  
 
@@ -1498,6 +1558,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="categoryModal"  
+                aria-label="Fechar categoria"
             >  
                 ×  
             </button>  
@@ -1561,7 +1622,7 @@
 
             <div  
                 id="categoryFormMessage"  
-                class="form-message"  
+                class="form-message" aria-live="polite"
             ></div>  
 
 
@@ -1600,6 +1661,9 @@
     id="colorModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="colorModalTitle"
 >  
 
     <div class="modal-content">  
@@ -1612,7 +1676,7 @@
                     VARIAÇÕES  
                 </span>  
 
-                <h2>  
+                <h2 id="colorModalTitle">
                     Cor  
                 </h2>  
 
@@ -1623,6 +1687,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="colorModal"  
+                aria-label="Fechar cor"
             >  
                 ×  
             </button>  
@@ -1664,14 +1729,14 @@
                 <div class="color-input-row">  
 
                     <input  
-                        id="colorHex"  
+                        id="colorHex" aria-label="Selecionar cor"
                         type="color"  
                         value="#E8A0B8"  
                     >  
 
 
                     <input  
-                        id="colorHexText"  
+                        id="colorHexText" aria-label="Código hexadecimal da cor"
                         type="text"  
                         value="#E8A0B8"  
                         maxlength="7"  
@@ -1715,7 +1780,7 @@
 
             <div  
                 id="colorFormMessage"  
-                class="form-message"  
+                class="form-message" aria-live="polite"
             ></div>  
 
 
@@ -1754,6 +1819,9 @@
     id="sizeModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="sizeModalTitle"
 >  
 
     <div class="modal-content">  
@@ -1766,7 +1834,7 @@
                     VARIAÇÕES  
                 </span>  
 
-                <h2>  
+                <h2 id="sizeModalTitle">
                     Tamanho  
                 </h2>  
 
@@ -1777,6 +1845,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="sizeModal"  
+                aria-label="Fechar tamanho"
             >  
                 ×  
             </button>  
@@ -1842,7 +1911,7 @@
 
             <div  
                 id="sizeFormMessage"  
-                class="form-message"  
+                class="form-message" aria-live="polite"
             ></div>  
 
 
@@ -1881,6 +1950,9 @@
     id="saleModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="saleModalTitle"
 >  
 
     <div class="modal-content">  
@@ -1893,7 +1965,7 @@
                     COMERCIAL  
                 </span>  
 
-                <h2>  
+                <h2 id="saleModalTitle">
                     Nova venda  
                 </h2>  
 
@@ -1904,6 +1976,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="saleModal"  
+                aria-label="Fechar nova venda"
             >  
                 ×  
             </button>  
@@ -1911,141 +1984,76 @@
         </div>  
 
 
-        <form id="saleForm">  
+        <div class="modal-body">
 
+            <div id="saleManagementWorkspace" class="sale-management">
 
-            <div class="form-group">  
+                <div class="sale-management-actions">
+                    <button type="button" class="secondary-button" id="saleAddProductButton" aria-controls="saleProductPicker" aria-expanded="false">
+                        + Adicionar produto
+                    </button>
+                </div>
 
-                <label>  
-                    Produtos  
-                </label>  
+                <div id="saleProductPicker" class="sale-product-picker" hidden>
+                    <div class="sale-picker-heading">
+                        <strong>Selecionar produto</strong>
+                        <button type="button" class="icon-button" id="saleClosePickerButton" aria-label="Fechar seleção de produto">×</button>
+                    </div>
 
-                <div  
-                    id="saleItems"  
-                    class="sale-items"  
-                ></div>  
+                    <label class="sr-only" for="saleProductSearchInput">Buscar produto</label>
+                    <input type="search" id="saleProductSearchInput" placeholder="Buscar produto..." autocomplete="off">
+                    <div id="saleProductPickerList" class="sale-product-picker-list"></div>
+                    <div id="saleVariantPicker" class="sale-variant-picker" hidden></div>
+                </div>
 
-            </div>  
+                <section class="sale-items-section" aria-labelledby="saleItemsTitle">
+                    <strong id="saleItemsTitle">Produtos da venda</strong>
+                    <div id="saleItemsList" class="sale-items-list"></div>
+                </section>
 
+                <div class="sale-summary">
+                    <div>
+                        <span>Subtotal</span>
+                        <strong id="saleSubtotalValue">R$ 0,00</strong>
+                    </div>
+                    <div>
+                        <label for="saleDiscountInput">Desconto</label>
+                        <input type="number" id="saleDiscountInput" min="0" step="0.01" inputmode="decimal" value="0">
+                    </div>
+                    <div class="total">
+                        <span>Total</span>
+                        <strong id="saleTotalValue">R$ 0,00</strong>
+                    </div>
+                </div>
 
-            <button  
-                id="addSaleItemButton"  
-                type="button"  
-                class="secondary-button"  
-            >  
-                + Adicionar produto  
-            </button>  
+                <div class="sale-payment form-group">
+                    <label for="salePaymentMethod">Forma de pagamento</label>
+                    <select id="salePaymentMethod" required>
+                        <option value="">Selecione</option>
+                        <option value="pix">Pix</option>
+                        <option value="credit_card">Cartão de crédito</option>
+                        <option value="debit_card">Cartão de débito</option>
+                        <option value="cash">Dinheiro</option>
+                        <option value="transfer">Transferência</option>
+                        <option value="other">Outro</option>
+                    </select>
+                </div>
 
+                <div class="sale-notes form-group">
+                    <label for="saleNotesInput">Observações</label>
+                    <textarea id="saleNotesInput" rows="2" placeholder="Opcional"></textarea>
+                </div>
 
-            <div class="form-group">  
+                <div id="saleFormMessage" class="form-message" aria-live="polite"></div>
 
-                <label for="saleDiscount">  
-                    Desconto  
-                </label>  
-
-                <input  
-                    id="saleDiscount"  
-                    type="number"  
-                    min="0"  
-                    step="0.01"  
-                    inputmode="decimal"  
-                    value="0"  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="salePaymentMethod">  
-                    Forma de pagamento  
-                </label>  
-
-                <select id="salePaymentMethod">  
-
-                    <option value="">  
-                        Selecione  
-                    </option>  
-
-                    <option value="Dinheiro">  
-                        Dinheiro  
-                    </option>  
-
-                    <option value="Pix">  
-                        Pix  
-                    </option>  
-
-                    <option value="Cartão de débito">  
-                        Cartão de débito  
-                    </option>  
-
-                    <option value="Cartão de crédito">  
-                        Cartão de crédito  
-                    </option>  
-
-                    <option value="Transferência">  
-                        Transferência  
-                    </option>  
-
-                </select>  
+                <div class="sale-management-footer">
+                    <button type="button" class="secondary-button" data-close-modal="saleModal">Cancelar</button>
+                    <button type="button" class="primary-button" id="saleRegisterButton">Registrar venda</button>
+                </div>
 
             </div>  
 
-
-            <div class="form-group">  
-
-                <label for="saleNotes">  
-                    Observações  
-                </label>  
-
-                <textarea  
-                    id="saleNotes"  
-                    rows="3"  
-                    placeholder="Observações da venda"  
-                ></textarea>  
-
-            </div>  
-
-
-            <div class="sale-total-box">  
-
-                <span>  
-                    Total  
-                </span>  
-
-                <strong id="saleTotal">  
-                    R$ 0,00  
-                </strong>  
-
-            </div>  
-
-
-            <div  
-                id="saleFormMessage"  
-                class="form-message"  
-            ></div>  
-
-
-            <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="saleModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Registrar venda  
-                </button>  
-
-            </div>  
-
-        </form>  
+        </div>
 
     </div>  
 
@@ -2061,6 +2069,9 @@
     id="transactionModal"  
     class="modal"  
     hidden  
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="transactionModalTitle"
 >  
 
     <div class="modal-content">  
@@ -2073,7 +2084,7 @@
                     FINANCEIRO  
                 </span>  
 
-                <h2>  
+                <h2 id="transactionModalTitle">
                     Lançamento  
                 </h2>  
 
@@ -2084,6 +2095,7 @@
                 type="button"  
                 class="modal-close"  
                 data-close-modal="transactionModal"  
+                aria-label="Fechar lançamento"
             >  
                 ×  
             </button>  
@@ -2196,27 +2208,27 @@
                         Selecione  
                     </option>  
 
-                    <option value="Dinheiro">  
+                    <option value="cash">
                         Dinheiro  
                     </option>  
 
-                    <option value="Pix">  
+                    <option value="pix">
                         Pix  
                     </option>  
 
-                    <option value="Cartão de débito">  
+                    <option value="debit_card">
                         Cartão de débito  
                     </option>  
 
-                    <option value="Cartão de crédito">  
+                    <option value="credit_card">
                         Cartão de crédito  
                     </option>  
 
-                    <option value="Transferência">  
+                    <option value="transfer">
                         Transferência  
                     </option>  
 
-                    <option value="Boleto">  
+                    <option value="boleto">
                         Boleto  
                     </option>  
 
@@ -2242,7 +2254,7 @@
 
             <div  
                 id="transactionFormMessage"  
-                class="form-message"  
+                class="form-message" aria-live="polite"
             ></div>  
 
 
