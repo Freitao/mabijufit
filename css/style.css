@@ -1,6 +1,6 @@
 /* =========================================================
    MABIJUFIT — STYLE.CSS CONSOLIDADO
-   Mobile-first / PWA
+   Versão mobile-first
    ========================================================= */
 
 
@@ -65,15 +65,15 @@
     --shadow-md: 0 5px 18px rgba(113, 67, 81, 0.09);
     --shadow-lg: 0 10px 30px rgba(113, 67, 81, 0.13);
 
-    --bottom-nav-height: 72px;
-    --header-height: 68px;
+    --bottom-nav-height: 74px;
+    --header-height: 64px;
 
     --content-max-width: 1200px;
 }
 
 
 /* =========================================================
-   2. RESET / BASE
+   2. RESET
    ========================================================= */
 
 *,
@@ -149,31 +149,6 @@ a {
     color: inherit;
 }
 
-
-/* =========================================================
-   3. APP WRAPPER
-   ========================================================= */
-
-#app {
-    position: relative;
-
-    min-height: 100vh;
-    min-height: 100dvh;
-
-    width: 100%;
-
-    transform: none !important;
-    filter: none !important;
-    perspective: none !important;
-
-    overflow: visible;
-}
-
-
-/* =========================================================
-   4. ELEMENTOS OCULTOS
-   ========================================================= */
-
 [hidden],
 .hidden {
     display: none !important;
@@ -181,7 +156,27 @@ a {
 
 
 /* =========================================================
-   5. LOGIN
+   3. APP
+   ========================================================= */
+
+#app {
+    position: relative;
+
+    width: 100%;
+
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    overflow: visible;
+
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+
+/* =========================================================
+   4. LOGIN
    ========================================================= */
 
 #loginScreen {
@@ -193,8 +188,7 @@ a {
     justify-content: center;
 
     padding:
-        24px
-        18px
+        24px 18px
         calc(24px + env(safe-area-inset-bottom));
 
     background:
@@ -227,7 +221,6 @@ a {
     margin: 0 auto 28px;
 
     object-fit: contain;
-    border-radius: 0;
 }
 
 .login-card h1,
@@ -254,67 +247,51 @@ a {
     text-align: left;
 }
 
-.login-card .button,
-.login-card button[type="submit"] {
-    width: auto;
-    min-width: 142px;
-}
-
 
 /* =========================================================
-   6. CABEÇALHO SUPERIOR
+   5. CABEÇALHO SUPERIOR
    ========================================================= */
 
 /*
-   O header é propositalmente compacto.
-   A estrutura permanece compatível com o HTML atual.
+   Cabeçalho compacto e discreto.
+   Evita o aspecto de "página web simples".
 */
 
 #app > header,
 .app-header,
-.top-header,
-header {
+.top-header {
     position: relative;
+
     z-index: 100;
 
     width: 100%;
-
-    background: rgba(255, 255, 255, 0.97);
-
-    border-bottom: 1px solid var(--border);
-
-    box-shadow:
-        0 2px 10px rgba(113, 67, 81, 0.035);
-
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-/*
-   Se o header atual estiver dentro do #app como primeiro header,
-   essas regras deixam a área compacta sem exigir mudança no HTML.
-*/
-
-#app > header {
     min-height: var(--header-height);
 
     display: flex;
     align-items: center;
 
+    background:
+        rgba(255, 255, 255, 0.98);
+
+    border-bottom: 1px solid var(--border);
+
+    box-shadow:
+        0 2px 12px rgba(113, 67, 81, 0.045);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+#app > header {
     padding:
-        10px
+        8px
         max(16px, env(safe-area-inset-right))
-        10px
+        8px
         max(16px, env(safe-area-inset-left));
 }
 
-#app > header > * {
-    min-width: 0;
-}
-
 /*
-   Texto do usuário.
-   Mantém o e-mail, mas reduz o peso visual.
+   Qualquer conteúdo textual do header fica compacto.
 */
 
 #app > header p,
@@ -340,17 +317,16 @@ header {
 }
 
 /*
-   Botão Sair.
-   Remove a aparência padrão cinza do navegador.
+   Botão Sair — deixa de parecer botão padrão do navegador.
 */
 
 #app > header button,
 #app > header .logout-button,
 #app > header button[type="button"] {
-    min-height: 38px;
-    min-width: 68px;
+    min-width: 64px;
+    min-height: 36px;
 
-    padding: 7px 14px;
+    padding: 6px 13px;
 
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
@@ -382,7 +358,7 @@ header {
 
 
 /* =========================================================
-   7. CONTEÚDO PRINCIPAL
+   6. CONTEÚDO
    ========================================================= */
 
 main {
@@ -392,8 +368,7 @@ main {
     margin: 0 auto;
 
     padding:
-        22px
-        16px
+        22px 16px
         calc(
             var(--bottom-nav-height) +
             env(safe-area-inset-bottom) +
@@ -401,39 +376,28 @@ main {
         );
 }
 
-main > section,
-.screen,
-.app-screen {
-    width: 100%;
-}
-
 
 /* =========================================================
-   8. TÍTULOS / SEÇÕES
+   7. TÍTULOS
    ========================================================= */
-
-section {
-    width: 100%;
-}
 
 section > h1,
 .page-title,
 h1 {
-    margin:
-        0 0 24px;
+    margin: 0 0 24px;
 
     color: var(--gray-900);
 
     font-size: 32px;
     line-height: 1.15;
     font-weight: 800;
+
     letter-spacing: -0.8px;
 }
 
 section > h2,
 h2 {
-    margin:
-        26px 0 16px;
+    margin: 26px 0 16px;
 
     color: var(--gray-900);
 
@@ -444,8 +408,7 @@ h2 {
 
 section > h3,
 h3 {
-    margin:
-        18px 0 12px;
+    margin: 18px 0 12px;
 
     color: var(--gray-800);
 
@@ -454,20 +417,9 @@ h3 {
     font-weight: 700;
 }
 
-.section-label,
-.eyebrow,
-section > p:first-child {
-    color: var(--text);
-
-    font-size: 14px;
-    font-weight: 500;
-
-    letter-spacing: 0.2px;
-}
-
 
 /* =========================================================
-   9. BOTÕES
+   8. BOTÕES
    ========================================================= */
 
 button,
@@ -526,6 +478,7 @@ button.secondary-button,
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     gap: 8px;
 
     min-height: 46px;
@@ -554,8 +507,9 @@ button.secondary-button:hover {
 
     width: 42px;
     height: 42px;
-    min-height: 42px;
+
     min-width: 42px;
+    min-height: 42px;
 
     padding: 0;
 
@@ -576,30 +530,11 @@ button:disabled,
 .button:disabled {
     cursor: not-allowed;
     opacity: 0.55;
-    transform: none;
 }
 
 
 /* =========================================================
-   10. ÁREAS DE AÇÕES
-   ========================================================= */
-
-.page-actions,
-.section-actions,
-.toolbar,
-.actions,
-.header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-
-    margin-bottom: 16px;
-}
-
-
-/* =========================================================
-   11. FORMULÁRIOS
+   9. FORMULÁRIOS
    ========================================================= */
 
 .form-group {
@@ -613,6 +548,7 @@ button:disabled,
 .form-grid {
     display: grid;
     grid-template-columns: 1fr;
+
     gap: 16px;
 }
 
@@ -647,8 +583,7 @@ textarea {
 
     transition:
         border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        background 0.18s ease;
+        box-shadow 0.18s ease;
 }
 
 textarea {
@@ -668,14 +603,14 @@ textarea:focus {
 
     box-shadow:
         0 0 0 3px rgba(223, 145, 170, 0.14);
-
-    background: #fffdfd;
 }
 
 input[type="checkbox"],
 input[type="radio"] {
     width: 18px;
     height: 18px;
+
+    min-width: 18px;
     min-height: 18px;
 
     padding: 0;
@@ -685,19 +620,12 @@ input[type="radio"] {
 
 input[type="file"] {
     min-height: 48px;
-
     padding: 8px;
-
-    background: var(--gray-50);
-}
-
-select {
-    appearance: auto;
 }
 
 
 /* =========================================================
-   12. MENSAGENS DE FORMULÁRIO
+   10. MENSAGENS
    ========================================================= */
 
 .form-message {
@@ -707,24 +635,25 @@ select {
     border-radius: var(--radius-md);
 
     font-size: 14px;
-    line-height: 1.4;
 }
 
 .form-message.success {
     background: var(--success-light);
     color: #477b5b;
+
     border: 1px solid #d5ebdc;
 }
 
 .form-message.error {
     background: var(--danger-light);
     color: #9d4658;
+
     border: 1px solid #f2d0d8;
 }
 
 
 /* =========================================================
-   13. CARDS DE RESUMO
+   11. CARDS DE RESUMO
    ========================================================= */
 
 .dashboard-grid,
@@ -732,7 +661,9 @@ select {
 .stats-grid,
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
     gap: 14px;
 
@@ -757,17 +688,149 @@ select {
     box-shadow: var(--shadow-sm);
 }
 
-.dashboard-card strong,
-.summary-card strong,
-.stat-card strong,
-.metric-card strong {
-    font-size: 20px;
-    font-weight: 800;
+
+/* =========================================================
+   12. ACESSOS RÁPIDOS
+   ========================================================= */
+
+/*
+   Os acessos rápidos devem parecer atalhos do aplicativo,
+   não botões padrão do navegador.
+*/
+
+.quick-actions,
+.quick-access,
+.quick-access-grid,
+.dashboard-quick-actions {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+
+    width: 100%;
+
+    margin-bottom: 22px;
+}
+
+.quick-actions button,
+.quick-access button,
+.quick-access-grid button,
+.dashboard-quick-actions button,
+.quick-actions a,
+.quick-access a,
+.quick-access-grid a,
+.dashboard-quick-actions a {
+    position: relative;
+
+    min-width: 0;
+    min-height: 56px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 15px;
+
+    background: var(--white);
+    color: var(--gray-700);
+
+    font-size: 15px;
+    font-weight: 700;
+
+    box-shadow: var(--shadow-sm);
+
+    text-decoration: none;
+
+    overflow: hidden;
+}
+
+.quick-actions button:hover,
+.quick-access button:hover,
+.quick-access-grid button:hover,
+.dashboard-quick-actions button:hover,
+.quick-actions a:hover,
+.quick-access a:hover,
+.quick-access-grid a:hover,
+.dashboard-quick-actions a:hover {
+    background: var(--pink-50);
+    border-color: var(--pink-300);
+}
+
+.quick-actions svg,
+.quick-access svg,
+.quick-access-grid svg,
+.dashboard-quick-actions svg {
+    display: block !important;
+
+    width: 22px !important;
+    height: 22px !important;
+
+    flex: 0 0 auto;
+
+    color: var(--pink-600);
+
+    stroke: currentColor;
+}
+
+/*
+   Caso existam spans destinados aos ícones.
+*/
+
+.quick-actions .icon,
+.quick-actions .quick-icon,
+.quick-access .icon,
+.quick-access .quick-icon,
+.quick-access-grid .icon,
+.quick-access-grid .quick-icon,
+.dashboard-quick-actions .icon,
+.dashboard-quick-actions .quick-icon {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 24px;
+    height: 24px;
+
+    flex: 0 0 auto;
+
+    color: var(--pink-600);
+}
+
+.quick-actions .icon svg,
+.quick-actions .quick-icon svg,
+.quick-access .icon svg,
+.quick-access .quick-icon svg,
+.quick-access-grid .icon svg,
+.quick-access-grid .quick-icon svg,
+.dashboard-quick-actions .icon svg,
+.dashboard-quick-actions .quick-icon svg {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+/*
+   Evita que o primeiro caractere usado como fallback
+   domine visualmente o botão quando houver um SVG presente.
+*/
+
+.quick-actions svg + span,
+.quick-access svg + span,
+.quick-access-grid svg + span,
+.dashboard-quick-actions svg + span {
+    min-width: 0;
 }
 
 
 /* =========================================================
-   14. EMPTY STATES
+   13. ESTADOS VAZIOS
    ========================================================= */
 
 .empty-state {
@@ -833,13 +896,14 @@ select {
 
 
 /* =========================================================
-   15. PESQUISA
+   14. BUSCA
    ========================================================= */
 
 .search-container,
 .search-wrapper,
 .list-search {
     width: 100%;
+
     margin-bottom: 14px;
 }
 
@@ -855,27 +919,52 @@ select {
 
 
 /* =========================================================
-   16. PRODUTOS — GRID
+   15. PRODUTOS — NOVO LAYOUT HORIZONTAL
    ========================================================= */
+
+/*
+   Antes:
+   
+   ┌───────────────┐
+   │     FOTO      │
+   │     GRANDE    │
+   ├───────────────┤
+   │ informações   │
+   └───────────────┘
+
+   Agora:
+
+   ┌───────┬────────────────────┐
+   │       │ Nome               │
+   │ FOTO  │ SKU                │
+   │       │ Categoria          │
+   │       │ Cores / tamanhos   │
+   │       │ Estoque            │
+   │       │ Preço              │
+   │       │ Ações              │
+   └───────┴────────────────────┘
+*/
 
 .product-grid,
 .products-grid {
     display: grid;
 
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
 
-    gap: 14px;
+    gap: 12px;
 
     width: 100%;
 }
 
 .product-card {
+    width: 100%;
     min-width: 0;
-    overflow: hidden;
 
-    display: flex;
-    flex-direction: column;
+    display: grid;
+
+    grid-template-columns: 112px minmax(0, 1fr);
+
+    overflow: hidden;
 
     background: var(--white);
 
@@ -893,12 +982,19 @@ select {
     transform: translateY(1px);
 }
 
+
+/* =========================================================
+   16. FOTO DO PRODUTO
+   ========================================================= */
+
 .product-card-image-wrapper {
     position: relative;
 
-    width: 100%;
+    width: 112px;
+    min-width: 112px;
 
-    aspect-ratio: 1 / 1;
+    height: 100%;
+    min-height: 220px;
 
     overflow: hidden;
 
@@ -910,19 +1006,56 @@ select {
     height: 100%;
 
     object-fit: cover;
+
+    background: var(--gray-100);
 }
 
+/*
+   Fotos verticais de roupas podem ser preservadas sem
+   distorção. Se o enquadramento for muito vertical,
+   contain evita cortar a peça.
+*/
+
+.product-card-image.portrait,
+.product-card-image.vertical {
+    object-fit: contain;
+
+    background: var(--gray-100);
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px;
+
+    background: var(--pink-50);
+    color: var(--pink-400);
+
+    font-size: 12px;
+    text-align: center;
+}
+
+
+/* =========================================================
+   17. INFORMAÇÕES DO PRODUTO
+   ========================================================= */
+
 .product-card-info {
+    min-width: 0;
+
     display: flex;
     flex-direction: column;
 
-    min-width: 0;
-
-    padding: 14px;
+    padding: 13px 13px 12px;
 }
 
 .product-card-name {
-    margin: 0 0 5px;
+    margin: 0 0 4px;
 
     color: var(--gray-900);
 
@@ -938,102 +1071,90 @@ select {
     color: var(--text-muted);
 
     font-size: 13px;
+
+    overflow-wrap: anywhere;
 }
 
 .product-card-details {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 
-    margin-top: 10px;
+    margin-top: 9px;
 
     color: var(--gray-700);
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .product-card-stock {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
 
-    margin-top: 14px;
+    gap: 6px;
+
+    margin-top: 10px;
 
     color: var(--gray-700);
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .product-card-price {
-    margin-top: 12px;
+    margin-top: auto;
+    padding-top: 10px;
 
     color: var(--pink-600);
 
-    font-size: 22px;
-    line-height: 1.15;
+    font-size: 20px;
+    line-height: 1.1;
     font-weight: 800;
 }
 
 .product-card-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
 
-    gap: 8px;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-    margin-top: 14px;
+    gap: 7px;
+
+    margin-top: 10px;
 }
 
 .product-card-actions button {
+    width: 100%;
     min-width: 0;
 
-    padding-inline: 8px;
+    min-height: 42px;
+
+    padding:
+        7px 6px;
 
     border: 1px solid var(--border);
 
     background: var(--white);
     color: var(--gray-700);
 
+    font-size: 14px;
     font-weight: 700;
 }
 
 .product-card-sell-button {
     color: var(--pink-600) !important;
-    border-color: var(--pink-200) !important;
+
+    border-color:
+        var(--pink-200) !important;
 }
 
 .product-card-edit-button {
     color: var(--gray-700) !important;
 }
 
-.product-thumbnail {
-    width: 72px;
-    height: 72px;
-
-    object-fit: cover;
-
-    border-radius: 14px;
-
-    background: var(--gray-100);
-}
-
-.product-image-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 100%;
-    height: 100%;
-
-    background: var(--pink-50);
-    color: var(--pink-400);
-
-    font-size: 13px;
-}
-
 
 /* =========================================================
-   17. STATUS DE ESTOQUE
+   18. STATUS DO ESTOQUE
    ========================================================= */
 
 .product-stock-status {
@@ -1041,14 +1162,15 @@ select {
     align-items: center;
     justify-content: center;
 
-    min-height: 34px;
+    min-height: 30px;
 
-    padding: 6px 11px;
+    padding: 5px 9px;
 
     border-radius: var(--radius-pill);
 
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1;
+
     font-weight: 700;
 
     white-space: nowrap;
@@ -1071,8 +1193,19 @@ select {
 
 
 /* =========================================================
-   18. FOTOS / VARIAÇÕES DE PRODUTO
+   19. THUMBNAILS / FOTOS
    ========================================================= */
+
+.product-thumbnail {
+    width: 72px;
+    height: 72px;
+
+    object-fit: cover;
+
+    border-radius: 14px;
+
+    background: var(--gray-100);
+}
 
 .product-existing-photos {
     margin-top: 12px;
@@ -1097,8 +1230,6 @@ select {
 
 .product-existing-photo,
 .product-photo-preview-item {
-    position: relative;
-
     overflow: hidden;
 
     border: 1px solid var(--border);
@@ -1110,7 +1241,9 @@ select {
 .product-existing-photo img,
 .product-photo-preview-item img {
     width: 100%;
+
     aspect-ratio: 1;
+
     object-fit: cover;
 }
 
@@ -1126,10 +1259,16 @@ select {
     white-space: nowrap;
 }
 
+
+/* =========================================================
+   20. VARIAÇÕES
+   ========================================================= */
+
 .product-variant-draft-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
 
     padding: 12px;
@@ -1146,6 +1285,7 @@ select {
 
 .product-variant-draft-size {
     color: var(--text-muted);
+
     font-size: 13px;
 }
 
@@ -1158,6 +1298,7 @@ select {
 .product-variant-quantity-control {
     display: inline-flex;
     align-items: center;
+
     gap: 5px;
 }
 
@@ -1181,7 +1322,9 @@ select {
 
 .product-variation-form {
     display: grid;
+
     grid-template-columns: 1fr;
+
     gap: 10px;
 }
 
@@ -1192,30 +1335,36 @@ select {
 .product-variation-batch {
     display: flex;
     flex-wrap: wrap;
+
     gap: 8px;
 }
 
 
 /* =========================================================
-   19. ESTOQUE
+   21. ESTOQUE
    ========================================================= */
 
 .stock-grid,
 .stock-list {
     display: flex;
     flex-direction: column;
+
     gap: 12px;
 }
 
 .stock-card {
     display: grid;
 
-    grid-template-columns: 74px minmax(0, 1fr) auto;
+    grid-template-columns:
+        64px
+        minmax(0, 1fr)
+        auto;
 
     align-items: center;
-    gap: 12px;
 
-    padding: 12px 14px;
+    gap: 11px;
+
+    padding: 11px 13px;
 
     background: var(--white);
 
@@ -1226,8 +1375,8 @@ select {
 }
 
 .stock-card-image-wrapper {
-    width: 74px;
-    height: 74px;
+    width: 64px;
+    height: 64px;
 
     overflow: hidden;
 
@@ -1266,9 +1415,9 @@ select {
 }
 
 .stock-card-quantity {
-    min-width: 74px;
+    min-width: 66px;
 
-    padding: 10px 8px;
+    padding: 9px 7px;
 
     text-align: center;
 
@@ -1292,7 +1441,7 @@ select {
 
 
 /* =========================================================
-   20. VENDAS
+   22. VENDAS
    ========================================================= */
 
 .sale-management {
@@ -1309,9 +1458,8 @@ select {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
 
-    padding: 0;
+    gap: 12px;
 }
 
 .sale-management-header h2,
@@ -1322,11 +1470,13 @@ select {
 .sale-management-actions {
     display: flex;
     flex-wrap: wrap;
+
     gap: 8px;
 }
 
 .sale-management-footer {
     display: flex;
+
     gap: 10px;
 
     padding-top: 14px;
@@ -1351,9 +1501,13 @@ select {
 .sale-product-picker-item {
     display: grid;
 
-    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-columns:
+        58px
+        minmax(0, 1fr)
+        auto;
 
     align-items: center;
+
     gap: 10px;
 
     width: 100%;
@@ -1373,8 +1527,8 @@ select {
 }
 
 .sale-product-picker-image {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
 
     object-fit: cover;
 
@@ -1397,15 +1551,11 @@ select {
     font-size: 13px;
 }
 
-.sale-product-picker-item .price,
-.sale-product-picker-item strong:last-child {
-    color: var(--pink-600);
-}
-
 .sale-variant-picker-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
 
     padding: 11px;
@@ -1419,7 +1569,9 @@ select {
 .sale-draft-item {
     display: grid;
 
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
 
     gap: 10px;
 
@@ -1444,6 +1596,7 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 12px;
 
     padding: 7px 0;
@@ -1451,6 +1604,7 @@ select {
 
 .sale-summary .total {
     margin-top: 6px;
+
     padding-top: 12px;
 
     border-top: 1px solid var(--border);
@@ -1461,14 +1615,9 @@ select {
     font-weight: 800;
 }
 
-.sale-payment,
-.sale-notes {
-    width: 100%;
-}
-
 
 /* =========================================================
-   21. FINANCEIRO
+   23. FINANCEIRO
    ========================================================= */
 
 .income {
@@ -1481,13 +1630,15 @@ select {
 
 
 /* =========================================================
-   22. CATEGORIAS
+   24. CATEGORIAS
    ========================================================= */
 
 .category-grid,
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
     gap: 12px;
 }
@@ -1496,9 +1647,8 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
 
-    min-width: 0;
+    gap: 10px;
 
     padding: 14px;
 
@@ -1514,10 +1664,6 @@ select {
     min-width: 0;
 }
 
-.category-card-info strong {
-    overflow-wrap: anywhere;
-}
-
 .category-card-actions {
     display: flex;
     gap: 6px;
@@ -1525,13 +1671,15 @@ select {
 
 
 /* =========================================================
-   23. CORES
+   25. CORES
    ========================================================= */
 
 .color-grid,
 .colors-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
     gap: 12px;
 }
@@ -1539,9 +1687,8 @@ select {
 .color-card {
     display: flex;
     align-items: center;
-    gap: 12px;
 
-    min-width: 0;
+    gap: 12px;
 
     padding: 14px;
 
@@ -1554,6 +1701,7 @@ select {
 .color-card-info {
     display: flex;
     align-items: center;
+
     gap: 10px;
 
     min-width: 0;
@@ -1568,6 +1716,7 @@ select {
     border-radius: 50%;
 
     border: 2px solid var(--white);
+
     box-shadow:
         0 0 0 1px var(--border);
 }
@@ -1591,6 +1740,7 @@ select {
 
 .color-card-code {
     color: var(--text-muted);
+
     font-size: 12px;
 }
 
@@ -1603,13 +1753,15 @@ select {
 
 
 /* =========================================================
-   24. TAMANHOS
+   26. TAMANHOS
    ========================================================= */
 
 .size-grid,
 .sizes-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
     gap: 12px;
 }
@@ -1618,6 +1770,7 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
 
     padding: 14px;
@@ -1631,6 +1784,7 @@ select {
 .size-card-info {
     display: flex;
     align-items: center;
+
     gap: 10px;
 }
 
@@ -1658,6 +1812,7 @@ select {
 
 .size-card-order {
     color: var(--text-muted);
+
     font-size: 12px;
 }
 
@@ -1668,16 +1823,8 @@ select {
 
 
 /* =========================================================
-   25. NAVEGAÇÃO INFERIOR
+   27. MENU INFERIOR
    ========================================================= */
-
-/*
-   ESTE É O BLOCO MAIS IMPORTANTE PARA CORRIGIR
-   O BUG VISTO NOS PRINTS.
-
-   O menu precisa ser horizontal, fixo e ocupar somente
-   a altura definida em --bottom-nav-height.
-*/
 
 .bottom-navigation {
     position: fixed !important;
@@ -1704,9 +1851,12 @@ select {
         max(6px, env(safe-area-inset-bottom))
         max(6px, env(safe-area-inset-left)) !important;
 
-    background: rgba(255, 255, 255, 0.98) !important;
+    background:
+        rgba(255, 255, 255, 0.98) !important;
 
-    border-top: 1px solid var(--border) !important;
+    border-top:
+        1px solid var(--border) !important;
+
     border-left: 0 !important;
     border-right: 0 !important;
     border-bottom: 0 !important;
@@ -1730,12 +1880,14 @@ select {
 
     display: flex !important;
     flex-direction: column !important;
+
     align-items: center !important;
     justify-content: center !important;
 
     gap: 3px !important;
 
     margin: 0 !important;
+
     padding: 5px 3px !important;
 
     border: 0 !important;
@@ -1745,7 +1897,7 @@ select {
 
     color: var(--text-muted) !important;
 
-    font-size: 11px !important;
+    font-size: 10px !important;
     line-height: 1.1 !important;
     font-weight: 600 !important;
 
@@ -1779,7 +1931,6 @@ select {
 
     color: currentColor !important;
 
-    fill: none;
     stroke: currentColor;
 }
 
@@ -1790,7 +1941,9 @@ select {
     max-width: 100%;
 
     overflow: hidden;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
@@ -1801,7 +1954,7 @@ select {
 
 
 /* =========================================================
-   26. MODAIS — BASE
+   28. MODAIS
    ========================================================= */
 
 .modal {
@@ -1813,6 +1966,7 @@ select {
 
     width: 100% !important;
     height: 100% !important;
+
     min-height: 100dvh !important;
 
     margin: 0 !important;
@@ -1846,11 +2000,6 @@ select {
 .modal.hidden {
     display: none !important;
 }
-
-
-/* =========================================================
-   27. CONTEÚDO DOS MODAIS
-   ========================================================= */
 
 .modal-content {
     position: relative;
@@ -1937,6 +2086,7 @@ select {
 
     width: 40px;
     height: 40px;
+
     min-width: 40px;
     min-height: 40px;
 
@@ -1950,15 +2100,6 @@ select {
 
     font-size: 20px;
 }
-
-.modal-header button:hover {
-    background: var(--gray-200);
-}
-
-
-/* =========================================================
-   28. ÁREA INTERNA DOS MODAIS
-   ========================================================= */
 
 .modal-body {
     flex: 1 1 auto;
@@ -1975,11 +2116,6 @@ select {
 
     overscroll-behavior: contain;
 }
-
-/*
-   Formulários que são filhos diretos do modal-content
-   também precisam possuir sua própria área rolável.
-*/
 
 .modal-content > form {
     flex: 1 1 auto;
@@ -2000,11 +2136,6 @@ select {
     padding: 18px;
 }
 
-
-/* =========================================================
-   29. AÇÕES DOS MODAIS
-   ========================================================= */
-
 .modal-actions {
     flex: 0 0 auto;
 
@@ -2015,6 +2146,7 @@ select {
     gap: 10px;
 
     margin-top: 6px;
+
     padding-top: 16px;
 
     border-top: 1px solid var(--border);
@@ -2028,23 +2160,15 @@ select {
     min-width: 0;
 }
 
-.modal-actions .primary-button {
-    min-height: 50px;
-}
-
 
 /* =========================================================
-   30. MODAL DE VENDA
+   29. MODAL DE VENDA
    ========================================================= */
 
 #saleModal .modal-content {
     max-width: 700px !important;
 
     min-height: 0;
-}
-
-#saleModal .modal-header {
-    flex-shrink: 0;
 }
 
 #saleModal #saleManagementWorkspace {
@@ -2067,81 +2191,13 @@ select {
     padding: 18px;
 }
 
-#saleModal .sale-management > * {
-    min-width: 0;
-}
-
-#saleModal .sale-product-picker {
-    flex-shrink: 0;
-}
-
 #saleModal .sale-management-footer {
     flex-shrink: 0;
 }
 
 
 /* =========================================================
-   31. SELETOR DE PRODUTOS DA VENDA
-   ========================================================= */
-
-#saleModal .sale-product-picker h3,
-#saleModal .sale-product-picker h4 {
-    margin-top: 0;
-}
-
-#saleModal .sale-product-picker input {
-    margin-bottom: 12px;
-}
-
-#saleModal .sale-product-picker-item {
-    cursor: pointer;
-
-    transition:
-        border-color 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-#saleModal .sale-product-picker-item:hover {
-    border-color: var(--pink-300);
-    background: var(--pink-50);
-}
-
-#saleModal .sale-product-picker-item:active {
-    transform: scale(0.99);
-}
-
-
-/* =========================================================
-   32. SEÇÕES INTERNAS DO MODAL DE VENDA
-   ========================================================= */
-
-#saleModal .sale-summary,
-#saleModal .sale-payment,
-#saleModal .sale-notes {
-    flex-shrink: 0;
-}
-
-#saleModal .sale-summary {
-    margin-top: 2px;
-}
-
-
-/* =========================================================
-   33. BOTÕES DE ADICIONAR PRODUTO
-   ========================================================= */
-
-#saleModal button {
-    -webkit-tap-highlight-color: transparent;
-}
-
-#saleModal .sale-management-actions button {
-    width: 100%;
-}
-
-
-/* =========================================================
-   34. TABELAS / LISTAGENS GENÉRICAS
+   30. TABELAS
    ========================================================= */
 
 .table-wrapper {
@@ -2186,7 +2242,7 @@ tr:last-child td {
 
 
 /* =========================================================
-   35. DASHBOARD — ATIVIDADE RECENTE
+   31. ATIVIDADE RECENTE
    ========================================================= */
 
 .recent-activity,
@@ -2196,7 +2252,9 @@ tr:last-child td {
 
 .activity-item {
     display: flex;
+
     align-items: flex-start;
+
     gap: 12px;
 
     padding: 12px 0;
@@ -2228,7 +2286,7 @@ tr:last-child td {
 
 
 /* =========================================================
-   36. ANIMAÇÕES
+   32. ANIMAÇÕES
    ========================================================= */
 
 @keyframes modalOverlayIn {
@@ -2244,18 +2302,24 @@ tr:last-child td {
 @keyframes modalContentIn {
     from {
         opacity: 0;
-        transform: translateY(8px) scale(0.985);
+
+        transform:
+            translateY(8px)
+            scale(0.985);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+
+        transform:
+            translateY(0)
+            scale(1);
     }
 }
 
 
 /* =========================================================
-   37. ACESSIBILIDADE
+   33. ACESSIBILIDADE
    ========================================================= */
 
 button:focus-visible,
@@ -2263,20 +2327,23 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(201, 111, 140, 0.25);
+    outline:
+        3px solid
+        rgba(201, 111, 140, 0.25);
+
     outline-offset: 2px;
 }
 
 
 /* =========================================================
-   38. MOBILE — ATÉ 480px
+   34. MOBILE
    ========================================================= */
 
 @media (max-width: 480px) {
 
     :root {
-        --bottom-nav-height: 72px;
-        --header-height: 64px;
+        --bottom-nav-height: 74px;
+        --header-height: 62px;
     }
 
     body {
@@ -2287,18 +2354,18 @@ textarea:focus-visible {
         min-height: var(--header-height);
 
         padding:
-            8px
+            7px
             max(12px, env(safe-area-inset-right))
-            8px
+            7px
             max(12px, env(safe-area-inset-left));
     }
 
     #app > header button,
     #app > header .logout-button {
-        min-height: 36px;
+        min-height: 34px;
         min-width: 58px;
 
-        padding: 6px 11px;
+        padding: 5px 11px;
 
         font-size: 12px;
     }
@@ -2324,23 +2391,61 @@ textarea:focus-visible {
         font-size: 22px;
     }
 
-    .dashboard-grid,
-    .summary-grid,
-    .stats-grid,
-    .metrics-grid {
-        gap: 12px;
+
+    /* -----------------------------------------
+       ACESSOS RÁPIDOS
+       ----------------------------------------- */
+
+    .quick-actions,
+    .quick-access,
+    .quick-access-grid,
+    .dashboard-quick-actions {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
     }
 
-    .dashboard-card,
-    .summary-card,
-    .stat-card,
-    .metric-card {
-        padding: 16px;
+    .quick-actions button,
+    .quick-access button,
+    .quick-access-grid button,
+    .dashboard-quick-actions button,
+    .quick-actions a,
+    .quick-access a,
+    .quick-access-grid a,
+    .dashboard-quick-actions a {
+        min-height: 54px;
+
+        padding: 9px 8px;
+
+        font-size: 14px;
     }
+
+
+    /* -----------------------------------------
+       PRODUTOS
+       ----------------------------------------- */
 
     .product-grid,
     .products-grid {
+        grid-template-columns: 1fr;
+
         gap: 12px;
+    }
+
+    .product-card {
+        grid-template-columns:
+            108px
+            minmax(0, 1fr);
+
+        min-height: 215px;
+    }
+
+    .product-card-image-wrapper {
+        width: 108px;
+        min-width: 108px;
+
+        min-height: 215px;
     }
 
     .product-card-info {
@@ -2351,36 +2456,59 @@ textarea:focus-visible {
         font-size: 17px;
     }
 
+    .product-card-details {
+        font-size: 13px;
+    }
+
     .product-card-price {
         font-size: 20px;
     }
 
-    .product-card-actions {
-        gap: 7px;
+    .product-card-actions button {
+        min-height: 40px;
+
+        font-size: 13px;
     }
 
-    .product-card-actions button {
-        min-height: 44px;
+    .product-stock-status {
+        min-height: 28px;
+
+        padding: 5px 8px;
+
+        font-size: 11px;
     }
+
+
+    /* -----------------------------------------
+       ESTOQUE
+       ----------------------------------------- */
 
     .stock-card {
-        grid-template-columns: 64px minmax(0, 1fr) auto;
+        grid-template-columns:
+            60px
+            minmax(0, 1fr)
+            auto;
 
-        gap: 10px;
+        gap: 9px;
 
-        padding: 10px 12px;
+        padding: 10px 11px;
     }
 
     .stock-card-image-wrapper {
-        width: 64px;
-        height: 64px;
+        width: 60px;
+        height: 60px;
     }
 
     .stock-card-quantity {
-        min-width: 64px;
+        min-width: 62px;
 
-        padding: 9px 6px;
+        padding: 8px 6px;
     }
+
+
+    /* -----------------------------------------
+       MODAIS
+       ----------------------------------------- */
 
     .modal {
         padding:
@@ -2427,20 +2555,10 @@ textarea:focus-visible {
         padding: 16px;
     }
 
-    .sale-product-picker {
-        padding: 13px;
-    }
 
-    .sale-product-picker-item {
-        grid-template-columns: 58px minmax(0, 1fr) auto;
-
-        padding: 9px;
-    }
-
-    .sale-product-picker-image {
-        width: 58px;
-        height: 58px;
-    }
+    /* -----------------------------------------
+       MENU INFERIOR
+       ----------------------------------------- */
 
     .bottom-navigation .nav-item {
         font-size: 10px !important;
@@ -2454,7 +2572,7 @@ textarea:focus-visible {
 
 
 /* =========================================================
-   39. TELAS MUITO PEQUENAS
+   35. TELAS MUITO PEQUENAS
    ========================================================= */
 
 @media (max-width: 360px) {
@@ -2464,9 +2582,15 @@ textarea:focus-visible {
         padding-right: 12px;
     }
 
-    .product-grid,
-    .products-grid {
-        gap: 9px;
+    .product-card {
+        grid-template-columns:
+            96px
+            minmax(0, 1fr);
+    }
+
+    .product-card-image-wrapper {
+        width: 96px;
+        min-width: 96px;
     }
 
     .product-card-info {
@@ -2478,11 +2602,25 @@ textarea:focus-visible {
     }
 
     .product-card-details {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .product-card-actions {
-        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .product-card-actions button {
+        padding-left: 4px;
+        padding-right: 4px;
+
+        font-size: 12px;
+    }
+
+    .quick-actions button,
+    .quick-access button,
+    .quick-access-grid button,
+    .dashboard-quick-actions button {
+        font-size: 13px;
     }
 
     .bottom-navigation .nav-item {
@@ -2497,7 +2635,7 @@ textarea:focus-visible {
 
 
 /* =========================================================
-   40. TABLET / DESKTOP
+   36. TABLET
    ========================================================= */
 
 @media (min-width: 700px) {
@@ -2520,9 +2658,20 @@ textarea:focus-visible {
     .product-grid,
     .products-grid {
         grid-template-columns:
-            repeat(3, minmax(0, 1fr));
+            repeat(2, minmax(0, 1fr));
 
         gap: 18px;
+    }
+
+    .product-card {
+        grid-template-columns:
+            120px
+            minmax(0, 1fr);
+    }
+
+    .product-card-image-wrapper {
+        width: 120px;
+        min-width: 120px;
     }
 
     .category-grid,
@@ -2545,11 +2694,11 @@ textarea:focus-visible {
 }
 
 
-@media (min-width: 1024px) {
+/* =========================================================
+   37. DESKTOP
+   ========================================================= */
 
-    :root {
-        --bottom-nav-height: 74px;
-    }
+@media (min-width: 1024px) {
 
     #app > header {
         padding-left: 28px;
@@ -2568,7 +2717,7 @@ textarea:focus-visible {
     .product-grid,
     .products-grid {
         grid-template-columns:
-            repeat(4, minmax(0, 1fr));
+            repeat(3, minmax(0, 1fr));
     }
 
     .dashboard-grid,
@@ -2603,7 +2752,7 @@ textarea:focus-visible {
 
 
 /* =========================================================
-   41. REDUÇÃO DE MOVIMENTO
+   38. REDUÇÃO DE MOVIMENTO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
@@ -2617,6 +2766,7 @@ textarea:focus-visible {
     *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+
         transition-duration: 0.01ms !important;
     }
-   }
+}
