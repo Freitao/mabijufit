@@ -114,7 +114,6 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* Bloqueia a rolagem da página enquanto qualquer modal estiver aberto. */
 body.modal-open {
     overflow: hidden;
     overscroll-behavior: none;
@@ -2002,31 +2001,40 @@ input[type="color"] {
 
 
 /* =========================================================
-   MODAIS — ESTRUTURA PRINCIPAL
+   MODAIS
    ========================================================= */
 
 /*
-   IMPORTANTE:
+   O .modal é o próprio overlay.
 
-   O .modal é o próprio overlay controlado pelo APP.JS.
+   Todos os modais existentes no index.html possuem:
+       class="modal"
+       hidden
 
-   Portanto ele NÃO pode participar do fluxo normal da página.
-   O posicionamento deve ser FIXED e ocupar a viewport inteira.
+   Portanto o posicionamento é feito exclusivamente aqui.
 
-   O .modal-content é apenas a caixa interna do modal.
+   O modal:
+   - fica preso à viewport;
+   - ocupa toda a área disponível;
+   - centraliza o .modal-content;
+   - possui sua própria rolagem;
+   - não participa do fluxo normal da página.
 */
 
 .modal {
     position: fixed !important;
-    inset: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
 
-    z-index: 1000;
+    z-index: 1000 !important;
 
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     min-height: 100dvh;
 
-    margin: 0;
+    margin: 0 !important;
     padding:
         max(12px, env(safe-area-inset-top))
         max(12px, env(safe-area-inset-right))
@@ -2049,18 +2057,21 @@ input[type="color"] {
 }
 
 /*
-   Não permitir que o atributo hidden seja sobrescrito
-   por display:flex do .modal.
+   O hidden precisa vencer o display:flex acima.
 */
 .modal[hidden],
 .modal.hidden {
     display: none !important;
 }
 
+
 /*
-   Caixa interna.
-   Ela é quem recebe a rolagem quando o conteúdo é maior
-   que a altura disponível.
+   Caixa interna do modal.
+
+   IMPORTANTE:
+   O HTML atual NÃO possui .modal-body.
+   Por isso o formulário é tratado diretamente como
+   área interna rolável.
 */
 .modal-content {
     position: relative;
@@ -2076,12 +2087,14 @@ input[type="color"] {
             - 24px
         );
 
-    margin: auto;
+    margin: 0 auto;
 
     display: flex;
     flex-direction: column;
 
     overflow: hidden;
+
+    flex: 0 1 auto;
 
     background: var(--white);
     border: 1px solid var(--border);
@@ -2090,12 +2103,44 @@ input[type="color"] {
     box-shadow: var(--shadow-lg);
 
     overscroll-behavior: contain;
+
+    animation: modalContentIn 0.18s ease-out;
 }
 
+
 /*
-   O corpo é a área que efetivamente rola.
-   Isso evita que um formulário grande aumente o modal
-   para fora da viewport.
+   Estrutura real dos modais:
+
+   .modal-content
+       .modal-header
+       form
+           campos
+           .modal-actions
+
+   O formulário ocupa o espaço restante.
+*/
+.modal-content > form {
+    min-width: 0;
+    min-height: 0;
+
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+
+/*
+   Quando existir .modal-body em alguma estrutura futura,
+   ele continua funcionando normalmente.
 */
 .modal-body {
     min-width: 0;
@@ -2112,16 +2157,27 @@ input[type="color"] {
     overscroll-behavior: contain;
 }
 
+
 /*
-   Caso o conteúdo seja diretamente filho do modal-content,
-   mantém espaçamento adequado sem quebrar a estrutura.
+   O conteúdo direto do formulário não deve ser comprimido
+   horizontalmente em telas pequenas.
 */
-.modal-content > form {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    overflow: hidden;
+.modal-content > form > * {
+    min-width: 0;
+}
+
+
+/*
+   Caso o formulário possua conteúdo agrupado em uma área
+   intermediária, ela pode crescer sem ultrapassar a largura.
+*/
+.modal-content form > .form-group,
+.modal-content form > .form-row,
+.modal-content form > .variation-section,
+.modal-content form > .product-existing-photos,
+.modal-content form > .product-photo-preview,
+.modal-content form > .product-variation-batch {
+    max-width: 100%;
 }
 
 
@@ -2186,9 +2242,10 @@ input[type="color"] {
     border-top: 1px solid var(--border);
 }
 
+
 /*
-   Quando .modal-actions estiver dentro do .modal-body,
-   ainda deve manter os botões acessíveis.
+   Quando as ações estiverem dentro de .modal-body,
+   continuam com espaçamento adequado.
 */
 .modal-body .modal-actions {
     padding:
@@ -2201,31 +2258,53 @@ input[type="color"] {
 }
 
 
+/*
+   No HTML atual, .modal-actions fica dentro do FORM.
+   Portanto ela deve permanecer no final do formulário.
+*/
+.modal-content > form > .modal-actions {
+    margin-top: auto;
+}
+
+
 /* =========================================================
    MODAIS ESPECÍFICOS
    ========================================================= */
 
-.productModal,
-.saleModal,
-.categoryModal,
-.colorModal,
-.sizeModal,
-.transactionModal {
+/*
+   Estes elementos são IDs no HTML, não classes.
+
+   O .modal genérico já faz todo o posicionamento.
+   Estas regras servem apenas para garantir prioridade
+   e manter comportamento uniforme em cada modal.
+*/
+
+#productModal,
+#categoryModal,
+#colorModal,
+#sizeModal,
+#saleModal,
+#transactionModal {
     position: fixed !important;
-    inset: 0 !important;
-    z-index: 1000;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+
+    z-index: 1000 !important;
 }
 
+
 /*
-   Alguns modais podem receber conteúdo grande.
-   O mesmo comportamento é mantido em todos eles.
+   Todos os conteúdos internos respeitam a altura
+   disponível da viewport.
 */
-.productModal .modal-content,
-.saleModal .modal-content,
-.categoryModal .modal-content,
-.colorModal .modal-content,
-.sizeModal .modal-content,
-.transactionModal .modal-content {
+#productModal .modal-content,
+#categoryModal .modal-content,
+#colorModal .modal-content,
+#sizeModal .modal-content,
+#saleModal .modal-content,
+#transactionModal .modal-content {
     max-height:
         calc(
             100dvh
@@ -2237,7 +2316,7 @@ input[type="color"] {
 
 
 /* =========================================================
-   ANIMAÇÃO DOS MODAIS
+   ANIMAÇÕES DOS MODAIS
    ========================================================= */
 
 @keyframes modalOverlayIn {
@@ -2260,10 +2339,6 @@ input[type="color"] {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-}
-
-.modal-content {
-    animation: modalContentIn 0.18s ease-out;
 }
 
 
@@ -2617,8 +2692,8 @@ input[type="color"] {
     }
 
     /*
-       Em telas extremamente pequenas, deixa uma pequena
-       margem para o modal sem impedir a rolagem interna.
+       Modal ocupa a viewport e o conteúdo interno
+       continua rolável mesmo em telas muito pequenas.
     */
     .modal {
         padding:
@@ -2629,6 +2704,9 @@ input[type="color"] {
     }
 
     .modal-content {
+        width: 100%;
+        max-width: 100%;
+
         max-height:
             calc(
                 100dvh
@@ -2652,6 +2730,10 @@ input[type="color"] {
     .modal-footer {
         padding-left: 14px;
         padding-right: 14px;
+    }
+
+    .modal-content > form {
+        overflow-y: auto;
     }
 }
 
