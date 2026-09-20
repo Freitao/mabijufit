@@ -1,5 +1,5 @@
 // Somente o shell local é armazenado. Supabase e autenticação exigem rede.
-const CACHE_NAME = "mabijufit-v5";
+const CACHE_NAME = "mabijufit-v6";
 const APP_FILES = [
     "./", "./index.html", "./css/style.css", "./js/app.js",
     "./js/supabase.js", "./manifest.json",
@@ -30,7 +30,7 @@ self.addEventListener("fetch", event => {
     const response = (async () => {
         const cache = await caches.open(CACHE_NAME);
         try {
-            const network = await fetch(event.request);
+            const network = await fetch(event.request, { cache: "no-cache" });
             if (network.ok) await cache.put(url.href, network.clone());
             return network;
         } catch {

@@ -13,6 +13,9 @@
 
 let currentUser = null;
 let appInitialized = false;
+let sessionGeneration = 0;
+let authRevision = 0;
+let initializationPromise = null;
 let currentSection = "home";
 
 let categoriesCache = [];
@@ -31,16 +34,30 @@ let productPhotoPreviewUrls = [];
 
 let editingProductId = null;
 let editingProductActiveVariantIds = [];
+let editingVariantStocks = {};
 
 let saleDraft = [];
 let saleProductPickerOpen = false;
 let saleVariantSelectionProductId = null;
 
 let currentFinancePeriod = "month";
+let stockFilter = "all";
+let productFilter = "all";
+let financeFilter = "all";
+let toastTimer;
 let lastFocusedElement = null;
 let saleSubmitting = false;
 let productSaving = false;
 let transactionSaving = false;
+let financeDeleting = false;
+let financeDeleteTarget = null;
+let saleDetailsRevision = 0;
+let currentProfile = null;
+let profileLoadPromise = null;
+let saleCancelling = false;
+let saleCancellationTarget = null;
+// movement_type é texto livre; sale_cancel foi confirmado pelo responsável pelo banco.
+const SALE_RETURN_MOVEMENT_TYPE = "sale_cancel";
 
 
 // =========================================================
@@ -60,6 +77,107 @@ const PRODUCT_IMAGE_INITIAL_QUALITY =
 // =========================================================
 // HELPERS
 // =========================================================
+
+async function fetchAllRows(createQuery) {
+    const rows = [];
+    const pageSize = 500;
+    for (let offset = 0; ;) {
+        const { data, error } = await createQuery().order("id").range(offset, offset + pageSize - 1);
+        if (error) return { data: null, error };
+        rows.push(...(data || []));
+        if (!data?.length) return { data: rows, error: null };
+        offset += data.length;
+    }
+}
+
+function sessionClient(userId, generation) {
+    const assertSession = () => {
+        if (generation !== sessionGeneration || currentUser?.id !== userId) {
+            throw new Error("A sessão mudou durante a operação. Confira os registros antes de tentar novamente.");
+        }
+    };
+    return {
+        from(table) { assertSession(); return supabaseClient.from(table); },
+        storage: { from(bucket) { assertSession(); return supabaseClient.storage.from(bucket); } }
+    };
+}
+
+function showToast(message) {
+    const toast = $("appToast");
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 4500);
+}
+
+function selectFilter(containerId, attribute, value) {
+    $(containerId).querySelectorAll("button").forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset[attribute] === value));
+    });
+}
+
+function setProductPanel(panel) {
+    document.querySelectorAll("[data-product-panel]").forEach(element => {
+        element.hidden = element.dataset.productPanel !== panel;
+    });
+    selectFilter("productFormTabs", "productPanelTarget", panel);
+    $("productForm").scrollTop = 0;
+}
+
+function setSaleStage(stage) {
+    document.querySelectorAll("[data-sale-stage]").forEach(element => {
+        element.hidden = element.dataset.saleStage !== stage;
+    });
+    $("saleModalTitle").textContent = stage === "payment" ? "Pagamento da venda" : "Nova venda";
+    $("saleModal").querySelector(".modal-body").scrollTop = 0;
+    if (stage === "payment") {
+        if ($("saleFormMessage").classList.contains("success")) showMessage("saleFormMessage", "");
+        $("saleBackToItems").focus({ preventScroll: true });
+    }
+}
+
+function syncSalePickerView() {
+    $("saleAddProductButton").setAttribute("aria-expanded", String(saleProductPickerOpen));
+    $("saleManagementWorkspace").classList.toggle("picking", saleProductPickerOpen);
+    $("saleModalTitle").textContent = saleProductPickerOpen ? "Adicionar à venda" : "Nova venda";
+    $("saleProductSearchInput").hidden = !!saleVariantSelectionProductId;
+    $("salePickerTitle").textContent = saleVariantSelectionProductId ? "Escolha cor e tamanho" : "Selecione o produto";
+    if (saleProductPickerOpen) $("saleClosePickerButton").focus({ preventScroll: true });
+}
+
+function emptyState(title, detail, action, label) {
+    return `<div class="empty-state compact"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(detail)}</p>${action ? `<button type="button" class="secondary-button small" data-action="${action}">${escapeHtml(label)}</button>` : ""}</div>`;
+}
+
+async function submitAuxiliaryForm(event, save) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (form.getAttribute("aria-busy") === "true") return;
+    const button = event.submitter || form.querySelector('[type="submit"]');
+    form.setAttribute("aria-busy", "true");
+    form.inert = true;
+    setLoading(button, true);
+    try { await save(event); }
+    finally { form.removeAttribute("aria-busy"); form.inert = false; setLoading(button, false); }
+}
+
+function showRegistration(name) {
+    document.querySelectorAll("[data-registration-panel]").forEach(panel => {
+        panel.hidden = panel.dataset.registrationPanel !== name;
+    });
+    selectFilter("registrationFilters", "registration", name);
+}
+
+function showDataLoadError() {
+    let notice = document.getElementById("dataLoadError");
+    if (!notice) {
+        notice = document.createElement("p");
+        notice.id = "dataLoadError";
+        notice.setAttribute("role", "alert");
+        document.getElementById("appScreen").prepend(notice);
+    }
+    notice.textContent = "Não foi possível atualizar todos os dados. Os valores podem estar desatualizados. Verifique sua conexão e atualize a página.";
+}
 
 function $(id) {
     return document.getElementById(id);
@@ -382,8 +500,7 @@ function getAuthErrorMessage(error) {
     }
 
     return (
-        error?.message ||
-        "Não foi possível entrar. Tente novamente."
+        "Não foi possível entrar. Verifique sua conexão e tente novamente."
     );
 }
 
@@ -583,7 +700,7 @@ function revokeProductPhotoPreviewUrls() {
 
             try {
                 URL.revokeObjectURL(url);
-            } catch (error) {}
+            } catch (error) { console.warn("Falha ao liberar recurso de imagem:", error); }
         }
     );
 
@@ -592,6 +709,7 @@ function revokeProductPhotoPreviewUrls() {
 
 
 function clearProductPhotosDraft() {
+    if ($("productCameraInput")) $("productCameraInput").value = "";
 
     revokeProductPhotoPreviewUrls();
 
@@ -698,16 +816,22 @@ function renderProductPhotoPreview() {
                     "small"
                 );
 
-            order.textContent =
-                index === 0
-                    ? "Foto principal"
-                    : `Foto ${index + 1}`;
+            order.textContent = index === 0 && !(productImagesCache[editingProductId] || []).some(image => image.is_primary)
+                ? "Principal ao salvar" : "Nova foto";
 
             info.appendChild(name);
             info.appendChild(order);
 
             item.appendChild(image);
             item.appendChild(info);
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "photo-remove";
+            remove.dataset.removePhoto = String(index);
+            remove.setAttribute("aria-label", `Remover foto ${index + 1} selecionada`);
+            remove.textContent = "Remover";
+            item.appendChild(remove);
+
 
             fragment.appendChild(item);
         }
@@ -730,12 +854,7 @@ function handleProductPhotoSelection(
             event.target.files || []
         );
 
-    if (!files.length) {
-
-        clearProductPhotosDraft();
-
-        return;
-    }
+    if (!files.length) return;
 
     const invalidFiles =
         files.filter(
@@ -755,8 +874,8 @@ function handleProductPhotoSelection(
                 )
         );
 
-    productPhotosDraft =
-        validFiles;
+    productPhotosDraft.push(...validFiles);
+    event.target.value = "";
 
     renderProductPhotoPreview();
 
@@ -813,7 +932,7 @@ async function loadImageForOptimization(
 
                     try {
                         bitmap.close();
-                    } catch (error) {}
+                    } catch (error) { console.warn("Falha ao liberar recurso de imagem:", error); }
                 }
             };
 
@@ -1185,7 +1304,8 @@ function createOptimizedImageName(
 function createProductImageStoragePath(
     productId,
     file,
-    index
+    index,
+    userId = currentUser?.id
 ) {
 
     const safeName =
@@ -1195,7 +1315,7 @@ function createProductImageStoragePath(
         );
 
     return [
-        currentUser.id,
+        userId,
         "products",
         productId,
         `${Date.now()}-${index}-${safeName}`
@@ -1206,6 +1326,10 @@ function createProductImageStoragePath(
 async function loadProductImages(
     productIds = []
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     const requestedUserId = currentUser?.id;
 
@@ -1231,70 +1355,69 @@ async function loadProductImages(
         return;
     }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "product_images"
-            )
-            .select(`
-                id,
-                product_id,
-                storage_path,
-                public_url,
-                is_primary,
-                display_order
-            `)
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .in(
-                "product_id",
-                uniqueProductIds
-            )
-            .order(
-                "display_order"
-            );
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar fotos dos produtos:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "product_images"
+                )
+                .select(`
+                    id,
+                    product_id,
+                    storage_path,
+                    public_url,
+                    is_primary,
+                    display_order
+                `)
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .in(
+                    "product_id",
+                    uniqueProductIds
+                )
+                .order(
+                    "display_order"
+                ));
 
-        return;
-    }
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
 
-    if (currentUser?.id !== requestedUserId) return;
-    const loadedImages = Object.fromEntries(uniqueProductIds.map(id => [id, []]));
-    (
-        data || []
-    ).forEach(
-        image => {
+        if (currentUser?.id !== requestedUserId) return;
+        const loadedImages = Object.fromEntries(uniqueProductIds.map(id => [id, []]));
+        (
+            data || []
+        ).forEach(
+            image => {
 
-            if (
-                !loadedImages[
-                    image.product_id
-                ]
-            ) {
+                if (
+                    !loadedImages[
+                        image.product_id
+                    ]
+                ) {
+
+                    loadedImages[
+                        image.product_id
+                    ] = [];
+                }
 
                 loadedImages[
                     image.product_id
-                ] = [];
+                ].push(
+                    image
+                );
             }
-
-            loadedImages[
-                image.product_id
-            ].push(
-                image
-            );
-        }
-    );
-    productImagesCache = { ...productImagesCache, ...loadedImages };
+        );
+        productImagesCache = { ...productImagesCache, ...loadedImages };
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadProductImages", error);
+        showDataLoadError();
+    }
 }
 
 
@@ -1302,6 +1425,10 @@ async function uploadProductImages(
     productId,
     options = {}
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     if (
         !currentUser ||
@@ -1393,7 +1520,8 @@ async function uploadProductImages(
                 createProductImageStoragePath(
                     productId,
                     optimizedFile,
-                    index
+                    index,
+                    userId
                 );
 
             showMessage(
@@ -1406,7 +1534,7 @@ async function uploadProductImages(
                 error:
                     uploadError
             } =
-                await supabaseClient
+                await client
                     .storage
                     .from(
                         "product-images"
@@ -1434,7 +1562,7 @@ async function uploadProductImages(
                 data:
                     publicUrlData
             } =
-                supabaseClient
+                client
                     .storage
                     .from(
                         "product-images"
@@ -1451,7 +1579,7 @@ async function uploadProductImages(
 
                 try {
 
-                    await supabaseClient
+                    const { error: cleanupError } = await client
                         .storage
                         .from(
                             "product-images"
@@ -1459,6 +1587,7 @@ async function uploadProductImages(
                         .remove([
                             path
                         ]);
+                    if (cleanupError) throw cleanupError;
 
                 } catch (
                     cleanupError
@@ -1477,7 +1606,7 @@ async function uploadProductImages(
 
             const isPrimary =
                 !hasExistingPrimary &&
-                index === 0;
+                uploaded.length === 0;
 
             const displayOrder =
                 existingMaxOrder +
@@ -1488,13 +1617,13 @@ async function uploadProductImages(
                 error:
                     imageInsertError
             } =
-                await supabaseClient
+                await client
                     .from(
                         "product_images"
                     )
                     .insert({
                         user_id:
-                            currentUser.id,
+                            userId,
                         product_id:
                             productId,
                         storage_path:
@@ -1513,7 +1642,7 @@ async function uploadProductImages(
 
                 try {
 
-                    await supabaseClient
+                    const { error: cleanupError } = await client
                         .storage
                         .from(
                             "product-images"
@@ -1521,6 +1650,7 @@ async function uploadProductImages(
                         .remove([
                             path
                         ]);
+                    if (cleanupError) throw cleanupError;
 
                 } catch (
                     cleanupError
@@ -1749,6 +1879,7 @@ function initializeModals() {
 function openModal(
     id
 ) {
+    $("appToast").hidden = true;
 
     const modal =
         $(id);
@@ -1834,7 +1965,9 @@ function closeModal(
 
     if ((id === "saleModal" && saleSubmitting) ||
         (id === "productModal" && productSaving) ||
-        (id === "transactionModal" && transactionSaving)) return;
+        (id === "transactionModal" && transactionSaving) ||
+        (id === "deleteFinanceModal" && financeDeleting) ||
+        (id === "cancelSaleModal" && saleCancelling)) return;
     const modal =
         $(id);
 
@@ -1842,6 +1975,9 @@ function closeModal(
         return;
     }
 
+    if (id === "deleteFinanceModal") financeDeleteTarget = null;
+    if (id === "saleDetailsModal") saleDetailsRevision++;
+    if (id === "cancelSaleModal") saleCancellationTarget = null;
     modal.hidden =
         true;
 
@@ -1870,6 +2006,11 @@ function closeModal(
             )
         ) {
             lastFocusedElement.focus();
+        } else if (lastFocusedElement?.dataset.openSale) {
+            // A recarga da lista pode ter substituído o card durante a consulta.
+            [...document.querySelectorAll("[data-open-sale]")].find(element =>
+                element.dataset.openSale === lastFocusedElement.dataset.openSale && element.getClientRects().length
+            )?.focus();
         }
 
         lastFocusedElement = null;
@@ -1892,8 +2033,8 @@ function closeModal(
 async function handleLogin(
     event
 ) {
-
     event.preventDefault();
+
     event.stopPropagation();
 
     const emailInput =
@@ -1966,9 +2107,6 @@ async function handleLogin(
             return;
         }
 
-        currentUser =
-            data.user;
-
         await showApplication(
             data.user
         );
@@ -2000,23 +2138,46 @@ async function handleLogin(
 
 
 async function handleLogout() {
-
-    try {
-
-        await supabaseClient
-            .auth
-            .signOut();
-
-    } catch (
-        error
-    ) {
-
-        console.error(
-            "Erro ao sair:",
-            error
-        );
+    if (saleSubmitting || productSaving || transactionSaving || financeDeleting || saleCancelling) {
+        alert("Aguarde a operação terminar antes de sair.");
+        return;
     }
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        resetSessionState();
+    } catch (error) {
+        console.error("Erro ao sair:", error);
+        alert("Não foi possível encerrar a sessão. Tente novamente.");
+    }
+}
 
+function resetSessionState() {
+    saleCancellationTarget = null;
+    currentProfile = null;
+    profileLoadPromise = null;
+    renderUserGreeting();
+    saleDetailsRevision++;
+    financeDeleteTarget = null;
+    clearTimeout(toastTimer);
+    $("appToast").hidden = true;
+    stockFilter = "all"; productFilter = "all"; financeFilter = "all";
+    selectFilter("stockFilters", "stockFilter", "all");
+    selectFilter("productFilters", "productFilter", "all");
+    selectFilter("financeFilters", "financeFilter", "all");
+    ["productSearch", "stockSearch", "salesSearch", "financeSearch"].forEach(id => { $(id).value = ""; });
+    currentFinancePeriod = "month";
+    $("financePeriod").value = "month";
+    showRegistration("categories");
+    document.getElementById("dataLoadError")?.remove();
+    sessionGeneration++;
+    initializationPromise = null;
+    categoriesCache = []; colorsCache = []; sizesCache = [];
+    productsCache = []; variantsCache = []; salesCache = []; financeCache = [];
+    productImagesCache = {};
+    productVariationsDraft = []; editingProductId = null;
+    editingProductActiveVariantIds = []; editingVariantStocks = {}; saleDraft = [];
+    saleProductPickerOpen = false; saleVariantSelectionProductId = null;
     currentUser =
         null;
 
@@ -2068,11 +2229,13 @@ async function handleLogout() {
     }
 }
 
-
 async function showApplication(
     user
 ) {
 
+    if (!user?.id) return;
+    if (currentUser?.id !== user.id) resetSessionState();
+    const generation = sessionGeneration;
     currentUser =
         user;
 
@@ -2092,25 +2255,10 @@ async function showApplication(
     }
 
     if (appScreen) {
-        appScreen.hidden =
-            false;
+        appScreen.hidden = !appInitialized;
     }
 
-    const userName =
-        $("userName");
-
-    if (userName) {
-
-        const fullName =
-            user.user_metadata
-                ?.full_name;
-
-        userName.textContent =
-            fullName ||
-            user.email ||
-            "Usuário";
-        userName.title = userName.textContent;
-    }
+    renderUserGreeting();
 
     if (
         !appInitialized
@@ -2119,7 +2267,10 @@ async function showApplication(
         appInitialized =
             true;
 
-        await loadInitialData();
+        initializationPromise = loadInitialData();
+        await initializationPromise;
+        if (generation !== sessionGeneration) return;
+        if (appScreen) appScreen.hidden = false;
 
         showSection(
             "home"
@@ -2127,6 +2278,9 @@ async function showApplication(
 
         return;
     }
+
+    if (initializationPromise) await initializationPromise;
+    if (generation !== sessionGeneration) return;
 
     if (!wasVisible) {
 
@@ -2142,42 +2296,72 @@ async function showApplication(
 // CATEGORIAS
 // =========================================================
 
+function renderUserGreeting() {
+    const fullName = typeof currentProfile?.full_name === "string"
+        ? currentProfile.full_name.trim().replace(/\s+/g, " ") : "";
+    $("userName").textContent = fullName ? `Olá, ${fullName}` : "Olá";
+    $("userName").title = $("userName").textContent;
+}
+
+function loadUserProfile() {
+    if (!currentUser) return Promise.resolve();
+    if (profileLoadPromise) return profileLoadPromise;
+    const userId = currentUser.id;
+    const generation = sessionGeneration;
+    const client = sessionClient(userId, generation);
+    profileLoadPromise = (async () => {
+        try {
+            const { data, error } = await client.from("profiles").select("full_name").eq("id", userId).maybeSingle();
+            if (error) throw error;
+            if (generation !== sessionGeneration || currentUser?.id !== userId) return;
+            currentProfile = data;
+            renderUserGreeting();
+        } catch (error) {
+            if (generation !== sessionGeneration || currentUser?.id !== userId) return;
+            currentProfile = null;
+            renderUserGreeting();
+            console.warn("Não foi possível carregar o nome do perfil.");
+        }
+    })();
+    return profileLoadPromise;
+}
+
 async function loadCategories() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "categories"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order("name");
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar categorias:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "categories"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order("name"));
 
-        return;
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        categoriesCache =
+            data || [];
+
+        renderCategories();
+        populateCategorySelect();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadCategories", error);
+        showDataLoadError();
     }
-
-    categoriesCache =
-        data || [];
-
-    renderCategories();
-    populateCategorySelect();
 }
 
 
@@ -2213,6 +2397,7 @@ function renderCategories() {
                 <div class="category-card">
 
                     <div class="category-card-info">
+                    ${category.is_active === false ? '<small class="status-badge">Inativa</small>' : ''}
 
                         <strong>
                             ${escapeHtml(
@@ -2279,8 +2464,8 @@ function populateCategorySelect() {
     categoriesCache
         .filter(
             category =>
-                category.is_active !==
-                false
+                category.is_active !== false ||
+                category.id === (productsCache.find(product => product.id === editingProductId)?.category_id)
         )
         .forEach(
             category => {
@@ -2358,12 +2543,12 @@ function openCategoryModal(
 async function saveCategory(
     event
 ) {
-
     event.preventDefault();
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     const id =
         $("categoryId")
@@ -2408,7 +2593,7 @@ async function saveCategory(
         if (id) {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "categories"
                     )
@@ -2421,20 +2606,20 @@ async function saveCategory(
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
-                    );
+                        userId
+                    ).select("id").single();
 
         } else {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "categories"
                     )
                     .insert({
                         ...payload,
                         user_id:
-                            currentUser.id
+                            userId
                     });
         }
 
@@ -2445,6 +2630,7 @@ async function saveCategory(
         closeModal(
             "categoryModal"
         );
+        showToast("Categoria salva.");
 
         await loadCategories();
 
@@ -2459,8 +2645,7 @@ async function saveCategory(
 
         showMessage(
             "categoryFormMessage",
-            error.message ||
-            "Não foi possível salvar a categoria."
+            "Não foi possível salvar a categoria. Verifique a conexão e tente novamente."
         );
     }
 }
@@ -2469,10 +2654,11 @@ async function saveCategory(
 async function deleteCategory(
     id
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     if (
         !confirm(
@@ -2485,7 +2671,7 @@ async function deleteCategory(
     const {
         error
     } =
-        await supabaseClient
+        await client
             .from(
                 "categories"
             )
@@ -2496,8 +2682,8 @@ async function deleteCategory(
             )
             .eq(
                 "user_id",
-                currentUser.id
-            );
+                userId
+            ).select("id").single();
 
     if (error) {
 
@@ -2522,41 +2708,41 @@ async function deleteCategory(
 // =========================================================
 
 async function loadColors() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "colors"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order("name");
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar cores:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "colors"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order("name"));
 
-        return;
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        colorsCache =
+            data || [];
+
+        renderColors();
+        renderProductVariationOptions();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadColors", error);
+        showDataLoadError();
     }
-
-    colorsCache =
-        data || [];
-
-    renderColors();
-    renderProductVariationOptions();
 }
 
 
@@ -2607,6 +2793,7 @@ function renderColors() {
                             ></span>
 
                             <div class="color-card-text">
+                        ${color.is_active === false ? '<small class="status-badge">Inativa</small>' : ''}
 
                                 <strong class="color-card-name">
                                     ${escapeHtml(
@@ -2725,12 +2912,12 @@ function openColorModal(
 async function saveColor(
     event
 ) {
-
     event.preventDefault();
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     const id =
         $("colorId")
@@ -2789,7 +2976,7 @@ async function saveColor(
         if (id) {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "colors"
                     )
@@ -2802,20 +2989,20 @@ async function saveColor(
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
-                    );
+                        userId
+                    ).select("id").single();
 
         } else {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "colors"
                     )
                     .insert({
                         ...payload,
                         user_id:
-                            currentUser.id
+                            userId
                     });
         }
 
@@ -2826,6 +3013,7 @@ async function saveColor(
         closeModal(
             "colorModal"
         );
+        showToast("Cor salva.");
 
         await loadColors();
 
@@ -2840,8 +3028,7 @@ async function saveColor(
 
         showMessage(
             "colorFormMessage",
-            error.message ||
-            "Não foi possível salvar a cor."
+            "Não foi possível salvar a cor. Verifique a conexão e tente novamente."
         );
     }
 }
@@ -2850,10 +3037,11 @@ async function saveColor(
 async function deleteColor(
     id
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     if (
         !confirm(
@@ -2866,7 +3054,7 @@ async function deleteColor(
     const {
         error
     } =
-        await supabaseClient
+        await client
             .from(
                 "colors"
             )
@@ -2877,8 +3065,8 @@ async function deleteColor(
             )
             .eq(
                 "user_id",
-                currentUser.id
-            );
+                userId
+            ).select("id").single();
 
     if (error) {
 
@@ -2903,44 +3091,44 @@ async function deleteColor(
 // =========================================================
 
 async function loadSizes() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "sizes"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order(
-                "display_order"
-            )
-            .order("name");
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar tamanhos:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "sizes"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order(
+                    "display_order"
+                )
+                .order("name"));
 
-        return;
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        sizesCache =
+            data || [];
+
+        renderSizes();
+        renderProductVariationOptions();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadSizes", error);
+        showDataLoadError();
     }
-
-    sizesCache =
-        data || [];
-
-    renderSizes();
-    renderProductVariationOptions();
 }
 
 
@@ -2992,6 +3180,7 @@ function renderSizes() {
                                 )}
                             </strong>
 
+                            ${size.is_active === false ? '<small class="status-badge">Inativo</small>' : ''}
                             <small class="size-card-order">
                                 Ordem:
                                 ${Number(
@@ -3074,12 +3263,12 @@ function openSizeModal(
 async function saveSize(
     event
 ) {
-
     event.preventDefault();
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     const id =
         $("sizeId")
@@ -3127,7 +3316,7 @@ async function saveSize(
         if (id) {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "sizes"
                     )
@@ -3140,20 +3329,20 @@ async function saveSize(
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
-                    );
+                        userId
+                    ).select("id").single();
 
         } else {
 
             query =
-                await supabaseClient
+                await client
                     .from(
                         "sizes"
                     )
                     .insert({
                         ...payload,
                         user_id:
-                            currentUser.id
+                            userId
                     });
         }
 
@@ -3164,6 +3353,7 @@ async function saveSize(
         closeModal(
             "sizeModal"
         );
+        showToast("Tamanho salvo.");
 
         await loadSizes();
 
@@ -3178,8 +3368,7 @@ async function saveSize(
 
         showMessage(
             "sizeFormMessage",
-            error.message ||
-            "Não foi possível salvar o tamanho."
+            "Não foi possível salvar o tamanho. Verifique a conexão e tente novamente."
         );
     }
 }
@@ -3188,10 +3377,11 @@ async function saveSize(
 async function deleteSize(
     id
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     if (
         !confirm(
@@ -3204,7 +3394,7 @@ async function deleteSize(
     const {
         error
     } =
-        await supabaseClient
+        await client
             .from(
                 "sizes"
             )
@@ -3215,8 +3405,8 @@ async function deleteSize(
             )
             .eq(
                 "user_id",
-                currentUser.id
-            );
+                userId
+            ).select("id").single();
 
     if (error) {
 
@@ -3724,11 +3914,7 @@ function generateBatchVariations() {
         return;
     }
 
-    const quantityValue =
-        prompt(
-            "Qual quantidade deve ser aplicada às novas combinações?",
-            "1"
-        );
+    const quantityValue = $("batchVariationQuantity").value;
 
     if (
         quantityValue ===
@@ -3829,53 +4015,53 @@ function generateBatchVariations() {
 // =========================================================
 
 async function loadProducts() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "products"
-            )
-            .select(`
-                *,
-                categories (
-                    id,
-                    name
-                )
-            `)
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order("name");
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar produtos:",
+    try {
+        const {
+            data,
             error
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "products"
+                )
+                .select(`
+                    *,
+                    categories (
+                        id,
+                        name
+                    )
+                `)
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order("name"));
+
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        productsCache =
+            data || [];
+
+        await loadProductImages(
+            productsCache.map(
+                product =>
+                    product.id
+            )
         );
 
-        return;
+        renderProducts();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadProducts", error);
+        showDataLoadError();
     }
-
-    productsCache =
-        data || [];
-
-    await loadProductImages(
-        productsCache.map(
-            product =>
-                product.id
-        )
-    );
-
-    renderProducts();
 }
 
 
@@ -3926,13 +4112,15 @@ function renderProductCard(
                     <span class="product-stock-status ${inactive ? "inactive" : status.className}">${inactive ? "Inativo" : status.label}</span>
                 </div>
                 <div class="product-card-details" title="${escapeHtml(colors.join(", "))}">
-                    ${colors.length} ${colors.length === 1 ? "cor" : "cores"} · ${escapeHtml(sizes.join(", ") || "Sem tamanhos")}
+                    ${getProductVariants(product.id).length} ${getProductVariants(product.id).length === 1 ? "variação" : "variações"} · ${escapeHtml(sizes.join(", ") || "Sem tamanhos")}
                 </div>
                 <div class="product-card-actions">
                     <button type="button" class="product-card-edit-button" data-edit-product-button="${product.id}">Editar</button>
                     <button type="button" class="product-card-sell-button" data-quick-sell-product="${product.id}" ${inactive || totalStock <= 0 ? "disabled" : ""}>Vender</button>
+                    <details class="product-more"><summary aria-label="Mais ações de ${escapeHtml(product.name)}">Mais</summary><div>
                     <button type="button" class="product-card-toggle-button" data-toggle-product="${product.id}">${inactive ? "Ativar" : "Desativar"}</button>
-                    ${inactive ? `<button type="button" class="product-card-delete-button" data-delete-product="${product.id}">Excluir</button>` : ""}
+                    <button type="button" class="product-card-delete-button" data-delete-product="${product.id}">Excluir</button>
+                    </div></details>
                 </div>
             </div>
         </article>
@@ -3947,6 +4135,8 @@ function renderProducts() {
 
 
 function resetProductForm() {
+    setProductPanel("details");
+    $("productForm").querySelectorAll("details").forEach(element => { element.open = false; });
 
     const form =
         $("productForm");
@@ -4010,11 +4200,16 @@ function resetProductForm() {
 async function loadProductForEdit(
     product
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     resetProductForm();
 
     editingProductId =
         product.id;
+    populateCategorySelect();
 
     $("productId").value =
         product.id;
@@ -4052,7 +4247,7 @@ async function loadProductForEdit(
             variants,
         error
     } =
-        await supabaseClient
+        await fetchAllRows(() => client
             .from(
                 "product_variants"
             )
@@ -4076,17 +4271,20 @@ async function loadProductForEdit(
             `)
             .eq(
                 "user_id",
-                currentUser.id
+                userId
             )
             .eq(
                 "product_id",
                 product.id
             )
-            .order("id");
+            .order("id"));
 
+    if (generation !== sessionGeneration || editingProductId !== product.id) return;
     if (error) {
         throw error;
     }
+
+    editingVariantStocks = Object.fromEntries((variants || []).map(variant => [variant.id, variant.stock_quantity]));
 
     editingProductActiveVariantIds =
         (
@@ -4265,8 +4463,11 @@ function openProductModal(
 async function saveProduct(
     event
 ) {
-
     event.preventDefault();
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     if (productSaving) return;
     if (!currentUser) {
@@ -4337,8 +4538,8 @@ async function saveProduct(
     }
 
     if (
-        costPrice < 0 ||
-        salePrice < 0
+        !Number.isFinite(costPrice) || !Number.isFinite(salePrice) ||
+        costPrice < 0 || salePrice < 0
     ) {
 
         showMessage(
@@ -4415,14 +4616,14 @@ async function saveProduct(
                 data,
                 error
             } =
-                await supabaseClient
+                await client
                     .from(
                         "products"
                     )
                     .insert({
                         ...payload,
                         user_id:
-                            currentUser.id
+                            userId
                     })
                     .select()
                     .single();
@@ -4445,7 +4646,7 @@ async function saveProduct(
                     productVariationsDraft.map(
                         variation => ({
                             user_id:
-                                currentUser.id,
+                                userId,
 
                             product_id:
                                 product.id,
@@ -4474,7 +4675,7 @@ async function saveProduct(
                     error:
                         variantsError
                 } =
-                    await supabaseClient
+                    await client
                         .from(
                             "product_variants"
                         )
@@ -4485,6 +4686,7 @@ async function saveProduct(
                 if (
                     variantsError
                 ) {
+                    console.error("Erro ao criar variações:", variantsError);
 
                     throw new Error(
                         "Não foi possível criar as variações do produto. O produto será desfeito."
@@ -4501,7 +4703,7 @@ async function saveProduct(
                 data,
                 error
             } =
-                await supabaseClient
+                await client
                     .from(
                         "products"
                     )
@@ -4514,7 +4716,7 @@ async function saveProduct(
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
+                        userId
                     )
                     .select()
                     .single();
@@ -4542,7 +4744,7 @@ async function saveProduct(
                         error:
                             variantUpdateError
                     } =
-                        await supabaseClient
+                        await client
                             .from(
                                 "product_variants"
                             )
@@ -4571,12 +4773,14 @@ async function saveProduct(
                             )
                             .eq(
                                 "user_id",
-                                currentUser.id
+                                userId
                             )
                             .eq(
                                 "product_id",
                                 id
-                            );
+                            )
+                            .eq("stock_quantity", editingVariantStocks[variation.variantId] ?? variantsCache.find(item => item.id === variation.variantId)?.stock_quantity)
+                            .select("id").single();
 
                     if (
                         variantUpdateError
@@ -4585,6 +4789,7 @@ async function saveProduct(
                         throw variantUpdateError;
                     }
 
+                    editingVariantStocks[variation.variantId] = Number(variation.quantity || 0);
                 } else {
 
                     const {
@@ -4592,13 +4797,13 @@ async function saveProduct(
                             newVariantError,
                         data: newVariant
                     } =
-                        await supabaseClient
+                        await client
                             .from(
                                 "product_variants"
                             )
                             .insert({
                                 user_id:
-                                    currentUser.id,
+                                    userId,
 
                                 product_id:
                                     id,
@@ -4660,7 +4865,7 @@ async function saveProduct(
                     error:
                         deactivateVariantsError
                 } =
-                    await supabaseClient
+                    await client
                         .from(
                             "product_variants"
                         )
@@ -4670,7 +4875,7 @@ async function saveProduct(
                         })
                         .eq(
                             "user_id",
-                            currentUser.id
+                            userId
                         )
                         .eq(
                             "product_id",
@@ -4723,6 +4928,7 @@ async function saveProduct(
         closeModal(
             "productModal"
         );
+        showToast("Produto salvo.");
 
         productVariationsDraft =
             [];
@@ -4779,7 +4985,7 @@ async function saveProduct(
                 error:
                     cleanupError
             } =
-                await supabaseClient
+                await client
                     .from(
                         "products"
                     )
@@ -4790,7 +4996,7 @@ async function saveProduct(
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
+                        userId
                     );
 
             if (
@@ -4806,8 +5012,9 @@ async function saveProduct(
 
         showMessage(
             "productFormMessage",
-            error.message ||
-            "Não foi possível salvar o produto."
+            id
+                ? "Não foi possível concluir a edição. Algumas alterações podem ter sido salvas; reabra o produto para conferir."
+                : "Não foi possível salvar o produto. Confira sua conexão e tente novamente."
         );
 
     } finally {
@@ -4859,10 +5066,11 @@ async function openQuickSale(
 async function toggleProductActive(
     productId
 ) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
     const product =
         productsCache.find(
@@ -4895,7 +5103,7 @@ async function toggleProductActive(
     const {
         error
     } =
-        await supabaseClient
+        await client
             .from(
                 "products"
             )
@@ -4909,8 +5117,8 @@ async function toggleProductActive(
             )
             .eq(
                 "user_id",
-                currentUser.id
-            );
+                userId
+            ).select("id").single();
 
     if (error) {
         console.error(
@@ -4935,36 +5143,75 @@ async function toggleProductActive(
 }
 
 async function deleteProduct(productId) {
-    if (!currentUser) return;
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId || productSaving || saleSubmitting) return;
+    const client = sessionClient(userId, generation);
     const product = productsCache.find(item => item.id === productId);
     if (!product) return;
-    if (product.is_active !== false) {
-        alert("Desative o produto antes de excluir. Produtos com variações ou fotos devem ser mantidos para preservar o histórico.");
-        return;
-    }
+    if (!confirm(`Excluir "${product.name}" e suas variações e fotos? Esta ação não pode ser desfeita. Produtos com vendas ou movimentações serão preservados.`)) return;
+    productSaving = true;
+    let deletionStarted = false;
     try {
-        const results = await Promise.all([
-            supabaseClient.from("product_variants").select("id")
-                .eq("user_id", currentUser.id).eq("product_id", productId).limit(1),
-            supabaseClient.from("product_images").select("id")
-                .eq("user_id", currentUser.id).eq("product_id", productId).limit(1)
-        ]);
-        for (const result of results) {
-            if (result.error) throw result.error;
+        const variantsResult = await fetchAllRows(() => client.from("product_variants")
+            .select("id").eq("user_id", userId).eq("product_id", productId));
+        if (variantsResult.error) throw variantsResult.error;
+        const variantIds = variantsResult.data.map(variant => variant.id);
+        for (let index = 0; index < variantIds.length; index += 100) {
+            const ids = variantIds.slice(index, index + 100);
+            const history = await Promise.all([
+                client.from("sale_items").select("id").eq("user_id", userId)
+                    .in("product_variant_id", ids).limit(1),
+                client.from("inventory_movements").select("id").eq("user_id", userId)
+                    .in("product_variant_id", ids).limit(1)
+            ]);
+            for (const result of history) if (result.error) throw result.error;
+            if (history.some(result => result.data?.length)) {
+                alert("Este produto possui vendas ou movimentações e não pode ser excluído. Use Desativar para preservar o histórico.");
+                return;
+            }
         }
-        if (results.some(result => result.data?.length)) {
-            alert("Este produto possui variações ou fotos. Mantenha-o desativado para preservar estoque, fotos e histórico.");
-            return;
+        const imagesResult = await fetchAllRows(() => client.from("product_images")
+            .select("id, storage_path").eq("user_id", userId).eq("product_id", productId));
+        if (imagesResult.error) throw imagesResult.error;
+        // Impede novas seleções de venda enquanto a exclusão está em andamento.
+        const inactive = await client.from("products").update({ is_active: false })
+            .eq("user_id", userId).eq("id", productId).select("id").single();
+        if (inactive.error) throw inactive.error;
+        deletionStarted = true;
+        const variantsDelete = await client.from("product_variants").delete()
+            .eq("user_id", userId).eq("product_id", productId).select("id");
+        if (variantsDelete.error) throw variantsDelete.error;
+        if (variantsDelete.data?.length !== variantIds.length) throw new Error("Nem todas as variações foram removidas. Confira permissões e operações concorrentes.");
+        const imagesDelete = await client.from("product_images").delete()
+            .eq("user_id", userId).eq("product_id", productId).select("id");
+        if (imagesDelete.error) throw imagesDelete.error;
+        if (imagesDelete.data?.length !== imagesResult.data.length) throw new Error("Nem todas as fotos foram removidas. Confira permissões e operações concorrentes.");
+        const deleted = await client.from("products").delete()
+            .eq("user_id", userId).eq("id", productId).select("id").single();
+        if (deleted.error) throw deleted.error;
+        const paths = imagesResult.data.map(image => image.storage_path).filter(Boolean);
+        if (paths.length) {
+            try {
+                const { error } = await client.storage.from("product-images").remove(paths);
+                if (error) throw error;
+            } catch (error) {
+                console.error("Produto excluído; falha ao remover arquivos do Storage:", { productId, paths, error });
+                alert("Produto excluído, mas algumas fotos permaneceram no Storage. Confira o console para a limpeza manual.");
+            }
         }
-        if (!confirm(`Excluir o cadastro vazio e inativo "${product.name}"? Esta ação não pode ser desfeita.`)) return;
-        const { error } = await supabaseClient.from("products").delete()
-            .eq("id", productId).eq("user_id", currentUser.id).eq("is_active", false);
-        if (error) throw error;
-        await loadProductsPage();
-        await loadDashboard();
+        delete productImagesCache[productId];
     } catch (error) {
-        console.error("Erro ao excluir produto:", error);
-        alert("Não foi possível excluir. Mantenha o produto desativado se houver vínculos com o histórico.");
+        console.error("Erro ao excluir produto:", { productId, error });
+        alert(deletionStarted
+            ? "A exclusão não foi concluída. O produto foi desativado e pode ter sido parcialmente removido. Confira o cadastro antes de tentar novamente."
+            : "Não foi possível verificar ou excluir o produto. Nenhum registro foi removido.");
+    } finally {
+        productSaving = false;
+        if (generation === sessionGeneration) {
+            await loadProductsPage();
+            await loadDashboard();
+        }
     }
 }
 
@@ -4974,92 +5221,89 @@ async function deleteProduct(productId) {
 // =========================================================
 
 async function loadVariants(includeImages = true) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "product_variants"
-            )
-            .select(`
-                *,
-                products (
-                    id,
-                    name,
-                    sale_price,
-                    cost_price,
-                    minimum_stock,
-                    is_active
-                ),
-                colors (
-                    id,
-                    name,
-                    hex_code
-                ),
-                sizes (
-                    id,
-                    name
-                )
-            `)
-            .eq(
-                "user_id",
-                currentUser.id
-            );
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar variações:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "product_variants"
+                )
+                .select(`
+                    *,
+                    products (
+                        id,
+                        name,
+                        sale_price,
+                        cost_price,
+                        minimum_stock,
+                        is_active
+                    ),
+                    colors (
+                        id,
+                        name,
+                        hex_code
+                    ),
+                    sizes (
+                        id,
+                        name
+                    )
+                `)
+                .eq(
+                    "user_id",
+                    userId
+                ));
+
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
 
         variantsCache =
-            [];
+            data || [];
 
-        return;
-    }
-
-    variantsCache =
-        data || [];
-
-    const productIds =
-        [
-            ...new Set(
-                variantsCache
-                    .map(
-                        variant =>
-                            variant.products?.id
-                    )
-                    .filter(
-                        Boolean
-                    )
-            )
-        ];
-
-    const allProductIds =
-        [
-            ...new Set([
-                ...productIds,
-                ...productsCache.map(
-                    product =>
-                        product.id
+        const productIds =
+            [
+                ...new Set(
+                    variantsCache
+                        .map(
+                            variant =>
+                                variant.products?.id
+                        )
+                        .filter(
+                            Boolean
+                        )
                 )
-            ])
-        ];
+            ];
 
-    if (
-        includeImages && allProductIds.length
-    ) {
+        const allProductIds =
+            [
+                ...new Set([
+                    ...productIds,
+                    ...productsCache.map(
+                        product =>
+                            product.id
+                    )
+                ])
+            ];
 
-        await loadProductImages(
-            allProductIds
-        );
+        if (
+            includeImages && allProductIds.length
+        ) {
+
+            await loadProductImages(
+                allProductIds
+            );
+        }
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadVariants", error);
+        showDataLoadError();
     }
 }
 
@@ -5235,12 +5479,8 @@ function renderStockCard(
                     ${minimum}
                 </small>
 
-                <small>
-                    Status:
-                    ${escapeHtml(
-                        status.label
-                    )}
-                </small>
+                <span class="status-text ${status.className}">${escapeHtml(status.label)}</span>
+                <button type="button" class="text-button" data-adjust-stock="${escapeHtml(productId)}">Ajustar estoque</button>
 
             </div>
 
@@ -5273,6 +5513,7 @@ function renderStock() {
 // =========================================================
 
 function resetSaleDraft() {
+    setSaleStage("items");
 
     saleDraft = [];
 
@@ -5322,6 +5563,8 @@ function resetSaleDraft() {
 async function openNewSaleModal(
     options = {}
 ) {
+    if (!currentUser) return;
+    const generation = sessionGeneration;
 
 
     resetSaleDraft();
@@ -5330,6 +5573,8 @@ async function openNewSaleModal(
         loadProducts(),
         loadVariants(false)
     ]);
+
+    if (generation !== sessionGeneration) return;
 
     if (
         options.productId
@@ -5441,6 +5686,8 @@ function toggleSaleProductPicker() {
 
         renderSaleProductPicker();
     }
+    syncSalePickerView();
+
 }
 
 
@@ -5476,6 +5723,9 @@ function closeSaleProductPicker() {
         list.hidden =
             false;
     }
+    syncSalePickerView();
+    if (!$("saleModal").hidden) $("saleAddProductButton").focus({ preventScroll: true });
+
 }
 
 
@@ -5639,132 +5889,30 @@ function renderSaleProductPicker() {
 }
 
 
-function renderSaleVariantPicker(
-    productId
-) {
-
-    const container =
-        $("saleVariantPicker");
-
-    if (!container) {
-        return;
-    }
-
-    const product =
-        productsCache.find(
-            item =>
-                item.id ===
-                productId
-        );
-
-    if (!product) {
-
-        container.hidden =
-            true;
-
-        return;
-    }
-
-    const variants =
-        getProductVariants(
-            productId
-        ).filter(
-            variant =>
-                variant.is_active !==
-                    false &&
-                Number(
-                    variant.stock_quantity ||
-                    0
-                ) > 0
-        );
-
-    if (
-        !variants.length
-    ) {
-
-        container.hidden =
-            false;
-
-        container.innerHTML = `
-            <div class="empty-state compact">
-                <strong>Sem estoque disponível</strong>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.hidden =
-        false;
-
-    container.innerHTML = `
-
-        <div>
-
-            <strong>
-                ${escapeHtml(
-                    product.name
-                )}
-            </strong>
-
-            <button
-                type="button"
-                class="secondary-button small"
-                data-sale-back-picker
-                aria-label="Voltar para produtos"
-            >
-                Voltar
-            </button>
-
-        </div>
-
-        <div>
-
-            ${variants.map(
-                variant => `
-
-                <button
-                    type="button"
-                    class="sale-variant-picker-item"
-                    data-sale-select-variant="${variant.id}"
-                >
-
-                    <span>
-
-                        ${escapeHtml(
-                            variant.colors?.name ||
-                            "Sem cor"
-                        )}
-
-                        /
-
-                        ${escapeHtml(
-                            variant.sizes?.name ||
-                            "Sem tamanho"
-                        )}
-
-                    </span>
-
-                    <span>
-                        Estoque:
-                        ${Number(
-                            variant.stock_quantity ||
-                            0
-                        )}
-                    </span>
-
-                    <strong>
-                        ${formatCurrency(
-                            product.sale_price
-                        )}
-                    </strong>
-
-                </button>
-            `
-            ).join("")}
-
-        </div>
-    `;
+function renderSaleVariantPicker(productId) {
+    const container = $("saleVariantPicker");
+    const product = productsCache.find(item => item.id === productId);
+    if (!product) return;
+    saleVariantSelectionProductId = productId;
+    saleProductPickerOpen = true;
+    $("saleProductPicker").hidden = false;
+    $("saleProductPickerList").hidden = true;
+    container.hidden = false;
+    const groups = new Map();
+    getProductVariants(productId).forEach(variant => {
+        const color = variant.colors?.name || "Sem cor";
+        if (!groups.has(color)) groups.set(color, []);
+        groups.get(color).push(variant);
+    });
+    container.innerHTML = `<div class="variant-product-heading"><strong>${escapeHtml(product.name)}</strong><button type="button" class="text-button" data-sale-back-picker>‹ Produtos</button></div>
+        <p class="field-hint">${formatCurrency(product.sale_price)} · Toque no tamanho para adicionar.</p>
+        <div class="variant-color-groups">${[...groups].map(([color, variants]) => `<section class="variant-color-group"><h3>${escapeHtml(color)}</h3><div class="variant-size-options">${variants.map(variant => {
+            const stock = Number(variant.stock_quantity || 0);
+            const reserved = saleDraft.find(item => item.variantId === variant.id)?.quantity || 0;
+            const available = Math.max(0, stock - reserved);
+            return `<button type="button" class="sale-variant-picker-item" data-sale-select-variant="${variant.id}" ${available <= 0 ? "disabled" : ""}><strong>${escapeHtml(variant.sizes?.name || "Único")}</strong><span>${available > 0 ? `${available} disponíveis` : "Indisponível"}</span></button>`;
+        }).join("")}</div></section>`).join("") || emptyState("Sem variações", "Cadastre cores e tamanhos no produto.")}</div>`;
+    syncSalePickerView();
 }
 
 
@@ -6170,6 +6318,9 @@ function renderSaleSummary() {
             );
     }
 
+    $("saleCartTotal").textContent = formatCurrency(subtotal);
+    $("saleContinueButton").disabled = !saleDraft.length;
+
     return {
         subtotal,
         discount:
@@ -6184,47 +6335,47 @@ function renderSaleSummary() {
 // =========================================================
 
 async function loadSales() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "sales"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order(
-                "sale_date",
-                {
-                    ascending:
-                        false
-                }
-            );
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar vendas:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "sales"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order(
+                    "sale_date",
+                    {
+                        ascending:
+                            false
+                    }
+                ));
 
-        return;
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        salesCache =
+            data || [];
+
+        renderSales();
+        updateSalesMetrics();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadSales", error);
+        showDataLoadError();
     }
-
-    salesCache =
-        data || [];
-
-    renderSales();
-    updateSalesMetrics();
 }
 
 
@@ -6237,7 +6388,7 @@ function updateSalesMetrics() {
         salesCache.filter(
             sale =>
                 sale.status !==
-                    "cancelled" &&
+                    "cancelled" && !sale.cancelled_at &&
                 localDateKey(
                     sale.sale_date
                 ) === today
@@ -6289,9 +6440,9 @@ function renderSaleHistoryCard(
 
     return `
 
-        <div class="sale-card">
+        <button type="button" class="sale-card" data-open-sale="${escapeHtml(sale.id)}" aria-label="Ver detalhes da venda #${escapeHtml(sale.sale_number)}">
 
-            <div>
+            <span class="sale-card-info">
 
                 <strong>
                     Venda #${escapeHtml(
@@ -6305,25 +6456,12 @@ function renderSaleHistoryCard(
                     )}
                 </span>
 
-                ${
-                    cancelled
-                        ? `
-                        <small>
-                            Cancelada
-                        </small>
-                        `
-                        : `
-                        <small>
-                            ${escapeHtml(
-                                formatPaymentMethod(
-                                    sale.payment_method
-                                )
-                            )}
-                        </small>
-                        `
-                }
-
-            </div>
+                <small>${escapeHtml(formatPaymentMethod(sale.payment_method))}</small>
+                <span class="status-badge ${cancelled || sale.cancelled_at ? "zero" : "normal"}">${cancelled ? "CANCELADA" : sale.cancelled_at ? "Cancelamento pendente" : sale.status === "completed" ? "Concluída" : "Status não informado"}</span>
+                ${cancelled && sale.cancelled_at ? `<small>Cancelada em ${escapeHtml(formatLocalDateTime(sale.cancelled_at))}</small>` : ""}
+                ${cancelled && sale.cancellation_reason ? `<small>Motivo: ${escapeHtml(sale.cancellation_reason)}</small>` : ""}
+                <small class="sale-details-hint">Ver detalhes →</small>
+            </span>
 
             <strong>
                 ${formatCurrency(
@@ -6331,7 +6469,7 @@ function renderSaleHistoryCard(
                 )}
             </strong>
 
-        </div>
+        </button>
     `;
 }
 
@@ -6340,8 +6478,248 @@ function renderSales() {
     filterSales({ target: $("salesSearch") });
 }
 
+async function openSaleDetails(id) {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId || financeDeleting || saleSubmitting || saleCancelling) return;
+    const revision = ++saleDetailsRevision;
+    const client = sessionClient(userId, generation);
+    const modal = $("saleDetailsModal");
+    $("saleDetailsTitle").textContent = "Detalhes da venda";
+    $("saleDetailsContent").replaceChildren();
+    showMessage("saleDetailsMessage", "Carregando venda…", "info");
+    modal.setAttribute("aria-busy", "true");
+    openModal("saleDetailsModal");
+    const isCurrent = () => revision === saleDetailsRevision && generation === sessionGeneration && currentUser?.id === userId && !modal.hidden;
+    try {
+        const [saleResult, itemsResult] = await Promise.all([
+            client.from("sales").select("*").eq("id", id).eq("user_id", userId).single(),
+            fetchAllRows(() => client.from("sale_items").select("*").eq("sale_id", id).eq("user_id", userId))
+        ]);
+        if (!isCurrent()) return;
+        if (saleResult.error || itemsResult.error || !saleResult.data) throw saleResult.error || itemsResult.error || new Error("Venda não encontrada");
+        const sale = saleResult.data;
+        const items = itemsResult.data || [];
+        const cancelled = sale.status === "cancelled";
+        const money = value => value == null ? "Não informado" : formatCurrency(value);
+        $("saleDetailsTitle").textContent = `Venda #${sale.sale_number}`;
+        $("saleDetailsContent").innerHTML = `
+            <span class="status-badge ${cancelled || sale.cancelled_at ? "zero" : "normal"}">${cancelled ? "CANCELADA" : sale.cancelled_at ? "Cancelamento pendente" : sale.status === "completed" ? "Concluída" : "Status não informado"}</span>
+            <dl class="sale-details-summary">
+                <div><dt>Data</dt><dd>${escapeHtml(formatLocalDateTime(sale.sale_date))}</dd></div>
+                <div><dt>Forma de pagamento</dt><dd>${escapeHtml(formatPaymentMethod(sale.payment_method))}</dd></div>
+            </dl>
+            <h3>Produtos</h3>
+            ${items.length ? `<ul class="sale-details-items">${items.map(item => `
+                <li><strong>${escapeHtml(item.product_name || "Produto não informado")}</strong>
+                    <span>${escapeHtml(item.variant_description || "Variação não informada")}</span>
+                    <span>${escapeHtml(item.quantity)} un. × ${money(item.unit_price)}</span>
+                    <strong>Total do item: ${money(item.total)}</strong></li>`).join("")}</ul>`
+                : '<p>Nenhum item encontrado para esta venda.</p>'}
+            <dl class="sale-details-summary">
+                <div><dt>Subtotal</dt><dd>${money(sale.subtotal)}</dd></div>
+                <div><dt>Desconto</dt><dd>${money(sale.discount)}</dd></div>
+                <div><dt>Total</dt><dd><strong>${money(sale.total)}</strong></dd></div>
+            </dl>
+            ${sale.notes ? `<h3>Observações</h3><p class="sale-details-text">${escapeHtml(sale.notes)}</p>` : ""}
+            ${cancelled ? `<h3>Cancelamento</h3>
+                <p>Cancelada em: ${sale.cancelled_at ? escapeHtml(formatLocalDateTime(sale.cancelled_at)) : "Data não informada"}</p>
+                ${sale.cancellation_reason ? `<p class="sale-details-text">Motivo: ${escapeHtml(sale.cancellation_reason)}</p>` : ""}`
+                : sale.cancelled_at ? '<p class="form-message error">Cancelamento pendente de conferência. Não repita a operação; confira estoque e financeiro com o suporte.</p>'
+                : sale.status === "completed" ? `<div class="sale-details-actions"><h3>Ações da venda</h3><button type="button" class="secondary-button danger" data-cancel-sale="${escapeHtml(sale.id)}" data-sale-number="${escapeHtml(sale.sale_number)}">Cancelar venda</button></div>` : ""}
+        `;
+        showMessage("saleDetailsMessage", "");
+    } catch (error) {
+        if (!isCurrent()) return;
+        console.error("Erro ao carregar detalhes da venda:", error);
+        showMessage("saleDetailsMessage", "Não foi possível carregar a venda e seus itens. Feche e tente abrir novamente.");
+    } finally {
+        if (revision === saleDetailsRevision) modal.removeAttribute("aria-busy");
+    }
+}
+
+
+function openSaleCancellation(id, number) {
+    if (!currentUser || saleCancelling) return;
+    saleCancellationTarget = { id, userId: currentUser.id, generation: sessionGeneration };
+    $("cancelSaleTitle").textContent = `Cancelar venda #${number}?`;
+    $("cancelSaleReason").value = "";
+    $("cancelSaleConfirm").disabled = false;
+    showMessage("cancelSaleMessage", "");
+    openModal("cancelSaleModal");
+}
+
+// Cada escrita é confirmada antes de prosseguir. Uma resposta perdida não é
+// confundida com rollback: a marca persistida mantém novas tentativas bloqueadas.
+async function performSaleCancellation(client, userId, id, reason, movementType) {
+    const read = async query => {
+        const { data, error } = await query;
+        if (error) throw new Error("Não foi possível conferir os dados da venda. Feche e tente novamente.", { cause: error });
+        return data;
+    };
+    const sale = await read(client.from("sales").select("*").eq("id", id).eq("user_id", userId).single());
+    if (sale.status === "cancelled") return { alreadyCancelled: true };
+    if (sale.status !== "completed" || sale.cancelled_at) {
+        throw new Error("Esta venda não está disponível para cancelamento. Se houver uma tentativa pendente, confira os registros com o suporte.");
+    }
+    if (!movementType) throw new Error("Antes de cancelar, o suporte precisa confirmar o tipo de movimentação de devolução permitido no estoque. Nenhum dado foi alterado.");
+    const [items, receipts, originalMovements] = await Promise.all([
+        read(fetchAllRows(() => client.from("sale_items").select("*").eq("sale_id", id).eq("user_id", userId))),
+        read(fetchAllRows(() => client.from("financial_transactions").select("*").eq("reference_id", id).eq("user_id", userId))),
+        read(fetchAllRows(() => client.from("inventory_movements").select("*").eq("reference_id", id).eq("user_id", userId)))
+    ]);
+    const quantities = new Map();
+    for (const item of items) {
+        const quantity = Number(item.quantity);
+        if (!item.product_variant_id || !Number.isSafeInteger(quantity) || quantity <= 0) throw new Error("Itens da venda inconsistentes. Confira a venda com o suporte.");
+        quantities.set(item.product_variant_id, (quantities.get(item.product_variant_id) || 0) + quantity);
+    }
+    if (!quantities.size || receipts.length !== 1 || receipts[0].transaction_type !== "income" ||
+        !Number.isFinite(Number(sale.total)) || Number(sale.total) <= 0 ||
+        !Number.isFinite(Number(receipts[0].amount)) || Number(receipts[0].amount) <= 0 ||
+        Math.round(Number(receipts[0].amount) * 100) !== Math.round(Number(sale.total) * 100)) {
+        throw new Error("Os itens ou a receita interna da venda precisam de conferência antes do cancelamento.");
+    }
+    if (originalMovements.some(row => row.movement_type !== "sale" || !Number.isSafeInteger(Number(row.quantity)) || Number(row.quantity) <= 0) ||
+        originalMovements.some(row => !quantities.has(row.product_variant_id)) ||
+        [...quantities].some(([variantId, quantity]) => originalMovements.filter(row => row.product_variant_id === variantId)
+            .reduce((sum, row) => sum + Number(row.quantity), 0) !== quantity)) {
+        throw new Error("O histórico de estoque da venda precisa de conferência antes do cancelamento.");
+    }
+    const stamp = new Date().toISOString();
+    let claimed = false;
+    let uncertain = false;
+    let financeRemoved = false;
+    const stocks = [];
+    let movements = [];
+    const write = async (query, expectedRows) => {
+        uncertain = true;
+        const { data, error } = await query;
+        if (error) {
+            // Erro PostgreSQL confirma rejeição da instrução; erro de rede não.
+            if (/^(22|23|42)[0-9A-Z]{3}$/.test(error.code || "")) uncertain = false;
+            throw error;
+        }
+        if (!Array.isArray(data)) throw new Error("Resposta da escrita não pôde ser confirmada.");
+        if (data.length === 0) {
+            uncertain = false;
+            throw new Error("O registro mudou ou a operação não foi autorizada.");
+        }
+        if (data.length !== expectedRows) throw new Error("Quantidade inesperada de registros alterados.");
+        uncertain = false;
+        return data;
+    };
+    try {
+        // Usa somente os campos existentes: completed + cancelled_at representa
+        // uma tentativa em andamento/pendente. O CAS também protege entre abas.
+        await write(client.from("sales").update({ cancelled_at: stamp, cancellation_reason: reason || null })
+            .eq("id", id).eq("user_id", userId).eq("status", "completed").is("cancelled_at", null).select("id"), 1);
+        claimed = true;
+        for (const [variantId, quantity] of [...quantities].sort(([a], [b]) => a.localeCompare(b))) {
+            const variant = await read(client.from("product_variants").select("id,stock_quantity")
+                .eq("id", variantId).eq("user_id", userId).single());
+            const previous = Number(variant.stock_quantity);
+            const next = previous + quantity;
+            if (!Number.isSafeInteger(previous) || previous < 0 || !Number.isSafeInteger(next)) throw new Error("Estoque inválido para devolução.");
+            await write(client.from("product_variants").update({ stock_quantity: next }).eq("id", variantId)
+                .eq("user_id", userId).eq("stock_quantity", previous).select("id"), 1);
+            stocks.push({ id: variantId, previous, next });
+        }
+        movements = await write(client.from("inventory_movements").insert([...quantities].map(([variantId, quantity]) => ({
+            user_id: userId, product_variant_id: variantId, movement_type: movementType, quantity,
+            reference_id: id, reason: `Cancelamento da venda #${sale.sale_number}`, notes: reason || null
+        }))).select("id"), quantities.size);
+        const receipt = receipts[0];
+        await write(client.from("financial_transactions").delete().eq("id", receipt.id).eq("user_id", userId)
+            .eq("reference_id", id).eq("transaction_type", "income").eq("amount", receipt.amount).select("id"), 1);
+        financeRemoved = true;
+        await write(client.from("sales").update({ status: "cancelled" }).eq("id", id).eq("user_id", userId)
+            .eq("status", "completed").eq("cancelled_at", stamp).select("id"), 1);
+        return { alreadyCancelled: false };
+    } catch (error) {
+        console.error("Falha no cancelamento da venda", { saleId: id, stamp, claimed, uncertain, financeRemoved, stocks, movements, error });
+        let rollbackFailed = false;
+        // Depois de remover a receita, não recria registros/IDs por suposição.
+        // Tampouco compensa escritas cujo resultado é desconhecido.
+        if (claimed && !uncertain && !financeRemoved) {
+            for (const stock of [...stocks].reverse()) {
+                try {
+                    await write(client.from("product_variants").update({ stock_quantity: stock.previous }).eq("id", stock.id)
+                        .eq("user_id", userId).eq("stock_quantity", stock.next).select("id"), 1);
+                } catch (rollbackError) {
+                    rollbackFailed = true;
+                    console.error("Falha ao compensar estoque no cancelamento", { saleId: id, stock, error: rollbackError });
+                }
+            }
+            if (!rollbackFailed) {
+                try {
+                    if (movements.length) await write(client.from("inventory_movements").delete().eq("user_id", userId)
+                        .eq("reference_id", id).in("id", movements.map(row => row.id)).select("id"), movements.length);
+                    await write(client.from("sales").update({ cancelled_at: null, cancellation_reason: sale.cancellation_reason || null })
+                        .eq("id", id).eq("user_id", userId).eq("status", "completed").eq("cancelled_at", stamp).select("id"), 1);
+                } catch (rollbackError) {
+                    rollbackFailed = true;
+                    console.error("Falha ao compensar movimentos/marca de cancelamento", { saleId: id, error: rollbackError });
+                }
+            }
+        }
+        const pending = uncertain || financeRemoved || rollbackFailed;
+        const failure = new Error(pending
+            ? "Não foi possível concluir ou confirmar o cancelamento. Não repita a operação. Confira esta venda, o estoque e o financeiro com o suporte."
+            : "Não foi possível cancelar a venda. As alterações confirmadas foram desfeitas. Reabra os detalhes para conferir antes de tentar novamente.");
+        failure.cause = error;
+        throw failure;
+    }
+}
+
+async function cancelSale(event) {
+    event.preventDefault();
+    if (saleCancelling || !saleCancellationTarget) return;
+    const { id, userId, generation } = saleCancellationTarget;
+    if (currentUser?.id !== userId || sessionGeneration !== generation) return;
+    saleCancelling = true;
+    $("cancelSaleForm").inert = true;
+    $("cancelSaleModal").setAttribute("aria-busy", "true");
+    setLoading($("cancelSaleConfirm"), true, "Cancelando…");
+    let result;
+    let failure;
+    try {
+        result = await performSaleCancellation(sessionClient(userId, generation), userId, id, $("cancelSaleReason").value.trim(), SALE_RETURN_MOVEMENT_TYPE);
+    } catch (error) {
+        failure = error;
+        console.error("Não foi possível cancelar venda", { saleId: id, error });
+    } finally {
+        try {
+            if (currentUser?.id === userId && sessionGeneration === generation) {
+                await Promise.all([loadSales(), loadProducts(), loadStock(), loadFinance()]);
+                await loadDashboard();
+            }
+        } catch (refreshError) {
+            console.error("Falha ao atualizar dados após cancelamento", { saleId: id, error: refreshError });
+            failure = failure || new Error("A operação terminou, mas a atualização da tela falhou. Recarregue a página para conferir esta venda antes de qualquer nova tentativa.");
+        } finally {
+            saleCancelling = false;
+            $("cancelSaleForm").inert = false;
+            $("cancelSaleModal").removeAttribute("aria-busy");
+            setLoading($("cancelSaleConfirm"), false);
+        }
+    }
+    if (currentUser?.id !== userId || sessionGeneration !== generation) return;
+    if (failure) {
+        showMessage("cancelSaleMessage", failure.message);
+        $("cancelSaleConfirm").disabled = true;
+    } else {
+        closeModal("cancelSaleModal");
+        await openSaleDetails(id);
+        showToast(result.alreadyCancelled ? "Esta venda já estava cancelada. Nenhuma alteração foi feita." : "Venda cancelada.");
+    }
+}
 
 async function registerSale() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     if (saleSubmitting) return;
     if (!currentUser) {
@@ -6438,7 +6816,7 @@ async function registerSale() {
                 error:
                     variantReadError
             } =
-                await supabaseClient
+                await client
                     .from(
                         "product_variants"
                     )
@@ -6455,7 +6833,7 @@ async function registerSale() {
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
+                        userId
                     )
                     .single();
 
@@ -6463,6 +6841,7 @@ async function registerSale() {
                 variantReadError ||
                 !currentVariant
             ) {
+                console.error("Erro ao verificar variação:", variantReadError);
 
                 throw new Error(
                     `Não foi possível verificar o estoque de "${item.productName}".`
@@ -6492,9 +6871,6 @@ async function registerSale() {
                 currentStock;
         }
 
-        const saleNumber =
-            await getNextSaleNumber();
-
         const notes =
             $("saleNotesInput")
                 ?.value
@@ -6507,16 +6883,13 @@ async function registerSale() {
             error:
                 saleError
         } =
-            await supabaseClient
+            await client
                 .from(
                     "sales"
                 )
                 .insert({
                     user_id:
-                        currentUser.id,
-
-                    sale_number:
-                        saleNumber,
+                        userId,
 
                     sale_date:
                         saleTimestamp.toISOString(),
@@ -6548,12 +6921,14 @@ async function registerSale() {
         saleId =
             sale.id;
 
+        const saleNumber = sale.sale_number;
+
         const saleItems =
             saleDraft.map(
                 item => ({
 
                     user_id:
-                        currentUser.id,
+                        userId,
 
                     sale_id:
                         sale.id,
@@ -6589,7 +6964,7 @@ async function registerSale() {
             error:
                 saleItemsError
         } =
-            await supabaseClient
+            await client
                 .from(
                     "sale_items"
                 )
@@ -6630,7 +7005,7 @@ async function registerSale() {
                 error:
                     stockError
             } =
-                await supabaseClient
+                await client
                     .from(
                         "product_variants"
                     )
@@ -6644,7 +7019,7 @@ async function registerSale() {
                     )
                     .eq(
                         "user_id",
-                        currentUser.id
+                        userId
                     )
                     .eq(
                         "stock_quantity",
@@ -6657,6 +7032,7 @@ async function registerSale() {
                 stockError ||
                 !updatedVariant
             ) {
+                console.error("Erro ao atualizar estoque:", stockError);
 
                 throw new Error(
                     `O estoque de "${item.productName}" mudou enquanto a venda era registrada. A operação será desfeita.`
@@ -6674,7 +7050,7 @@ async function registerSale() {
 
             movements.push({
                 user_id:
-                    currentUser.id,
+                    userId,
 
                 product_variant_id:
                     item.variantId,
@@ -6700,7 +7076,7 @@ async function registerSale() {
             error:
                 movementError
         } =
-            await supabaseClient
+            await client
                 .from(
                     "inventory_movements"
                 )
@@ -6721,13 +7097,13 @@ async function registerSale() {
             error:
                 financeError
         } =
-            await supabaseClient
+            await client
                 .from(
                     "financial_transactions"
                 )
                 .insert({
                     user_id:
-                        currentUser.id,
+                        userId,
 
                     transaction_type:
                         "income",
@@ -6766,6 +7142,7 @@ async function registerSale() {
         closeModal(
             "saleModal"
         );
+        showToast("Venda registrada.");
 
         resetSaleDraft();
 
@@ -6787,52 +7164,28 @@ async function registerSale() {
             error
         );
 
-        if (
-            financeInserted &&
-            saleId
-        ) {
-
-            await supabaseClient
-                .from(
-                    "financial_transactions"
-                )
-                .delete()
-                .eq(
-                    "user_id",
-                    currentUser.id
-                )
-                .eq(
-                    "reference_id",
-                    saleId
-                );
+        if (financeInserted) {
+            alert("Venda registrada, mas a atualização da tela falhou. Atualize a página; não registre novamente.");
+            return;
         }
-
-        if (
-            inventoryMovementsInserted &&
-            saleId
-        ) {
-
-            await supabaseClient
-                .from(
-                    "inventory_movements"
-                )
-                .delete()
-                .eq(
-                    "user_id",
-                    currentUser.id
-                )
-                .eq(
-                    "reference_id",
-                    saleId
-                );
-        }
+        let rollbackFailed = false;
+        const compensate = async (query, label, requireRow = false) => {
+            try {
+                const { data, error } = await query();
+                if (error) throw error;
+                if (requireRow && !data) throw new Error("Registro não encontrado ou estoque alterado por outra operação.");
+            } catch (error) {
+                rollbackFailed = true;
+                console.error(`Falha no rollback (${label}); venda ${saleId}:`, error);
+            }
+        };
 
         for (
             const variant
             of updatedVariants
         ) {
 
-            await supabaseClient
+            await compensate(() => client
                 .from(
                     "product_variants"
                 )
@@ -6846,12 +7199,36 @@ async function registerSale() {
                 )
                 .eq(
                     "user_id",
-                    currentUser.id
+                    userId
                 )
                 .eq(
                     "stock_quantity",
                     variant.newStock
-                );
+                ).select().single(), "estoque", true);
+        }
+
+        if (rollbackFailed) {
+            showMessage("saleFormMessage", "A venda falhou e o estoque não pôde ser restaurado. Não tente novamente antes de conferir a venda " + saleId + " no Supabase.");
+            return;
+        }
+        if (
+            inventoryMovementsInserted &&
+            saleId
+        ) {
+
+            await compensate(() => client
+                .from(
+                    "inventory_movements"
+                )
+                .delete()
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .eq(
+                    "reference_id",
+                    saleId
+                ), "exclusão");
         }
 
         if (
@@ -6859,24 +7236,24 @@ async function registerSale() {
             saleId
         ) {
 
-            await supabaseClient
+            await compensate(() => client
                 .from(
                     "sale_items"
                 )
                 .delete()
                 .eq(
                     "user_id",
-                    currentUser.id
+                    userId
                 )
                 .eq(
                     "sale_id",
                     saleId
-                );
+                ), "exclusão");
         }
 
-        if (saleId) {
+        if (saleId && !rollbackFailed) {
 
-            await supabaseClient
+            await compensate(() => client
                 .from(
                     "sales"
                 )
@@ -6887,14 +7264,19 @@ async function registerSale() {
                 )
                 .eq(
                     "user_id",
-                    currentUser.id
-                );
+                    userId
+                ), "exclusão");
         }
 
+        if (rollbackFailed) {
+            showMessage("saleFormMessage", "A venda falhou e o rollback ficou incompleto. Confira a venda " + saleId + " no Supabase antes de tentar novamente.");
+            return;
+        }
         showMessage(
             "saleFormMessage",
-            error.message ||
-            "Não foi possível registrar a venda. Confira os registros e o estoque antes de tentar novamente."
+            error instanceof Error && /^(Estoque insuficiente|O estoque de|Não foi possível verificar o estoque|".*desativada)/.test(error.message)
+                ? error.message
+                : "Não foi possível registrar a venda. Confira os registros e o estoque antes de tentar novamente."
         );
 
     } finally {
@@ -6907,47 +7289,6 @@ async function registerSale() {
             false
         );
     }
-}
-
-
-async function getNextSaleNumber() {
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "sales"
-            )
-            .select(
-                "sale_number"
-            )
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order(
-                "sale_number",
-                {
-                    ascending:
-                        false
-                }
-            )
-            .limit(1);
-
-    if (error) {
-        throw error;
-    }
-
-    const last =
-        Number(
-            data?.[0]
-                ?.sale_number ||
-            0
-        );
-
-    return last + 1;
 }
 
 
@@ -7028,46 +7369,46 @@ function updateFinanceView() {
 }
 
 async function loadFinance() {
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
-    if (!currentUser) {
-        return;
-    }
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "financial_transactions"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order(
-                "transaction_date",
-                {
-                    ascending:
-                        false
-                }
-            );
-
-    if (error) {
-
-        console.error(
-            "Erro ao carregar financeiro:",
+    try {
+        const {
+            data,
             error
-        );
+        } =
+            await fetchAllRows(() => client
+                .from(
+                    "financial_transactions"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .order(
+                    "transaction_date",
+                    {
+                        ascending:
+                            false
+                    }
+                ));
 
-        return;
+        if (generation !== sessionGeneration) return;
+        if (error) throw error;
+
+        financeCache =
+            data || [];
+
+        updateFinanceView();
+    } catch (error) {
+        if (generation !== sessionGeneration) return;
+        console.error("Falha em loadFinance", error);
+        showDataLoadError();
     }
-
-    financeCache =
-        data || [];
-
-    updateFinanceView();
 }
 
 
@@ -7153,6 +7494,8 @@ function updateFinanceMetrics() {
             );
     }
 
+    $("financeBalance").className = balance < 0 ? "expense" : "income";
+
     const periodLabel =
         financePeriodLabels[
             currentFinancePeriod
@@ -7182,6 +7525,13 @@ function renderFinanceCard(transaction) {
                 <strong>${escapeHtml(transaction.description)}</strong>
                 <span>${escapeHtml(transaction.category || "Sem categoria")}</span>
                 <small>${formatLocalDate(transaction.transaction_date)} · ${escapeHtml(formatPaymentMethod(transaction.payment_method))}</small>
+                <details class="finance-actions">
+                    <summary>Opções do lançamento</summary>
+                    ${transaction.reference_id === null
+                        ? `<small>Lançamento manual</small><button type="button" class="secondary-button danger" data-delete-finance="${escapeHtml(transaction.id)}">Excluir lançamento</button>`
+                        : `<small>${transaction.reference_id ? "Lançamento vinculado. Para desfazer uma receita de venda, cancele a venda de origem. A exclusão isolada não é permitida." : "Origem não confirmada. Exclusão indisponível."}</small>
+                        ${transaction.reference_id && salesCache.some(sale => sale.id === transaction.reference_id) ? `<button type="button" class="secondary-button" data-open-sale="${escapeHtml(transaction.reference_id)}">Ver venda de origem</button>` : ""}`}
+                </details>
             </div>
             <strong class="${income ? "income" : "expense"}">${income ? "+" : "−"} ${formatCurrency(transaction.amount)}</strong>
         </article>
@@ -7193,8 +7543,74 @@ function renderFinance() {
     filterFinance({ target: $("financeSearch") });
 }
 
+function openDeleteFinanceModal(id) {
+    if (financeDeleting || !currentUser) return;
+    const transaction = financeCache.find(item => item.id === id);
+    if (!transaction) return;
+    financeDeleteTarget = null;
+    showMessage("deleteFinanceMessage", "");
+    $("deleteFinanceSummary").textContent = [
+        transaction.transaction_type === "income" ? "Receita" : "Despesa",
+        transaction.description, transaction.category,
+        formatCurrency(transaction.amount), formatLocalDate(transaction.transaction_date)
+    ].filter(Boolean).join(" · ");
+    const manual = transaction.reference_id === null;
+    $("deleteFinanceConfirm").hidden = !manual;
+    $("deleteFinanceExplanation").textContent = manual
+        ? "Esta ação removerá o lançamento financeiro."
+        : "Este lançamento não pode ser excluído isoladamente. Para desfazer uma receita de venda, cancele a venda de origem.";
+    if (manual) financeDeleteTarget = { id, userId: currentUser.id, generation: sessionGeneration };
+    openModal("deleteFinanceModal");
+}
 
-function openTransactionModal() {
+async function deleteManualTransaction(event) {
+    event.preventDefault();
+    if (financeDeleting || !financeDeleteTarget) return;
+    const { id, userId, generation } = financeDeleteTarget;
+    if (currentUser?.id !== userId || generation !== sessionGeneration) return;
+    const client = sessionClient(userId, generation);
+    const button = $("deleteFinanceConfirm");
+    financeDeleting = true;
+    $("deleteFinanceForm").inert = true;
+    $("deleteFinanceModal").setAttribute("aria-busy", "true");
+    setLoading(button, true, "Excluindo...");
+    showMessage("deleteFinanceMessage", "");
+    try {
+        // O filtro é aplicado no DELETE, inclusive se a origem mudou após abrir o modal.
+        // Repetir a requisição para o mesmo ID não remove outros lançamentos.
+        const { data, error } = await client.from("financial_transactions")
+            .delete().eq("id", id).eq("user_id", userId).is("reference_id", null).select("id");
+        if (error) throw error;
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
+        if (!data?.some(row => row.id === id)) {
+            showMessage("deleteFinanceMessage", "Nenhuma exclusão foi confirmada. O lançamento pode ter sido removido, estar vinculado a uma venda ou você pode não ter permissão. Volte e confira a lista atualizada.");
+            await loadFinance();
+            await loadDashboard();
+            return;
+        }
+        financeCache = financeCache.filter(item => item.id !== id);
+        updateFinanceView();
+        await loadDashboard();
+        financeDeleteTarget = null;
+        financeDeleting = false;
+        closeModal("deleteFinanceModal");
+        showToast("Lançamento excluído.");
+    } catch (error) {
+        console.error("Erro ao excluir lançamento manual:", error);
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
+        showMessage("deleteFinanceMessage", "Não foi possível confirmar a exclusão. Confira sua conexão e atualize a lista antes de tentar novamente.");
+        await loadFinance();
+        await loadDashboard();
+    } finally {
+        financeDeleting = false;
+        $("deleteFinanceForm").inert = false;
+        $("deleteFinanceModal").removeAttribute("aria-busy");
+        setLoading(button, false);
+    }
+}
+
+
+function openTransactionModal(type = "expense") {
 
     const form =
         $("transactionForm");
@@ -7204,6 +7620,8 @@ function openTransactionModal() {
     }
 
     form.reset();
+    $("transactionType").value = type;
+    form.querySelectorAll("details").forEach(element => { element.open = false; });
 
     if (
         $("transactionDate")
@@ -7228,8 +7646,11 @@ function openTransactionModal() {
 async function saveTransaction(
     event
 ) {
-
     event.preventDefault();
+    const userId = currentUser?.id;
+    const generation = sessionGeneration;
+    if (!userId) return;
+    const client = sessionClient(userId, generation);
 
     if (transactionSaving) return;
     if (!currentUser) {
@@ -7272,13 +7693,19 @@ async function saveTransaction(
             .value
             .trim();
 
-    if (!type) {
+    if (!["income", "expense"].includes(type)) {
 
         showMessage(
             "transactionFormMessage",
             "Selecione o tipo do lançamento."
         );
 
+        return;
+    }
+
+    if (!category) {
+        showMessage("transactionFormMessage", "Informe a categoria do lançamento.");
+        $("transactionCategory").focus();
         return;
     }
 
@@ -7304,7 +7731,7 @@ async function saveTransaction(
         return;
     }
 
-    if (!date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         showMessage("transactionFormMessage", "Informe a data do lançamento.");
         return;
     }
@@ -7318,20 +7745,18 @@ async function saveTransaction(
         const {
             error
         } =
-            await supabaseClient
+            await client
                 .from(
                     "financial_transactions"
                 )
                 .insert({
                     user_id:
-                        currentUser.id,
+                        userId,
 
                     transaction_type:
                         type,
 
-                    category:
-                        category ||
-                        null,
+                    category,
 
                     description,
 
@@ -7343,6 +7768,8 @@ async function saveTransaction(
                     payment_method:
                         paymentMethod ||
                         null,
+
+                    reference_id: null,
 
                     notes:
                         notes ||
@@ -7357,6 +7784,7 @@ async function saveTransaction(
         closeModal(
             "transactionModal"
         );
+        showToast("Lançamento salvo.");
 
         await loadFinance();
         await loadDashboard();
@@ -7366,14 +7794,19 @@ async function saveTransaction(
     ) {
 
         console.error(
-            "Erro ao salvar lançamento:",
-            error
+            "Erro ao salvar lançamento financeiro:",
+            {
+                operation: "INSERT public.financial_transactions",
+                message: error?.message ?? String(error),
+                code: error?.code ?? null,
+                details: error?.details ?? null,
+                hint: error?.hint ?? null
+            }
         );
 
         showMessage(
             "transactionFormMessage",
-            error.message ||
-            "Não foi possível salvar o lançamento."
+            "Não foi possível salvar o lançamento. Seus dados foram mantidos. Confira o motivo com o suporte antes de tentar novamente."
         );
     } finally {
         transactionSaving = false;
@@ -7427,7 +7860,7 @@ function renderRecentActivity() {
     }
 
     const saleActivities =
-        salesCache.map(
+        salesCache.filter(sale => sale.status !== "cancelled" && !sale.cancelled_at).map(
             sale => ({
                 type: "sale",
                 icon: "receipt",
@@ -7569,7 +8002,7 @@ async function loadDashboard() {
         salesCache.filter(
             sale =>
                 sale.status !==
-                    "cancelled" &&
+                    "cancelled" && !sale.cancelled_at &&
                 localDateKey(
                     sale.sale_date
                 ) === today
@@ -7677,6 +8110,19 @@ const stock =
             );
     }
 
+    const todayIncome = financeCache.filter(item => item.transaction_type === "income" && localDateKey(item.transaction_date) === today)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    $("metricResult").textContent = formatCurrency(todayIncome - todayExpenses);
+    $("metricResult").className = todayIncome - todayExpenses < 0 ? "expense" : "income";
+    const attention = getOperationalVariants().filter(item => getStockStatus(item.stock_quantity, item.minimum_stock ?? item.products?.minimum_stock).className !== "normal")
+        .sort((a, b) => Number(a.stock_quantity) - Number(b.stock_quantity));
+    $("metricLowStock").textContent = attention.length;
+    $("dashboardStockAlerts").innerHTML = attention.length ? attention.slice(0, 3).map(item => `
+        <button type="button" class="stock-alert-row" data-adjust-stock="${escapeHtml(item.product_id)}">
+            <span><strong>${escapeHtml(item.products?.name || "Produto")}</strong><small>${escapeHtml(item.colors?.name || "Sem cor")} · ${escapeHtml(item.sizes?.name || "Sem tamanho")}</small></span>
+            <span class="status-badge ${Number(item.stock_quantity) === 0 ? "zero" : "low"}">${Number(item.stock_quantity) === 0 ? "Sem estoque" : `${Number(item.stock_quantity)} un.`}</span>
+        </button>`).join("") : (getOperationalVariants().length ? emptyState("Estoque em dia", "Nenhuma variação ativa precisa de reposição.") : emptyState("Estoque ainda não cadastrado", "Adicione as peças e suas quantidades para acompanhar a reposição.", "new-product", "+ Cadastrar produto"));
+
     renderRecentActivity();
 }
 
@@ -7686,6 +8132,51 @@ const stock =
 // =========================================================
 
 function bindEvents() {
+    $("togglePassword").addEventListener("click", () => {
+        const show = $("password").type === "password";
+        $("password").type = show ? "text" : "password";
+        $("togglePassword").textContent = show ? "Ocultar" : "Mostrar";
+        $("togglePassword").setAttribute("aria-pressed", String(show));
+        $("togglePassword").setAttribute("aria-label", show ? "Ocultar senha" : "Mostrar senha");
+    });
+    $("productCameraInput").addEventListener("change", handleProductPhotoSelection);
+    $("productForm").addEventListener("invalid", event => {
+        const panel = event.target.closest("[data-product-panel]");
+        if (panel) setProductPanel(panel.dataset.productPanel);
+        const details = event.target.closest("details");
+        if (details) details.open = true;
+    }, true);
+    $("saleContinueButton").addEventListener("click", () => {
+        if (saleDraft.length) { renderSaleSummary(); setSaleStage("payment"); }
+    });
+    $("saleBackToItems").addEventListener("click", () => { setSaleStage("items"); $("saleContinueButton").focus(); });
+    document.addEventListener("click", async event => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        if (button.dataset.productPanelTarget) setProductPanel(button.dataset.productPanelTarget);
+        if (button.dataset.registration) showRegistration(button.dataset.registration);
+        if (button.dataset.productFilter) { productFilter = button.dataset.productFilter; selectFilter("productFilters", "productFilter", productFilter); renderProducts(); }
+        if (button.dataset.stockFilter) { stockFilter = button.dataset.stockFilter; selectFilter("stockFilters", "stockFilter", stockFilter); renderStock(); }
+        if (button.dataset.financeFilter) { financeFilter = button.dataset.financeFilter; selectFilter("financeFilters", "financeFilter", financeFilter); renderFinance(); }
+        if (button.dataset.removePhoto !== undefined) { productPhotosDraft.splice(Number(button.dataset.removePhoto), 1); renderProductPhotoPreview(); }
+        if (button.dataset.adjustStock) {
+            const product = productsCache.find(item => item.id === button.dataset.adjustStock);
+            if (product) {
+                try { await loadProductForEdit(product); setProductPanel("stock"); }
+                catch (error) { console.error("Erro ao abrir estoque:", error); showToast("Não foi possível abrir o estoque. Tente novamente."); }
+            }
+        }
+        const action = button.dataset.action;
+        if (action === "new-product") openProductModal();
+        if (action === "new-sale") await openNewSaleModal();
+        if (action === "new-expense") openTransactionModal("expense");
+        if (action === "products") showSection("products");
+        if (action === "stock" || action === "stock-alerts") {
+            stockFilter = "all";
+            selectFilter("stockFilters", "stockFilter", stockFilter); showSection("stock");
+        }
+    });
+
 
     // =================================================
     // LOGIN
@@ -7871,19 +8362,19 @@ function bindEvents() {
     $("categoryForm")
         ?.addEventListener(
             "submit",
-            saveCategory
+            event => submitAuxiliaryForm(event, saveCategory)
         );
 
     $("colorForm")
         ?.addEventListener(
             "submit",
-            saveColor
+            event => submitAuxiliaryForm(event, saveColor)
         );
 
     $("sizeForm")
         ?.addEventListener(
             "submit",
-            saveSize
+            event => submitAuxiliaryForm(event, saveSize)
         );
 
     $("transactionForm")
@@ -8034,6 +8525,7 @@ function bindEvents() {
             if (
                 closeButton
             ) {
+                if ($(closeButton.dataset.closeModal)?.querySelector('form[aria-busy="true"]')) return;
 
                 event.preventDefault();
                 event.stopPropagation();
@@ -8383,6 +8875,8 @@ function bindEvents() {
             if (
                 backPicker
             ) {
+                saleVariantSelectionProductId = null;
+                syncSalePickerView();
 
                 const list =
                     $("saleProductPickerList");
@@ -8562,17 +9056,42 @@ function bindEvents() {
             }
         );
 
+    $("deleteFinanceForm").addEventListener("submit", deleteManualTransaction);
+    $("cancelSaleForm").addEventListener("submit", cancelSale);
+    $("saleDetailsContent").addEventListener("click", event => {
+        const button = event.target.closest("[data-cancel-sale]");
+        if (button) openSaleCancellation(button.dataset.cancelSale, button.dataset.saleNumber);
+    });
+    $("cancelSaleBack").addEventListener("click", () => {
+        if (saleCancelling) return;
+        const id = saleCancellationTarget?.id;
+        closeModal("cancelSaleModal");
+        if (id) openSaleDetails(id);
+    });
+    for (const list of [$("salesList"), $("financeList")]) {
+        list.addEventListener("click", event => {
+            const button = event.target.closest("[data-open-sale]");
+            if (button) openSaleDetails(button.dataset.openSale);
+        });
+    }
+    $("financeList").addEventListener("click", event => {
+        const button = event.target.closest("[data-delete-finance]");
+        if (button) openDeleteFinanceModal(button.dataset.deleteFinance);
+    });
+
     document.addEventListener("keydown", event => {
         const modal = document.querySelector(".modal:not([hidden])");
         if (!modal) return;
         if (event.key === "Escape") {
             event.preventDefault();
+            if (modal.querySelector('form[aria-busy="true"]')) return;
+            if (modal.id === "saleModal" && saleProductPickerOpen) { closeSaleProductPicker(); $("saleAddProductButton").focus(); return; }
             closeModal(modal.id);
         }
         if (event.key !== "Tab") return;
         const elements = [...modal.querySelectorAll(
-            'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]'
-        )].filter(element => element.getClientRects().length && !element.closest("[inert]"));
+            'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"], summary'
+        )].filter(element => element.getClientRects().length && !element.closest("[inert]") && (!element.closest("details:not([open])") || element.matches("summary")));
         const first = elements[0];
         const last = elements[elements.length - 1];
         if (!first) { event.preventDefault(); return; }
@@ -8601,6 +9120,8 @@ function filterProducts(
     const filtered =
         productsCache.filter(
             product => {
+                if (productFilter === "active" && product.is_active === false) return false;
+                if (productFilter === "inactive" && product.is_active !== false) return false;
 
                 const name =
                     String(
@@ -8648,13 +9169,7 @@ function renderProductCollection(
         !products.length
     ) {
 
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">${iconSvg("bag")}</div>
-                <strong>Nenhum produto encontrado</strong>
-                <p>Tente outro termo de busca.</p>
-            </div>
-        `;
+        container.innerHTML = emptyState("Nenhum produto encontrado", "Cadastre uma peça ou ajuste a busca e os filtros.", "new-product", "+ Cadastrar produto");
 
         return;
     }
@@ -8681,6 +9196,8 @@ function filterStock(
         getOperationalVariants()
             .filter(
             variant => {
+                const status = getStockStatus(variant.stock_quantity, variant.minimum_stock ?? variant.products?.minimum_stock).className;
+                if (stockFilter !== "all" && status !== stockFilter) return false;
 
                 const text =
                     [
@@ -8700,9 +9217,8 @@ function filterStock(
             }
         );
 
-    renderStockCollection(
-        filtered
-    );
+    filtered.sort((a, b) => Number(a.stock_quantity || 0) - Number(b.stock_quantity || 0));
+    renderStockCollection(filtered);
 }
 
 
@@ -8721,12 +9237,7 @@ function renderStockCollection(
         !variants.length
     ) {
 
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>Nenhum resultado</strong>
-                <p>Nenhuma variação corresponde à busca.</p>
-            </div>
-        `;
+        container.innerHTML = emptyState("Nenhuma variação encontrada", "Ajuste os filtros ou cadastre o estoque de uma peça.", "products", "Ver produtos");
 
         return;
     }
@@ -8753,8 +9264,7 @@ function filterSales(
         salesCache.filter(
             sale =>
                 String(
-                    sale.sale_number ||
-                    ""
+                    [sale.sale_number, formatPaymentMethod(sale.payment_method), formatLocalDate(sale.sale_date)].join(" ")
                 )
                     .toLowerCase()
                     .includes(
@@ -8773,11 +9283,7 @@ function filterSales(
         !filtered.length
     ) {
 
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>Nenhuma venda encontrada</strong>
-            </div>
-        `;
+        container.innerHTML = emptyState("Nenhuma venda encontrada", "Registre uma venda ou altere sua busca.", "new-sale", "+ Nova venda");
 
         return;
     }
@@ -8804,6 +9310,7 @@ function filterFinance(
         getFinanceTransactionsForPeriod()
             .filter(
             transaction => {
+                if (financeFilter !== "all" && transaction.transaction_type !== financeFilter) return false;
 
                 const text =
                     [
@@ -8833,11 +9340,7 @@ function filterFinance(
         !filtered.length
     ) {
 
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>Nenhum lançamento encontrado</strong>
-            </div>
-        `;
+        container.innerHTML = emptyState("Nenhum lançamento encontrado", "Confira o período ou registre uma receita ou despesa.", "new-expense", "+ Lançamento");
 
         return;
     }
@@ -8872,6 +9375,7 @@ async function loadProductsPage() {
 async function loadInitialData() {
 
     await Promise.all([
+        loadUserProfile(),
         loadCategories(),
         loadColors(),
         loadSizes(),
@@ -8890,6 +9394,7 @@ async function loadInitialData() {
 // =========================================================
 
 async function checkSession() {
+    const revision = authRevision;
 
     try {
 
@@ -8900,6 +9405,8 @@ async function checkSession() {
             await supabaseClient
                 .auth
                 .getSession();
+
+        if (revision !== authRevision) return;
 
         if (error) {
             throw error;
@@ -8941,6 +9448,7 @@ async function checkSession() {
             error
         );
 
+        showMessage("loginMessage", "Não foi possível recuperar a sessão. Verifique a conexão e entre novamente.");
         const loginScreen =
             $("loginScreen");
 
@@ -8973,8 +9481,7 @@ document.addEventListener(
         );
 
         if (
-            typeof supabaseClient ===
-            "undefined"
+            typeof supabaseClient === "undefined" || !supabaseClient
         ) {
 
             console.error(
@@ -9010,88 +9517,23 @@ document.addEventListener(
          * Listener de autenticação.
          */
 
-        supabaseClient.auth
-            .onAuthStateChange(
-                async (
-                    event,
-                    session
-                ) => {
-
-                    console.log(
-                        "Auth:",
-                        event
-                    );
-
-                    if (
-                        event ===
-                            "SIGNED_IN" &&
-                        session?.user
-                    ) {
-
-                        await showApplication(
-                            session.user
-                        );
-                    }
-
-                    if (
-                        event ===
-                        "SIGNED_OUT"
-                    ) {
-
-                        currentUser =
-                            null;
-
-                        appInitialized =
-                            false;
-
-                        currentSection =
-                            "home";
-
-                        $("appScreen").inert = false;
-                        $("loginScreen").inert = false;
-                        clearProductPhotosDraft();
-
-                        document
-                            .querySelectorAll(
-                                ".modal"
-                            )
-                            .forEach(
-                                modal => {
-
-                                    modal.hidden =
-                                        true;
-
-                                    modal.setAttribute(
-                                        "aria-hidden",
-                                        "true"
-                                    );
-                                }
-                            );
-
-                        document.body.classList.remove(
-                            "modal-open"
-                        );
-
-                        if (
-                            $("appScreen")
-                        ) {
-
-                            $("appScreen")
-                                .hidden =
-                                true;
-                        }
-
-                        if (
-                            $("loginScreen")
-                        ) {
-
-                            $("loginScreen")
-                                .hidden =
-                                false;
-                        }
-                    }
-                }
-            );
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            const revision = ++authRevision;
+            if (event === "SIGNED_OUT") {
+                resetSessionState();
+                return;
+            }
+            if (session?.user) {
+                // O callback deve liberar o lock do Auth antes de consultar dados.
+                setTimeout(() => {
+                    if (revision !== authRevision) return;
+                    showApplication(session.user).catch(error => {
+                        console.error("Erro ao iniciar sessão:", error);
+                        alert("Não foi possível carregar os dados. Atualize a página.");
+                    });
+                }, 0);
+            }
+        });
 
         /*
          * Finalmente verifica a sessão existente.

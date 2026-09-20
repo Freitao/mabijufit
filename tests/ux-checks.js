@@ -1,0 +1,105 @@
+// Fluxos reais da interface com dados Supabase simulados.
+const results=[];
+const check=(name,condition)=>{results.push({name,passed:!!condition});if(!condition)throw new Error('UX: '+name);};
+const tick=()=>new Promise(resolve=>setTimeout(resolve,80));
+const visible=element=>!!element?.getClientRects().length && !element.closest('details:not([open])');
+$('togglePassword').click();check('mostrar senha',$('password').type==='text');
+$('togglePassword').click();check('ocultar senha',$('password').type==='password');
+showSection('home');await tick();
+const todayIncome=financeCache.filter(x=>x.transaction_type==='income'&&localDateKey(x.transaction_date)===todayISO()).reduce((sum,x)=>sum+Number(x.amount),0);
+const todayExpense=financeCache.filter(x=>x.transaction_type==='expense'&&localDateKey(x.transaction_date)===todayISO()).reduce((sum,x)=>sum+Number(x.amount),0);
+check('resultado do dia usa receitas menos despesas',$('metricResult').textContent===formatCurrency(todayIncome-todayExpense));
+check('alertas reais de estoque',$('dashboardStockAlerts').textContent.includes('Sem estoque'));
+document.querySelector('[data-action="new-expense"]').click();await tick();
+check('atalho de despesa abre formulário preenchido',$('transactionType').value==='expense'&&!$('transactionModal').hidden&&$('transactionDate').value===todayISO());
+check('campos essenciais visíveis',visible($('transactionDescription'))&&visible($('transactionAmount'))&&!visible($('transactionNotes')));
+check('categoria obrigatória sempre visível',visible($('transactionCategory'))&&$('transactionCategory').required&&!$('transactionCategory').closest('details'));
+check('observações opcionais',!$('transactionNotes').required);
+$('transactionDescription').value='Teste de categoria';$('transactionAmount').value='12.50';
+const financialInserts=()=>mockCalls.filter(x=>x.table==='financial_transactions'&&x.action==='insert').length;
+const initialInserts=financialInserts();
+for(const category of ['', '   ']) {
+ $('transactionCategory').value=category;
+ check('validação nativa rejeita categoria '+JSON.stringify(category),!$('transactionCategory').checkValidity());
+ $('transactionForm').requestSubmit();await tick();
+ check('formulário não envia categoria inválida '+JSON.stringify(category),financialInserts()===initialInserts&&!$('transactionModal').hidden);
+ await saveTransaction({preventDefault(){}});
+ check('validação JS bloqueia categoria '+JSON.stringify(category),financialInserts()===initialInserts&&document.activeElement===$('transactionCategory')&&$('transactionFormMessage').textContent.includes('categoria'));
+}
+$('transactionCategory').value='  Fornecedores  ';
+$('transactionForm').requestSubmit();await tick();
+const transaction=mockDB.financial_transactions.find(x=>x.description==='Teste de categoria');
+check('categoria válida salva sem observações',financialInserts()===initialInserts+1&&transaction?.category==='Fornecedores'&&transaction.notes===null&&$('transactionModal').hidden);
+openTransactionModal('income');$('transactionDescription').value='Receita com observação';$('transactionCategory').value='Outras receitas';$('transactionAmount').value='10';
+const notesDetails=$('transactionNotes').closest('details');notesDetails.open=true;$('transactionNotes').value='Observação preservada';
+$('transactionForm').requestSubmit();await tick();
+check('receita preserva observações preenchidas',mockDB.financial_transactions.some(x=>x.description==='Receita com observação'&&x.transaction_type==='income'&&x.notes==='Observação preservada'));
+closeModal('transactionModal');
+showSection('products');await tick();
+document.querySelector('[data-product-filter="inactive"]').click();
+check('filtro produtos inativos',document.querySelectorAll('#productsList .product-card').length===productsCache.filter(x=>x.is_active===false).length);
+document.querySelector('[data-product-filter="all"]').click();
+const more=document.querySelector('#productsList .product-more');more.open=true;
+check('ações secundárias preservadas',visible(more.querySelector('[data-delete-product]'))&&visible(more.querySelector('[data-toggle-product]')));more.open=false;
+openProductModal();await tick();$('productName').value='Rascunho preservado';
+document.querySelector('[data-product-panel-target="photos"]').click();
+check('etapa fotos exclusiva',!visible($('productName'))&&visible(document.querySelector('.product-photo-section')));
+check('câmera e galeria distintas',$('productCameraInput').getAttribute('capture')==='environment'&&$('productPhotoInput').multiple);
+const canvas=document.createElement('canvas');canvas.width=10;canvas.height=10;const blob=await new Promise(r=>canvas.toBlob(r));
+handleProductPhotoSelection({target:{files:[new File([blob],'frente.png',{type:'image/png'})]}});
+handleProductPhotoSelection({target:{files:[]}});check('cancelar seleção preserva fotos',productPhotosDraft.length===1);
+handleProductPhotoSelection({target:{files:[new File([blob],'costas.png',{type:'image/png'})]}});
+check('fotos acumulam entre seleções',productPhotosDraft.length===2);
+document.querySelector('[data-remove-photo="0"]').click();check('remover somente foto do rascunho',productPhotosDraft.length===1&&productPhotosDraft[0].name==='costas.png');
+document.querySelector('[data-product-panel-target="stock"]').click();
+check('estoque em etapa própria',visible($('productVariationColor'))&&!visible($('productName')));
+$('productSalePrice').dispatchEvent(new Event('invalid',{bubbles:false,cancelable:true}));
+check('validação revela campo obrigatório oculto',visible($('productSalePrice')));
+check('troca de etapa preserva rascunho',$('productName').value==='Rascunho preservado');
+closeModal('productModal');clearProductPhotosDraft();
+showSection('settings');await tick();
+for(const name of ['categories','colors','sizes']) {
+ document.querySelector(`[data-registration="${name}"]`).click();
+ check('cadastro separado '+name,visible(document.querySelector(`[data-registration-panel="${name}"]`))&&document.querySelectorAll('[data-registration-panel]:not([hidden])').length===1);
+}
+showSection('stock');await tick();
+for(const status of ['low','zero','normal']) {
+ document.querySelector(`[data-stock-filter="${status}"]`).click();
+ const expected=getOperationalVariants().filter(x=>getStockStatus(x.stock_quantity,x.minimum_stock??x.products?.minimum_stock).className===status).length;
+ check('filtro estoque '+status,document.querySelectorAll('#stockList .stock-card').length===expected);
+}
+document.querySelector('[data-stock-filter="all"]').click();
+document.querySelector('#stockList [data-adjust-stock]').click();await tick();
+check('ajustar estoque abre edição na etapa correta',!$('productModal').hidden&&visible($('productVariationColor'))&&$('productId').value!=='');closeModal('productModal');
+showSection('finance');await tick();
+const balance=$('financeBalance').textContent;
+for(const type of ['income','expense']) {
+ document.querySelector(`[data-finance-filter="${type}"]`).click();
+ check('filtro financeiro '+type,document.querySelectorAll('#financeList .finance-card').length===getFinanceTransactionsForPeriod().filter(x=>x.transaction_type===type).length);
+ check('filtro de lista preserva resumo do período '+type,$('financeBalance').textContent===balance);
+}
+document.querySelector('[data-finance-filter="all"]').click();
+await openNewSaleModal();await tick();
+check('venda começa pelos itens',!visible($('salePaymentMethod'))&&$('saleContinueButton').disabled);
+$('saleAddProductButton').click();
+check('seletor substitui carrinho',visible($('saleProductPicker'))&&!visible($('saleItemsList'))&&!visible($('salePaymentMethod')));
+check('seletor não abre teclado',document.activeElement!==$('saleProductSearchInput'));
+const original=variantsCache.find(x=>x.id==='v2').stock_quantity;variantsCache.find(x=>x.id==='v2').stock_quantity=0;
+document.querySelector('[data-sale-select-product="p1"]').click();
+check('cor e tamanho agrupados',document.querySelectorAll('.variant-color-group').length>=1&&!visible($('saleProductSearchInput')));
+check('variação zerada desabilitada',document.querySelector('[data-sale-select-variant="v2"]').disabled);
+document.querySelector('[data-sale-select-variant="v1"]').click();
+check('adicionar volta para os itens',visible($('saleItemsList'))&&!visible($('saleProductPicker'))&&saleDraft.length===1);
+variantsCache.find(x=>x.id==='v2').stock_quantity=original;
+$('saleContinueButton').click();
+check('pagamento em etapa exclusiva',visible($('salePaymentMethod'))&&!visible($('saleItemsList')));
+$('saleDiscountInput').value='2';$('saleDiscountInput').dispatchEvent(new Event('input'));
+$('salePaymentMethod').value='pix';$('saleBackToItems').click();
+check('voltar preserva pagamento e desconto',$('saleDiscountInput').value==='2'&&$('salePaymentMethod').value==='pix'&&saleDraft.length===1);
+$('saleContinueButton').click();const count=mockDB.sales.length;
+$('saleRegisterButton').click();await tick();
+check('registrar pela interface mantém integração',mockDB.sales.length===count+1&&$('saleModal').hidden);
+check('sucesso anunciado',$('appToast').textContent==='Venda registrada.');
+await handleLogout();check('logout limpa filtros',stockFilter==='all'&&financeFilter==='all'&&productFilter==='all');await showApplication(mockUser);await tick();
+check('nenhuma rejeição ou erro JS',reviewErrors.length===0);
+return JSON.stringify(results,null,2);

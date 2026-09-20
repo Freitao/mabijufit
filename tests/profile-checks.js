@@ -1,0 +1,37 @@
+const results=[];
+const check=(name,condition)=>{results.push({name,passed:!!condition});if(!condition)throw new Error('Perfil: '+name);};
+const profile=mockDB.profiles.find(row=>row.id===mockUser.id);
+const name=profile.full_name;
+check('nome vem de profiles',$('userName').textContent==='Olá, Marcela');
+const profileReads=()=>mockCalls.filter(call=>call.table==='profiles'&&call.action==='select').length;
+const before=profileReads();
+await Promise.all([showApplication(mockUser),showApplication(mockUser),loadUserProfile()]);
+check('inicialização repetida reutiliza perfil',profileReads()===before);
+for(const value of ['', '   ', null]) {
+ profile.full_name=value;
+ await handleLogout();await showApplication(mockUser);
+ check('nome vazio usa saudação neutra '+JSON.stringify(value),$('userName').textContent==='Olá'&&$('userName').title==='Olá');
+}
+profile.full_name='  Marcela   da Silva  ';
+await handleLogout();await showApplication(mockUser);
+check('nome normalizado',$('userName').textContent==='Olá, Marcela da Silva');
+profile.full_name='<img src=x onerror=alert(1)>';
+await handleLogout();await showApplication(mockUser);
+check('nome é texto seguro',!$('userName').querySelector('img')&&$('userName').textContent.includes('<img'));
+await handleLogout();mockFailure={table:'profiles',action:'select'};await showApplication(mockUser);
+check('falha de perfil não bloqueia app nem expõe e-mail',$('userName').textContent==='Olá'&&!$('appScreen').hidden&&!$('userName').title.includes('@'));
+profile.full_name=name;
+await handleLogout();
+let release;
+mockDelay={table:'profiles',promise:new Promise(resolve=>release=resolve)};
+const pending=showApplication(mockUser);
+await new Promise(resolve=>setTimeout(resolve,80));
+await showApplication({id:'profile-other',email:'outro@example.com',user_metadata:{full_name:'Nome do Auth'}});
+release();await pending;
+check('perfil ausente e resposta antiga não vazam identidade',$('userName').textContent==='Olá'&&currentUser.id==='profile-other');
+await showApplication(mockUser);
+check('troca de usuário recupera perfil correto',$('userName').textContent==='Olá, Marcela');
+check('e-mail de autenticação preservado',currentUser.email===mockUser.email);
+check('nenhuma escrita em profiles',!mockCalls.some(call=>call.table==='profiles'&&call.action!=='select'));
+check('sem erros JS não tratados',reviewErrors.length===0);
+return JSON.stringify(results,null,2);

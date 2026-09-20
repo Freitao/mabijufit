@@ -1,2316 +1,1424 @@
-<!DOCTYPE html><html lang="pt-BR">  <head>  <meta charset="UTF-8">  
-
-<meta  
-    name="viewport"  
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
->  
-
-<meta  
-    name="theme-color"  
-    content="#c96f8c"
->  
-
-<meta  
-    name="description"  
-    content="MabijuFit - Gestão inteligente da sua loja"  
->  
-
-<link  
-    rel="manifest"  
-    href="manifest.json"  
->  
-
-<link  
-    rel="icon"  
-    type="image/png"  
-    href="assets/icons/icon-192.png"  
->  
-
-<link  
-    rel="stylesheet"  
-    href="css/style.css"  
->  
-
-<title>MabijuFit</title>
-
-</head>  <body>  <div id="app">  <!-- =====================================================  
-     LOGIN  
-     ===================================================== -->  
-
-<main  
-    id="loginScreen"  
-    class="login-page"  
->  
-
-    <div class="login-card">  
-
-        <div class="login-logo">  
-
-            <img  
-                src="assets/icons/icon-192.png"  
-                alt="MabijuFit"  
-            >  
-
-        </div>  
-
-
-        <h1>  
-            MabijuFit  
-        </h1>  
-
-
-        <p class="login-subtitle">  
-            Gestão da sua loja  
-        </p>  
-
-
-        <form id="loginForm">  
-
-            <div class="form-group">  
-
-                <label for="email">  
-                    E-mail  
-                </label>  
-
-                <input  
-                    id="email"  
-                    type="email"  
-                    autocomplete="email"  
-                    placeholder="seu@email.com"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="password">  
-                    Senha  
-                </label>  
-
-                <input  
-                    id="password"  
-                    type="password"  
-                    autocomplete="current-password"  
-                    placeholder="••••••••"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <button  
-                id="loginButton"  
-                type="submit"  
-                class="primary-button"  
-            >  
-                Entrar  
-            </button>  
-
-
-            <div  
-                id="loginMessage"  
-                class="form-message" aria-live="polite"
-            ></div>  
-
-        </form>  
-
-
-        <div class="login-footer">  
-            MabijuFit&nbsp; Gestão inteligente  
-        </div>  
-
-    </div>  
-
-</main>  
-
-
-
-<!-- =====================================================  
-     APLICAÇÃO  
-     ===================================================== -->  
-
-<main  
-    id="appScreen"  
-    class="app-screen"  
-    hidden  
->  
-
-
-    <!-- =================================================  
-         CABEÇALHO  
-         ================================================= -->  
-
-    <header class="app-header">  
-
-        <div class="app-header-inner">
-
-            <div class="header-profile">
-
-                <div class="header-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-4 4 2 10 8 15 6-5 12-11 8-15Z"/></svg></div>
-
-                <div class="header-user-copy">
-
-                    <span class="app-greeting">Olá,</span>
-
-                    <strong id="userName" title="MabijuFit">MabijuFit</strong>
-
-                </div>
-
-            </div>
-
-
-            <button
-                id="logoutButton"
-                type="button"
-                class="logout-button"
-            >
-                Sair
-            </button>
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+  <meta content="#c96f8c" name="theme-color"/>
+  <meta content="MabijuFit - Gestão inteligente da sua loja" name="description"/>
+  <link href="manifest.json" rel="manifest"/>
+  <link href="assets/icons/icon-192.png" rel="icon" type="image/png"/>
+  <link href="css/style.css" rel="stylesheet"/>
+  <title>
+   MabijuFit
+  </title>
+ </head>
+ <body>
+  <div id="app">
+   <!-- =====================================================
+     LOGIN
+     ===================================================== -->
+   <main class="login-page" id="loginScreen">
+    <div class="login-card">
+     <div class="login-logo">
+      <img alt="MabijuFit" src="assets/icons/icon-192.png"/>
+     </div>
+     <h1>
+      MabijuFit
+     </h1>
+     <p class="login-subtitle">
+      Estoque, vendas e financeiro em um só lugar.
+     </p>
+     <form id="loginForm">
+      <div class="form-group">
+       <label for="email">
+        E-mail
+       </label>
+       <input autocomplete="email" id="email" placeholder="seu@email.com" required="" type="email"/>
+      </div>
+      <div class="form-group">
+       <label for="password">
+        Senha
+       </label>
+       <div class="password-field">
+        <input autocomplete="current-password" id="password" placeholder="••••••••" required="" type="password"/>
+        <button aria-label="Mostrar senha" aria-pressed="false" id="togglePassword" type="button">
+         Mostrar
+        </button>
+       </div>
+      </div>
+      <button class="primary-button" id="loginButton" type="submit">
+       Entrar
+      </button>
+      <div aria-live="polite" class="form-message" id="loginMessage">
+      </div>
+     </form>
+     <div class="login-footer">
+      Acesso da equipe · MabijuFit
+     </div>
+    </div>
+   </main>
+   <!-- =====================================================
+     APLICAÇÃO
+     ===================================================== -->
+   <main class="app-screen" hidden="" id="appScreen">
+    <!-- =================================================
+         CABEÇALHO
+         ================================================= -->
+    <header class="app-header">
+     <div class="app-header-inner">
+      <div class="header-profile">
+       <div aria-hidden="true" class="header-avatar">
+        <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+         <path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-4 4 2 10 8 15 6-5 12-11 8-15Z">
+         </path>
+        </svg>
+       </div>
+       <div class="header-user-copy">
+        <span class="app-greeting">
+         MabijuFit · Gestão
+        </span>
+        <strong id="userName" title="Olá">
+         Olá
+        </strong>
+       </div>
+       <button aria-label="Abrir cadastros" class="header-settings" data-section="settings" type="button">
+        Cadastros
+       </button>
+      </div>
+      <button class="logout-button" id="logoutButton" type="button">
+       Sair
+      </button>
+     </div>
+    </header>
+    <!-- =================================================
+         CONTEÚDO
+         ================================================= -->
+    <div class="app-content">
+     <!-- =============================================
+             INÍCIO
+             ============================================= -->
+     <section class="app-section" id="homeScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         VISÃO GERAL
+        </span>
+        <h2>
+         Resumo da loja
+        </h2>
+       </div>
+      </div>
+      <div class="metrics-grid">
+       <article class="metric-card">
+        <span>
+         Vendas
+        </span>
+        <strong id="metricSales">
+         R$ 0,00
+        </strong>
+        <small>
+         Hoje
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Nº de vendas
+        </span>
+        <strong id="metricOrders">
+         0
+        </strong>
+        <small>
+         Hoje
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Reposição
+        </span>
+        <strong id="metricLowStock">
+         0
+        </strong>
+        <small>
+         Variações
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Despesas
+        </span>
+        <strong id="metricExpenses">
+         R$ 0,00
+        </strong>
+        <small>
+         Hoje
+        </small>
+       </article>
+      </div>
+      <button class="day-result" data-section="finance" type="button">
+       <span>
+        Resultado de hoje
+        <small>
+         Receitas menos despesas
+        </small>
+       </span>
+       <strong id="metricResult">
+        R$ 0,00
+       </strong>
+       <span aria-hidden="true">
+        ›
+       </span>
+      </button>
+      <div class="section-block">
+       <h3>
+        Acessos rápidos
+       </h3>
+       <div class="quick-actions">
+        <button class="quick-action" data-action="new-sale" type="button">
+         <span aria-hidden="true" class="quick-action-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+           <path d="M5 3h14v18l-3-2-4 2-4-2-3 2ZM9 8h6M9 12h6">
+           </path>
+          </svg>
+         </span>
+         <strong>
+          Nova venda
+         </strong>
+        </button>
+        <button class="quick-action" data-action="new-product" type="button">
+         <span aria-hidden="true" class="quick-action-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+           <path d="M6 8h12l1 13H5L6 8Z">
+           </path>
+           <path d="M9 9V6a3 3 0 0 1 6 0v3">
+           </path>
+          </svg>
+         </span>
+         <strong>
+          Novo produto
+         </strong>
+        </button>
+        <button class="quick-action" data-action="new-expense" type="button">
+         <span aria-hidden="true" class="quick-action-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+           <path d="M12 3v12m-5-5 5 5 5-5M5 20h14">
+           </path>
+          </svg>
+         </span>
+         <strong>
+          Despesa
+         </strong>
+        </button>
+        <button class="quick-action" data-action="stock" type="button">
+         <span aria-hidden="true" class="quick-action-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+           <path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5ZM3 7.5v9L12 21l9-4.5v-9M12 12v9">
+           </path>
+          </svg>
+         </span>
+         <strong>
+          Ver estoque
+         </strong>
+        </button>
+       </div>
+      </div>
+      <div class="section-block stock-attention">
+       <div class="subsection-heading">
+        <h3>
+         Precisa de atenção
+        </h3>
+        <button class="text-button" data-action="stock-alerts" type="button">
+         Ver estoque
+        </button>
+       </div>
+       <div id="dashboardStockAlerts">
+       </div>
+      </div>
+      <div class="section-block">
+       <h3>
+        Atividade recente
+       </h3>
+       <div class="empty-state" id="recentActivity">
+        <div class="empty-state-icon">
+         <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+          <path d="M5 3h14v18H5ZM9 8h6M9 12h6">
+          </path>
+         </svg>
         </div>
-
-    </header>  
-
-
-
-    <!-- =================================================  
-         CONTEÚDO  
-         ================================================= -->  
-
-    <div class="app-content">  
-
-
-        <!-- =============================================  
-             INÍCIO  
-             ============================================= -->  
-
-        <section  
-            id="homeScreen"  
-            class="app-section"  
-        >  
-
-            <div class="section-heading">  
-
-                <div>  
-
-                    <span class="section-eyebrow">  
-                        VISÃO GERAL  
-                    </span>  
-
-                    <h2>  
-                        Resumo da loja  
-                    </h2>  
-
-                </div>  
-
-            </div>  
-
-
-            <div class="metrics-grid">  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Vendas  
-                    </span>  
-
-                    <strong id="metricSales">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small>  
-                        Hoje  
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Pedidos  
-                    </span>  
-
-                    <strong id="metricOrders">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Hoje  
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Estoque baixo  
-                    </span>  
-
-                    <strong id="metricLowStock">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Variações
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Despesas  
-                    </span>  
-
-                    <strong id="metricExpenses">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small>  
-                        Hoje  
-                    </small>  
-
-                </article>  
-
-            </div>  
-
-
-
-            <div class="section-block">  
-
-                <h3>  
-                    Acessos rápidos  
-                </h3>  
-
-
-                <div class="quick-actions">  
-
-
-                    <button  
-                        type="button"  
-                        class="quick-action"  
-                        data-section="products"  
-                    >  
-
-                        <span class="quick-action-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <path d="M6 8h12l1 13H5L6 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                                <path d="M9 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                        </span>  
-
-                        <strong>  
-                            Produtos  
-                        </strong>  
-
-                    </button>  
-
-
-                    <button  
-                        type="button"  
-                        class="quick-action"  
-                        data-section="stock"  
-                    >  
-
-                        <span class="quick-action-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                                <path d="M3 7.5v9L12 21l9-4.5v-9M12 12v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            </svg>
-                        </span>  
-
-                        <strong>  
-                            Estoque  
-                        </strong>  
-
-                    </button>  
-
-
-                    <button  
-                        type="button"  
-                        class="quick-action"  
-                        data-section="sales"  
-                    >  
-
-                        <span class="quick-action-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <path d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="10" cy="20" r="1.3" fill="currentColor"/>
-                                <circle cx="18" cy="20" r="1.3" fill="currentColor"/>
-                            </svg>
-                        </span>  
-
-                        <strong>  
-                            Vendas  
-                        </strong>  
-
-                    </button>  
-
-
-                    <button  
-                        type="button"  
-                        class="quick-action"  
-                        data-section="finance"  
-                    >  
-
-                        <span class="quick-action-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <path d="M4 19V10M10 19V5M16 19v-7M22 19V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                        </span>  
-
-                        <strong>  
-                            Financeiro  
-                        </strong>  
-
-                    </button>  
-
-
-                </div>  
-
-            </div>  
-
-
-
-            <div class="section-block">  
-
-                <h3>  
-                    Atividade recente  
-                </h3>  
-
-
-                <div  
-                    id="recentActivity"  
-                    class="empty-state"  
-                >  
-
-                    <div class="empty-state-icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h14v18H5ZM9 8h6M9 12h6"/></svg></div>
-
-                    <strong>  
-                        Nenhuma atividade ainda  
-                    </strong>  
-
-                    <p>  
-                        As vendas e movimentações aparecerão aqui.  
-                    </p>  
-
-                </div>  
-
-            </div>  
-
-        </section>  
-
-
-
-        <!-- =============================================  
-             PRODUTOS  
-             ============================================= -->  
-
-        <section  
-            id="productsScreen"  
-            class="app-section"  
-            hidden  
-        >  
-
-
-            <div class="section-heading">  
-
-                <div>  
-
-                    <span class="section-eyebrow">  
-                        CATÁLOGO  
-                    </span>  
-
-                    <h2>  
-                        Produtos  
-                    </h2>  
-
-                </div>  
-
-
-                <div class="section-actions">
-                    <button
-                        type="button"
-                        class="secondary-button small"
-                        data-section="settings"
-                    >
-                        Cadastros
-                    </button>
-
-                    <button
-                        id="newProductButton"
-                        type="button"
-                        class="primary-button small"
-                    >
-                        + Novo
-                    </button>
-                </div>
-
-            </div>  
-
-
-            <input  
-                id="productSearch" aria-label="Buscar produtos"
-                type="search"  
-                class="search-input"  
-                placeholder="Buscar produto..."  
-            >  
-
-
-
-            <div  
-                id="productsList"  
-                class="cards-list products-grid"
-            ></div>  
-
-        </section>
-
-
-        <!-- =============================================
+        <strong>
+         Nenhuma atividade ainda
+        </strong>
+        <p>
+         As vendas e movimentações aparecerão aqui.
+        </p>
+       </div>
+      </div>
+     </section>
+     <!-- =============================================
+             PRODUTOS
+             ============================================= -->
+     <section class="app-section" hidden="" id="productsScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         PRODUTOS
+        </span>
+        <h2>
+         Produtos
+        </h2>
+       </div>
+       <div class="section-actions">
+        <button class="primary-button small" id="newProductButton" type="button">
+         + Novo
+        </button>
+       </div>
+      </div>
+      <input aria-label="Buscar produtos" class="search-input" id="productSearch" placeholder="Nome ou código do produto" type="search"/>
+      <div aria-label="Filtrar produtos" class="filter-chips" id="productFilters" role="group">
+       <button aria-pressed="true" data-product-filter="all" type="button">
+        Todos
+       </button>
+       <button aria-pressed="false" data-product-filter="active" type="button">
+        Ativos
+       </button>
+       <button aria-pressed="false" data-product-filter="inactive" type="button">
+        Inativos
+       </button>
+      </div>
+      <div class="cards-list products-grid" id="productsList">
+      </div>
+     </section>
+     <!-- =============================================
              CADASTROS AUXILIARES
              ============================================= -->
-
-        <section
-            id="settingsScreen"
-            class="app-section"
-            hidden
-        >
-
-            <div class="section-heading">
-                <div>
-                    <span class="section-eyebrow">CONFIGURAÇÕES</span>
-                    <h2>Cadastros auxiliares</h2>
-                    <p>Organize as opções usadas nos produtos e variações.</p>
-                </div>
-
-                <button type="button" class="secondary-button small" data-section="products">
-                    Voltar
-                </button>
-            </div>
-
-            <div class="section-block">  
-
-                <div class="subsection-heading">  
-
-                    <div>  
-
-                        <span class="section-eyebrow">  
-                            ORGANIZAÇÃO  
-                        </span>  
-
-                        <h3>  
-                            Categorias  
-                        </h3>  
-
-                    </div>  
-
-
-                    <button  
-                        id="newCategoryButton"  
-                        type="button"  
-                        class="secondary-button"  
-                    >  
-                        + Categoria  
-                    </button>  
-
-                </div>  
-
-
-                <div  
-                    id="categoriesList"  
-                    class="cards-list categories-grid"
-                ></div>  
-
-            </div>  
-
-
-
-            <!-- =========================================  
-                 CORES  
-                 ========================================= -->  
-
-            <div class="section-block">  
-
-                <div class="subsection-heading">  
-
-                    <div>  
-
-                        <span class="section-eyebrow">  
-                            VARIAÇÕES  
-                        </span>  
-
-                        <h3>  
-                            Cores  
-                        </h3>  
-
-                    </div>  
-
-
-                    <button  
-                        id="newColorButton"  
-                        type="button"  
-                        class="secondary-button"  
-                    >  
-                        + Cor  
-                    </button>  
-
-                </div>  
-
-
-                <div  
-                    id="colorsList"  
-                    class="cards-list colors-grid"
-                ></div>  
-
-            </div>  
-
-
-
-            <!-- =========================================  
-                 TAMANHOS  
-                 ========================================= -->  
-
-            <div class="section-block">  
-
-                <div class="subsection-heading">  
-
-                    <div>  
-
-                        <span class="section-eyebrow">  
-                            VARIAÇÕES  
-                        </span>  
-
-                        <h3>  
-                            Tamanhos  
-                        </h3>  
-
-                    </div>  
-
-
-                    <button  
-                        id="newSizeButton"  
-                        type="button"  
-                        class="secondary-button"  
-                    >  
-                        + Tamanho  
-                    </button>  
-
-                </div>  
-
-
-                <div  
-                    id="sizesList"  
-                    class="cards-list sizes-grid"
-                ></div>  
-
-            </div>  
-
-        </section>  
-
-
-
-        <!-- =============================================  
-             ESTOQUE  
-             ============================================= -->  
-
-        <section  
-            id="stockScreen"  
-            class="app-section"  
-            hidden  
-        >  
-
-
-            <div class="section-heading">  
-
-                <div>  
-
-                    <span class="section-eyebrow">  
-                        CONTROLE  
-                    </span>  
-
-                    <h2>  
-                        Estoque  
-                    </h2>  
-
-                </div>  
-
-            </div>  
-
-
-            <div class="metrics-grid">  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Total  
-                    </span>  
-
-                    <strong id="stockTotal">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Unidades  
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Baixo  
-                    </span>  
-
-                    <strong id="stockLow">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Variações  
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Zerado  
-                    </span>  
-
-                    <strong id="stockZero">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Variações  
-                    </small>  
-
-                </article>  
-
-            </div>  
-
-
-            <input  
-                id="stockSearch" aria-label="Buscar no estoque"
-                type="search"  
-                class="search-input"  
-                placeholder="Buscar no estoque..."  
-            >  
-
-
-            <div  
-                id="stockList"  
-                class="cards-list stock-list"
-            ></div>  
-
-        </section>  
-
-
-
-        <!-- =============================================  
-             VENDAS  
-             ============================================= -->  
-
-        <section  
-            id="salesScreen"  
-            class="app-section"  
-            hidden  
-        >  
-
-
-            <div class="section-heading">  
-
-                <div>  
-
-                    <span class="section-eyebrow">  
-                        COMERCIAL  
-                    </span>  
-
-                    <h2>  
-                        Vendas  
-                    </h2>  
-
-                </div>  
-
-
-                <button  
-                    id="newSaleButton"  
-                    type="button"  
-                    class="primary-button small"  
-                >  
-                    + Venda  
-                </button>  
-
-            </div>  
-
-
-            <div class="metrics-grid">  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Hoje  
-                    </span>  
-
-                    <strong id="salesToday">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small>  
-                        Vendas  
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Pedidos  
-                    </span>  
-
-                    <strong id="salesOrdersToday">  
-                        0  
-                    </strong>  
-
-                    <small>  
-                        Hoje  
-                    </small>  
-
-                </article>  
-
-            </div>  
-
-
-            <input  
-                id="salesSearch" aria-label="Buscar vendas"
-                type="search"  
-                class="search-input"  
-                placeholder="Buscar venda..."  
-            >  
-
-
-            <div  
-                id="salesList"  
-                class="cards-list sales-list"
-            ></div>  
-
-        </section>  
-
-
-
-        <!-- =============================================  
-             FINANCEIRO  
-             ============================================= -->  
-
-        <section  
-            id="financeScreen"  
-            class="app-section"  
-            hidden  
-        >  
-
-
-            <div class="section-heading">  
-
-                <div>  
-
-                    <span class="section-eyebrow">  
-                        FINANCEIRO  
-                    </span>  
-
-                    <h2>  
-                        Financeiro  
-                    </h2>  
-
-                </div>  
-
-
-                <button  
-                    id="newTransactionButton"  
-                    type="button"  
-                    class="primary-button small"  
-                >  
-                    + Lançamento  
-                </button>  
-
-            </div>  
-
-
-            <div class="list-toolbar">
-                <label for="financePeriod">Período</label>
-                <select id="financePeriod">
-                    <option value="today">Hoje</option>
-                    <option value="7days">Últimos 7 dias</option>
-                    <option value="30days">Últimos 30 dias</option>
-                    <option value="month" selected>Este mês</option>
-                    <option value="all">Todo o histórico</option>
-                </select>
-            </div>
-
-
-            <div class="metrics-grid">  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Receitas  
-                    </span>  
-
-                    <strong id="financeIncome">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small id="financeIncomePeriod">
-                        Este mês
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Despesas  
-                    </span>  
-
-                    <strong id="financeExpenses">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small id="financeExpensesPeriod">
-                        Este mês
-                    </small>  
-
-                </article>  
-
-
-                <article class="metric-card">  
-
-                    <span>  
-                        Resultado  
-                    </span>  
-
-                    <strong id="financeBalance">  
-                        R$ 0,00  
-                    </strong>  
-
-                    <small id="financeBalancePeriod">
-                        Este mês
-                    </small>  
-
-                </article>  
-
-            </div>  
-
-
-            <input  
-                id="financeSearch" aria-label="Buscar lançamentos"
-                type="search"  
-                class="search-input"  
-                placeholder="Buscar lançamento..."  
-            >  
-
-
-            <div  
-                id="financeList"  
-                class="cards-list finance-list"
-            ></div>  
-
-        </section>  
-
-
-    </div>  
-
-
-
-    <!-- =================================================  
-         NAVEGAÇÃO INFERIOR  
-         ================================================= -->  
-
-    <nav class="bottom-navigation" aria-label="Navegação principal">
-
-<button  
-    type="button"  
-    class="nav-item active"  
-    data-section="home"  
->  
-    <span class="nav-icon" aria-hidden="true">  
-        <svg viewBox="0 0 24 24" fill="none">  
-            <path  
-                d="M3 10.8L12 3l9 7.8"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-                stroke-linejoin="round"  
-            />  
-            <path  
-                d="M5.5 9.8V21h13V9.8"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-            <path  
-                d="M9.5 21v-6h5v6"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-        </svg>  
-    </span>  
-
-    <small>  
-        Início  
-    </small>  
-</button>  
-
-
-<button  
-    type="button"  
-    class="nav-item"  
-    data-section="products"  
->  
-    <span class="nav-icon" aria-hidden="true">  
-        <svg viewBox="0 0 24 24" fill="none">  
-            <path  
-                d="M6 8h12l1 13H5L6 8Z"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-            <path  
-                d="M9 9V6a3 3 0 0 1 6 0v3"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-            />  
-        </svg>  
-    </span>  
-
-    <small>  
-        Produtos  
-    </small>  
-</button>  
-
-
-<button  
-    type="button"  
-    class="nav-item"  
-    data-section="stock"  
->  
-    <span class="nav-icon" aria-hidden="true">  
-        <svg viewBox="0 0 24 24" fill="none">  
-            <path  
-                d="M3 7.5L12 3l9 4.5L12 12 3 7.5Z"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-            <path  
-                d="M3 7.5V16.5L12 21V12"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-            <path  
-                d="M21 7.5V16.5L12 21"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linejoin="round"  
-            />  
-        </svg>  
-    </span>  
-
-    <small>  
-        Estoque  
-    </small>  
-</button>  
-
-
-<button  
-    type="button"  
-    class="nav-item"  
-    data-section="sales"  
->  
-    <span class="nav-icon" aria-hidden="true">  
-        <svg viewBox="0 0 24 24" fill="none">  
-            <path  
-                d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-                stroke-linejoin="round"  
-            />  
-            <circle  
-                cx="10"  
-                cy="20"  
-                r="1.3"  
-                fill="currentColor"  
-            />  
-            <circle  
-                cx="18"  
-                cy="20"  
-                r="1.3"  
-                fill="currentColor"  
-            />  
-        </svg>  
-    </span>  
-
-    <small>  
-        Vendas  
-    </small>  
-</button>  
-
-
-<button  
-    type="button"  
-    class="nav-item"  
-    data-section="finance"  
->  
-    <span class="nav-icon" aria-hidden="true">  
-        <svg viewBox="0 0 24 24" fill="none">  
-            <path  
-                d="M4 19V10"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-            />  
-            <path  
-                d="M10 19V5"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-            />  
-            <path  
-                d="M16 19v-7"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-            />  
-            <path  
-                d="M22 19V3"  
-                stroke="currentColor"  
-                stroke-width="2"  
-                stroke-linecap="round"  
-            />  
-        </svg>  
-    </span>  
-
-    <small>  
-        Financeiro  
-    </small>  
-</button>
-
-</nav>  </main>  
-
-
-
-<!-- =====================================================  
-     MODAL — PRODUTO  
-     ===================================================== -->  
-
-<div  
-    id="productModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="productModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    CATÁLOGO  
-                </span>  
-
-                <h2 id="productModalTitle" data-modal-title>
-                    Novo produto  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="productModal"  
-                aria-label="Fechar produto"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <form id="productForm">  
-
-
-            <input  
-                id="productId"  
-                type="hidden"  
-            >  
-
-
-            <div class="form-group">  
-
-                <label for="productName">  
-                    Nome do produto  
-                </label>  
-
-                <input  
-                    id="productName"  
-                    type="text"  
-                    placeholder="Ex.: Legging Power"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="productSku">  
-                    SKU  
-                </label>  
-
-                <input  
-                    id="productSku"  
-                    type="text"  
-                    placeholder="Ex.: LEG-001"  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="productCategory">  
-                    Categoria  
-                </label>  
-
-                <select id="productCategory">  
-
-                    <option value="">  
-                        Selecione  
-                    </option>  
-
-                </select>  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="productDescription">  
-                    Descrição  
-                </label>  
-
-                <textarea  
-                    id="productDescription"  
-                    rows="4"  
-                    placeholder="Descrição do produto"  
-                ></textarea>  
-
-            </div>  
-
-
-            <div class="form-row">  
-
-
-                <div class="form-group">  
-
-                    <label for="productCostPrice">  
-                        Preço de custo  
-                    </label>  
-
-                    <input  
-                        id="productCostPrice"  
-                        type="number"  
-                        min="0"  
-                        step="0.01"  
-                        inputmode="decimal"  
-                        placeholder="0,00"  
-                    >  
-
-                </div>  
-
-
-                <div class="form-group">  
-
-                    <label for="productSalePrice">  
-                        Preço de venda  
-                    </label>  
-
-                    <input  
-                        id="productSalePrice"  
-                        type="number"  
-                        min="0"  
-                        step="0.01"  
-                        inputmode="decimal"  
-                        placeholder="0,00"  
-                        required  
-                    >  
-
-                </div>  
-
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="productMinimumStock">  
-                    Estoque mínimo  
-                </label>  
-
-                <input  
-                    id="productMinimumStock"  
-                    type="number"  
-                    min="0"  
-                    step="1"  
-                    inputmode="numeric"  
-                    value="0"  
-                >  
-
-            </div>  
-
-
-            <label  
-                class="checkbox-label"  
-            >  
-
-                <input  
-                    id="productActive"  
-                    type="checkbox"  
-                    checked  
-                >  
-
-                <span>  
-                    Produto ativo  
-                </span>  
-
-            </label>  
-
-
-
-            <!-- =========================================  
- FOTOS DO PRODUTO  
- ========================================= -->
-
-<div class="variation-section product-photo-section">  <div class="variation-heading">  
-
-    <div>  
-
-        <h3>  
-            Fotos do produto  
-        </h3>  
-
-        <p>  
-            Adicione fotos para identificar melhor a peça.  
-        </p>  
-
-    </div>  
-
-</div>  
-
-
-<label class="product-photo-upload" for="productPhotoInput">
-
-    <span class="product-photo-upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h4l2-3h4l2 3h4v15H4Z"/><circle cx="12" cy="13" r="4"/></svg></span>
-
-    <strong>  
-        Adicionar fotos  
-    </strong>  
-
-    <span>  
-        Toque para selecionar uma ou mais fotos.  
-    </span>  
-
-</label>  
-
-
-<input  
-    id="productPhotoInput"  
-    type="file"  
-    accept="image/*"  
-    multiple  
-    class="sr-only"
->  
-
-
-<div id="productExistingPhotos" class="product-existing-photos"></div>
-<div  
-    id="productPhotoPreview"  
-    class="product-photo-preview"  
-></div>
-
-</div>  <!-- =========================================  
-     VARIAÇÕES DO PRODUTO  
-     ========================================= -->  <div class="variation-section">  <div class="variation-heading">  
-
-    <div>  
-
-        <h3>  
-            Variações do produto  
-        </h3>  
-
-        <p>  
-            Cadastre somente as combinações que realmente existem.  
-        </p>  
-
-    </div>  
-
-</div>  
-
-
-<!-- =========================================  
-     ADICIONAR VARIAÇÃO  
-     ========================================= -->  
-
-<div class="product-variation-form">  
-
-    <div class="product-variation-field">  
-
-        <label for="productVariationColor">  
-            Cor  
-        </label>  
-
-        <select id="productVariationColor">  
-
-            <option value="">  
-                Selecione a cor  
-            </option>  
-
-        </select>  
-
-    </div>  
-
-
-    <div class="product-variation-field">  
-
-        <label for="productVariationSize">  
-            Tamanho  
-        </label>  
-
-        <select id="productVariationSize">  
-
-            <option value="">  
-                Selecione o tamanho  
-            </option>  
-
-        </select>  
-
-    </div>  
-
-
-    <div class="product-variation-field">  
-
-        <label for="productVariationQuantity">  
-            Quantidade disponível  
-        </label>  
-
-        <input  
-            id="productVariationQuantity"  
-            type="number"  
-            min="0"  
-            step="1"  
-            value="1"  
-            inputmode="numeric"  
-            placeholder="Ex.: 3"  
-        >  
-
-    </div>  
-
-
-    <button  
-        id="addProductVariationButton"  
-        type="button"  
-        class="secondary-button"  
-    >  
-        + Adicionar variação  
-    </button>  
-
-</div>  
-
-
-<!-- =========================================  
-     LISTA DE VARIAÇÕES  
-     ========================================= -->  
-
-<div  
-    id="productVariantsList"  
-    class="product-variants-list"  
->  
-
-    <div class="empty-state compact">  
-
-        <strong>  
-            Nenhuma variação adicionada  
-        </strong>  
-
-        <p>  
-            Selecione cor, tamanho e quantidade acima.  
-        </p>  
-
-    </div>  
-
-</div>  
-
-
-<!-- =========================================  
-     CRIAÇÃO EM LOTE  
-     ========================================= -->  
-
-<div class="product-variation-batch">  
-
-    <button  
-        id="openBatchVariationButton"  
-        type="button"  
-        class="secondary-button"  
-    >  
-         Gerar várias combinações
-    </button>  
-
-    <p>  
-        Use esta opção quando o produto possuir muitas combinações de cor e tamanho.  
-    </p>  
-
-</div>
-
-</div>  
-                <div  
-                    id="productFormMessage"  
-                    class="form-message" aria-live="polite"
-                ></div>  <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="productModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Salvar produto  
-                </button>  
-
-            </div>  
-
-
-        </form>  
-
-    </div>  
-
-</div>  
-
-
-<!-- =====================================================  
-     MODAL — CATEGORIA  
-     ===================================================== -->  
-
-<div  
-    id="categoryModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="categoryModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    ORGANIZAÇÃO  
-                </span>  
-
-                <h2 id="categoryModalTitle">
-                    Categoria  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="categoryModal"  
-                aria-label="Fechar categoria"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <form id="categoryForm">  
-
-            <input  
-                id="categoryId"  
-                type="hidden"  
-            >  
-
-
-            <div class="form-group">  
-
-                <label for="categoryName">  
-                    Nome  
-                </label>  
-
-                <input  
-                    id="categoryName"  
-                    type="text"  
-                    placeholder="Ex.: Leggings"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="categoryDescription">  
-                    Descrição  
-                </label>  
-
-                <textarea  
-                    id="categoryDescription"  
-                    rows="4"  
-                    placeholder="Descrição da categoria"  
-                ></textarea>  
-
-            </div>  
-
-
-            <label class="checkbox-label">  
-
-                <input  
-                    id="categoryActive"  
-                    type="checkbox"  
-                    checked  
-                >  
-
-                <span>  
-                    Categoria ativa  
-                </span>  
-
-            </label>  
-
-
-            <div  
-                id="categoryFormMessage"  
-                class="form-message" aria-live="polite"
-            ></div>  
-
-
-            <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="categoryModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Salvar  
-                </button>  
-
-            </div>  
-
-        </form>  
-
-    </div>  
-
-</div>  
-
-
-
-<!-- =====================================================  
-     MODAL — COR  
-     ===================================================== -->  
-
-<div  
-    id="colorModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="colorModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    VARIAÇÕES  
-                </span>  
-
-                <h2 id="colorModalTitle">
-                    Cor  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="colorModal"  
-                aria-label="Fechar cor"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <form id="colorForm">  
-
-            <input  
-                id="colorId"  
-                type="hidden"  
-            >  
-
-
-            <div class="form-group">  
-
-                <label for="colorName">  
-                    Nome da cor  
-                </label>  
-
-                <input  
-                    id="colorName"  
-                    type="text"  
-                    placeholder="Ex.: Rosa"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label>  
-                    Cor  
-                </label>  
-
-
-                <div class="color-input-row">  
-
-                    <input  
-                        id="colorHex" aria-label="Selecionar cor"
-                        type="color"  
-                        value="#E8A0B8"  
-                    >  
-
-
-                    <input  
-                        id="colorHexText" aria-label="Código hexadecimal da cor"
-                        type="text"  
-                        value="#E8A0B8"  
-                        maxlength="7"  
-                        placeholder="#E8A0B8"  
-                    >  
-
-                </div>  
-
-
-                <div class="color-preview-wrapper">  
-
-                    <span>  
-                        Pré-visualização  
-                    </span>  
-
-                    <span  
-                        id="colorPreview"  
-                        class="color-preview"  
-                        style="background:#E8A0B8;"  
-                    ></span>  
-
-                </div>  
-
-            </div>  
-
-
-            <label class="checkbox-label">  
-
-                <input  
-                    id="colorActive"  
-                    type="checkbox"  
-                    checked  
-                >  
-
-                <span>  
-                    Cor ativa  
-                </span>  
-
-            </label>  
-
-
-            <div  
-                id="colorFormMessage"  
-                class="form-message" aria-live="polite"
-            ></div>  
-
-
-            <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="colorModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Salvar  
-                </button>  
-
-            </div>  
-
-        </form>  
-
-    </div>  
-
-</div>  
-
-
-
-<!-- =====================================================  
-     MODAL — TAMANHO  
-     ===================================================== -->  
-
-<div  
-    id="sizeModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="sizeModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    VARIAÇÕES  
-                </span>  
-
-                <h2 id="sizeModalTitle">
-                    Tamanho  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="sizeModal"  
-                aria-label="Fechar tamanho"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <form id="sizeForm">  
-
-            <input  
-                id="sizeId"  
-                type="hidden"  
-            >  
-
-
-            <div class="form-group">  
-
-                <label for="sizeName">  
-                    Tamanho  
-                </label>  
-
-                <input  
-                    id="sizeName"  
-                    type="text"  
-                    placeholder="Ex.: M"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="sizeDisplayOrder">  
-                    Ordem de exibição  
-                </label>  
-
-                <input  
-                    id="sizeDisplayOrder"  
-                    type="number"  
-                    min="0"  
-                    step="1"  
-                    value="0"  
-                >  
-
-            </div>  
-
-
-            <label class="checkbox-label">  
-
-                <input  
-                    id="sizeActive"  
-                    type="checkbox"  
-                    checked  
-                >  
-
-                <span>  
-                    Tamanho ativo  
-                </span>  
-
-            </label>  
-
-
-            <div  
-                id="sizeFormMessage"  
-                class="form-message" aria-live="polite"
-            ></div>  
-
-
-            <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="sizeModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Salvar  
-                </button>  
-
-            </div>  
-
-        </form>  
-
-    </div>  
-
-</div>  
-
-
-
-<!-- =====================================================  
-     MODAL — VENDA  
-     ===================================================== -->  
-
-<div  
-    id="saleModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="saleModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    COMERCIAL  
-                </span>  
-
-                <h2 id="saleModalTitle">
-                    Nova venda  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="saleModal"  
-                aria-label="Fechar nova venda"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <div class="modal-body">
-
-            <div id="saleManagementWorkspace" class="sale-management">
-
-                <div class="sale-management-actions">
-                    <button type="button" class="secondary-button" id="saleAddProductButton" aria-controls="saleProductPicker" aria-expanded="false">
-                        + Adicionar produto
-                    </button>
-                </div>
-
-                <div id="saleProductPicker" class="sale-product-picker" hidden>
-                    <div class="sale-picker-heading">
-                        <strong>Selecionar produto</strong>
-                        <button type="button" class="icon-button" id="saleClosePickerButton" aria-label="Fechar seleção de produto">×</button>
-                    </div>
-
-                    <label class="sr-only" for="saleProductSearchInput">Buscar produto</label>
-                    <input type="search" id="saleProductSearchInput" placeholder="Buscar produto..." autocomplete="off">
-                    <div id="saleProductPickerList" class="sale-product-picker-list"></div>
-                    <div id="saleVariantPicker" class="sale-variant-picker" hidden></div>
-                </div>
-
-                <section class="sale-items-section" aria-labelledby="saleItemsTitle">
-                    <strong id="saleItemsTitle">Produtos da venda</strong>
-                    <div id="saleItemsList" class="sale-items-list"></div>
-                </section>
-
-                <div class="sale-summary">
-                    <div>
-                        <span>Subtotal</span>
-                        <strong id="saleSubtotalValue">R$ 0,00</strong>
-                    </div>
-                    <div>
-                        <label for="saleDiscountInput">Desconto</label>
-                        <input type="number" id="saleDiscountInput" min="0" step="0.01" inputmode="decimal" value="0">
-                    </div>
-                    <div class="total">
-                        <span>Total</span>
-                        <strong id="saleTotalValue">R$ 0,00</strong>
-                    </div>
-                </div>
-
-                <div class="sale-payment form-group">
-                    <label for="salePaymentMethod">Forma de pagamento</label>
-                    <select id="salePaymentMethod" required>
-                        <option value="">Selecione</option>
-                        <option value="pix">Pix</option>
-                        <option value="credit_card">Cartão de crédito</option>
-                        <option value="debit_card">Cartão de débito</option>
-                        <option value="cash">Dinheiro</option>
-                        <option value="transfer">Transferência</option>
-                        <option value="other">Outro</option>
-                    </select>
-                </div>
-
-                <div class="sale-notes form-group">
-                    <label for="saleNotesInput">Observações</label>
-                    <textarea id="saleNotesInput" rows="2" placeholder="Opcional"></textarea>
-                </div>
-
-                <div id="saleFormMessage" class="form-message" aria-live="polite"></div>
-
-                <div class="sale-management-footer">
-                    <button type="button" class="secondary-button" data-close-modal="saleModal">Cancelar</button>
-                    <button type="button" class="primary-button" id="saleRegisterButton">Registrar venda</button>
-                </div>
-
-            </div>  
-
+     <section class="app-section" hidden="" id="settingsScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         CONFIGURAÇÕES
+        </span>
+        <h2>
+         Cadastros
+        </h2>
+        <p>
+         Opções usadas nos produtos e variações.
+        </p>
+       </div>
+       <button class="secondary-button small" data-section="products" type="button">
+        Voltar
+       </button>
+      </div>
+      <div aria-label="Tipo de cadastro" class="filter-chips" id="registrationFilters" role="group">
+       <button aria-pressed="true" data-registration="categories" type="button">
+        Categorias
+       </button>
+       <button aria-pressed="false" data-registration="colors" type="button">
+        Cores
+       </button>
+       <button aria-pressed="false" data-registration="sizes" type="button">
+        Tamanhos
+       </button>
+      </div>
+      <div class="section-block" data-registration-panel="categories">
+       <div class="subsection-heading">
+        <div>
+         <span class="section-eyebrow">
+          ORGANIZAÇÃO
+         </span>
+         <h3>
+          Categorias
+         </h3>
         </div>
-
-    </div>  
-
-</div>  
-
-
-
-<!-- =====================================================  
-     MODAL — FINANCEIRO  
-     ===================================================== -->  
-
-<div  
-    id="transactionModal"  
-    class="modal"  
-    hidden  
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="transactionModalTitle"
->  
-
-    <div class="modal-content">  
-
-        <div class="modal-header">  
-
-            <div>  
-
-                <span class="section-eyebrow">  
-                    FINANCEIRO  
-                </span>  
-
-                <h2 id="transactionModalTitle">
-                    Lançamento  
-                </h2>  
-
-            </div>  
-
-
-            <button  
-                type="button"  
-                class="modal-close"  
-                data-close-modal="transactionModal"  
-                aria-label="Fechar lançamento"
-            >  
-                ×  
-            </button>  
-
-        </div>  
-
-
-        <form id="transactionForm">  
-
-
-            <div class="form-group">  
-
-                <label for="transactionType">  
-                    Tipo  
-                </label>  
-
-                <select id="transactionType" required>  
-
-                    <option value="">  
-                        Selecione  
-                    </option>  
-
-                    <option value="income">  
-                        Receita  
-                    </option>  
-
-                    <option value="expense">  
-                        Despesa  
-                    </option>  
-
-                </select>  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionCategory">  
-                    Categoria  
-                </label>  
-
-                <input  
-                    id="transactionCategory"  
-                    type="text"  
-                    placeholder="Ex.: Fornecedores"  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionDescription">  
-                    Descrição  
-                </label>  
-
-                <input  
-                    id="transactionDescription"  
-                    type="text"  
-                    placeholder="Ex.: Compra de mercadorias"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionAmount">  
-                    Valor  
-                </label>  
-
-                <input  
-                    id="transactionAmount"  
-                    type="number"  
-                    min="0"  
-                    step="0.01"  
-                    inputmode="decimal"  
-                    placeholder="0,00"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionDate">  
-                    Data  
-                </label>  
-
-                <input  
-                    id="transactionDate"  
-                    type="date"  
-                    required  
-                >  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionPaymentMethod">  
-                    Forma de pagamento  
-                </label>  
-
-                <select id="transactionPaymentMethod">  
-
-                    <option value="">  
-                        Selecione  
-                    </option>  
-
-                    <option value="cash">
-                        Dinheiro  
-                    </option>  
-
-                    <option value="pix">
-                        Pix  
-                    </option>  
-
-                    <option value="debit_card">
-                        Cartão de débito  
-                    </option>  
-
-                    <option value="credit_card">
-                        Cartão de crédito  
-                    </option>  
-
-                    <option value="transfer">
-                        Transferência  
-                    </option>  
-
-                    <option value="boleto">
-                        Boleto  
-                    </option>  
-
-                </select>  
-
-            </div>  
-
-
-            <div class="form-group">  
-
-                <label for="transactionNotes">  
-                    Observações  
-                </label>  
-
-                <textarea  
-                    id="transactionNotes"  
-                    rows="3"  
-                    placeholder="Observações"  
-                ></textarea>  
-
-            </div>  
-
-
-            <div  
-                id="transactionFormMessage"  
-                class="form-message" aria-live="polite"
-            ></div>  
-
-
-            <div class="modal-actions">  
-
-                <button  
-                    type="button"  
-                    class="secondary-button"  
-                    data-close-modal="transactionModal"  
-                >  
-                    Cancelar  
-                </button>  
-
-                <button  
-                    type="submit"  
-                    class="primary-button"  
-                >  
-                    Salvar lançamento  
-                </button>  
-
-            </div>  
-
-
-        </form>  
-
-    </div>  
-
-</div>
-
-</div>  <!-- =====================================================  
-     SUPABASE  
-     ===================================================== -->  <script  
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"  
-></script>  <script src="js/supabase.js"></script>  <script src="js/app.js"></script>  <!-- =====================================================  
-     SERVICE WORKER  
-     ===================================================== -->  <script>  
-  
-if ("serviceWorker" in navigator) {  
-  
-    window.addEventListener(  
-        "load",  
-        () => {  
-  
-            navigator.serviceWorker.register(  
-                "service-worker.js"  
-            ).catch(  
-                error =>  
-                    console.error(  
-                        "Erro no Service Worker:",  
-                        error  
-                    )  
-            );  
-  
-        }  
-    );  
-  
-}  
-  
-</script>  </body>  </html>  
+        <button class="secondary-button" id="newCategoryButton" type="button">
+         + Categoria
+        </button>
+       </div>
+       <div class="cards-list categories-grid" id="categoriesList">
+       </div>
+      </div>
+      <!-- =========================================
+                 CORES
+                 ========================================= -->
+      <div class="section-block" data-registration-panel="colors" hidden="">
+       <div class="subsection-heading">
+        <div>
+         <span class="section-eyebrow">
+          VARIAÇÕES
+         </span>
+         <h3>
+          Cores
+         </h3>
+        </div>
+        <button class="secondary-button" id="newColorButton" type="button">
+         + Cor
+        </button>
+       </div>
+       <div class="cards-list colors-grid" id="colorsList">
+       </div>
+      </div>
+      <!-- =========================================
+                 TAMANHOS
+                 ========================================= -->
+      <div class="section-block" data-registration-panel="sizes" hidden="">
+       <div class="subsection-heading">
+        <div>
+         <span class="section-eyebrow">
+          VARIAÇÕES
+         </span>
+         <h3>
+          Tamanhos
+         </h3>
+        </div>
+        <button class="secondary-button" id="newSizeButton" type="button">
+         + Tamanho
+        </button>
+       </div>
+       <div class="cards-list sizes-grid" id="sizesList">
+       </div>
+      </div>
+     </section>
+     <!-- =============================================
+             ESTOQUE
+             ============================================= -->
+     <section class="app-section" hidden="" id="stockScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         CONTROLE
+        </span>
+        <h2>
+         Estoque
+        </h2>
+       </div>
+      </div>
+      <div class="metrics-grid">
+       <article class="metric-card">
+        <span>
+         Total
+        </span>
+        <strong id="stockTotal">
+         0
+        </strong>
+        <small>
+         Unidades
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Baixo
+        </span>
+        <strong id="stockLow">
+         0
+        </strong>
+        <small>
+         Variações
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Zerado
+        </span>
+        <strong id="stockZero">
+         0
+        </strong>
+        <small>
+         Variações
+        </small>
+       </article>
+      </div>
+      <input aria-label="Buscar no estoque" class="search-input" id="stockSearch" placeholder="Produto, cor ou tamanho" type="search"/>
+      <div aria-label="Filtrar estoque" class="filter-chips" id="stockFilters" role="group">
+       <button aria-pressed="true" data-stock-filter="all" type="button">
+        Todos
+       </button>
+       <button aria-pressed="false" data-stock-filter="low" type="button">
+        Baixo
+       </button>
+       <button aria-pressed="false" data-stock-filter="zero" type="button">
+        Sem estoque
+       </button>
+       <button aria-pressed="false" data-stock-filter="normal" type="button">
+        Normal
+       </button>
+      </div>
+      <div class="cards-list stock-list" id="stockList">
+      </div>
+     </section>
+     <!-- =============================================
+             VENDAS
+             ============================================= -->
+     <section class="app-section" hidden="" id="salesScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         COMERCIAL
+        </span>
+        <h2>
+         Vendas
+        </h2>
+       </div>
+       <button class="primary-button small" id="newSaleButton" type="button">
+        + Venda
+       </button>
+      </div>
+      <div class="metrics-grid">
+       <article class="metric-card">
+        <span>
+         Hoje
+        </span>
+        <strong id="salesToday">
+         R$ 0,00
+        </strong>
+        <small>
+         Vendas
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Nº de vendas
+        </span>
+        <strong id="salesOrdersToday">
+         0
+        </strong>
+        <small>
+         Hoje
+        </small>
+       </article>
+      </div>
+      <input aria-label="Buscar vendas" class="search-input" id="salesSearch" placeholder="Número ou forma de pagamento" type="search"/>
+      <div class="cards-list sales-list" id="salesList">
+      </div>
+     </section>
+     <!-- =============================================
+             FINANCEIRO
+             ============================================= -->
+     <section class="app-section" hidden="" id="financeScreen">
+      <div class="section-heading">
+       <div>
+        <span class="section-eyebrow">
+         FINANCEIRO
+        </span>
+        <h2>
+         Financeiro
+        </h2>
+       </div>
+       <button class="primary-button small" id="newTransactionButton" type="button">
+        + Lançamento
+       </button>
+      </div>
+      <div class="list-toolbar">
+       <label for="financePeriod">
+        Período
+       </label>
+       <select id="financePeriod">
+        <option value="today">
+         Hoje
+        </option>
+        <option value="7days">
+         Últimos 7 dias
+        </option>
+        <option value="30days">
+         Últimos 30 dias
+        </option>
+        <option selected="" value="month">
+         Este mês
+        </option>
+        <option value="all">
+         Todo o histórico
+        </option>
+       </select>
+      </div>
+      <div class="metrics-grid">
+       <article class="metric-card">
+        <span>
+         Receitas
+        </span>
+        <strong id="financeIncome">
+         R$ 0,00
+        </strong>
+        <small id="financeIncomePeriod">
+         Este mês
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Despesas
+        </span>
+        <strong id="financeExpenses">
+         R$ 0,00
+        </strong>
+        <small id="financeExpensesPeriod">
+         Este mês
+        </small>
+       </article>
+       <article class="metric-card">
+        <span>
+         Resultado
+        </span>
+        <strong id="financeBalance">
+         R$ 0,00
+        </strong>
+        <small id="financeBalancePeriod">
+         Este mês
+        </small>
+       </article>
+      </div>
+      <div aria-label="Filtrar lançamentos" class="filter-chips" id="financeFilters" role="group">
+       <button aria-pressed="true" data-finance-filter="all" type="button">
+        Todos
+       </button>
+       <button aria-pressed="false" data-finance-filter="income" type="button">
+        Receitas
+       </button>
+       <button aria-pressed="false" data-finance-filter="expense" type="button">
+        Despesas
+       </button>
+      </div>
+      <input aria-label="Buscar lançamentos" class="search-input" id="financeSearch" placeholder="Descrição ou categoria" type="search"/>
+      <div class="cards-list finance-list" id="financeList">
+      </div>
+     </section>
+    </div>
+    <!-- =================================================
+         NAVEGAÇÃO INFERIOR
+         ================================================= -->
+    <nav aria-label="Navegação principal" class="bottom-navigation">
+     <button class="nav-item active" data-section="home" type="button">
+      <span aria-hidden="true" class="nav-icon">
+       <svg fill="none" viewbox="0 0 24 24">
+        <path d="M3 10.8L12 3l9 7.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <path d="M5.5 9.8V21h13V9.8" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <path d="M9.5 21v-6h5v6" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+       </svg>
+      </span>
+      <small>
+       Início
+      </small>
+     </button>
+     <button class="nav-item" data-section="products" type="button">
+      <span aria-hidden="true" class="nav-icon">
+       <svg fill="none" viewbox="0 0 24 24">
+        <path d="M6 8h12l1 13H5L6 8Z" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <path d="M9 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+        </path>
+       </svg>
+      </span>
+      <small>
+       Produtos
+      </small>
+     </button>
+     <button class="nav-item" data-section="stock" type="button">
+      <span aria-hidden="true" class="nav-icon">
+       <svg fill="none" viewbox="0 0 24 24">
+        <path d="M3 7.5L12 3l9 4.5L12 12 3 7.5Z" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <path d="M3 7.5V16.5L12 21V12" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <path d="M21 7.5V16.5L12 21" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+        </path>
+       </svg>
+      </span>
+      <small>
+       Estoque
+      </small>
+     </button>
+     <button class="nav-item" data-section="sales" type="button">
+      <span aria-hidden="true" class="nav-icon">
+       <svg fill="none" viewbox="0 0 24 24">
+        <path d="M3 5h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 9H7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+        </path>
+        <circle cx="10" cy="20" fill="currentColor" r="1.3">
+        </circle>
+        <circle cx="18" cy="20" fill="currentColor" r="1.3">
+        </circle>
+       </svg>
+      </span>
+      <small>
+       Vendas
+      </small>
+     </button>
+     <button class="nav-item" data-section="finance" type="button">
+      <span aria-hidden="true" class="nav-icon">
+       <svg fill="none" viewbox="0 0 24 24">
+        <path d="M4 19V10" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+        </path>
+        <path d="M10 19V5" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+        </path>
+        <path d="M16 19v-7" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+        </path>
+        <path d="M22 19V3" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+        </path>
+       </svg>
+      </span>
+      <small>
+       Financeiro
+      </small>
+     </button>
+    </nav>
+   </main>
+   <!-- =====================================================
+     MODAL — PRODUTO
+     ===================================================== -->
+   <div aria-labelledby="productModalTitle" aria-modal="true" class="modal" hidden="" id="productModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        PRODUTOS
+       </span>
+       <h2 data-modal-title="" id="productModalTitle">
+        Novo produto
+       </h2>
+      </div>
+      <button aria-label="Fechar produto" class="modal-close" data-close-modal="productModal" type="button">
+       ×
+      </button>
+     </div>
+     <form id="productForm">
+      <input id="productId" type="hidden"/>
+      <div aria-label="Etapas do produto" class="filter-chips" id="productFormTabs" role="group">
+       <button aria-pressed="true" data-product-panel-target="details" type="button">
+        1 · Dados
+       </button>
+       <button aria-pressed="false" data-product-panel-target="photos" type="button">
+        2 · Fotos
+       </button>
+       <button aria-pressed="false" data-product-panel-target="stock" type="button">
+        3 · Estoque
+       </button>
+      </div>
+      <div class="product-panel" data-product-panel="details">
+       <div class="form-group">
+        <label for="productName">
+         Nome do produto
+        </label>
+        <input id="productName" placeholder="Ex.: Legging Power" required="" type="text"/>
+       </div>
+       <div class="form-group">
+        <label for="productCategory">
+         Categoria
+        </label>
+        <select id="productCategory">
+         <option value="">
+          Selecione
+         </option>
+        </select>
+       </div>
+       <div class="form-row">
+        <div class="form-group">
+         <label for="productCostPrice">
+          Preço de custo
+         </label>
+         <input id="productCostPrice" inputmode="decimal" min="0" placeholder="0,00" step="0.01" type="number"/>
+        </div>
+        <div class="form-group">
+         <label for="productSalePrice">
+          Preço de venda
+         </label>
+         <input id="productSalePrice" inputmode="decimal" min="0" placeholder="0,00" required="" step="0.01" type="number"/>
+        </div>
+       </div>
+       <details class="optional-fields">
+        <summary>
+         Código e descrição
+         <span>
+          Opcional
+         </span>
+        </summary>
+        <div class="form-group">
+         <label for="productSku">
+          SKU
+         </label>
+         <input id="productSku" placeholder="Ex.: LEG-001" type="text"/>
+        </div>
+        <div class="form-group">
+         <label for="productDescription">
+          Descrição
+         </label>
+         <textarea id="productDescription" placeholder="Descrição do produto" rows="2"></textarea>
+        </div>
+       </details>
+       <label class="checkbox-label">
+        <input checked="" id="productActive" type="checkbox"/>
+        <span>
+         Produto ativo
+        </span>
+       </label>
+      </div>
+      <div class="product-panel" data-product-panel="photos" hidden="">
+       <div class="variation-section product-photo-section">
+        <div class="variation-heading">
+         <div>
+          <h3>
+           Fotos do produto
+          </h3>
+          <p>
+           Adicione fotos para identificar melhor a peça.
+          </p>
+         </div>
+        </div>
+        <label class="camera-button secondary-button" for="productCameraInput">
+         Fotografar a peça
+        </label>
+        <label class="product-photo-upload" for="productPhotoInput">
+         <span aria-hidden="true" class="product-photo-upload-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+           <path d="M4 6h4l2-3h4l2 3h4v15H4Z">
+           </path>
+           <circle cx="12" cy="13" r="4">
+           </circle>
+          </svg>
+         </span>
+         <strong>
+          Escolher da galeria
+         </strong>
+         <span>
+          Uma ou mais fotos da peça
+         </span>
+        </label>
+        <input accept="image/*" class="sr-only" id="productPhotoInput" multiple="" type="file"/>
+        <input accept="image/*" aria-label="Fotografar produto" capture="environment" class="sr-only" id="productCameraInput" type="file"/>
+        <div class="product-existing-photos" id="productExistingPhotos">
+        </div>
+        <div class="product-photo-preview" id="productPhotoPreview">
+        </div>
+       </div>
+      </div>
+      <div class="product-panel" data-product-panel="stock" hidden="">
+       <div class="form-group">
+        <label for="productMinimumStock">
+         Estoque mínimo
+        </label>
+        <input id="productMinimumStock" inputmode="numeric" min="0" step="1" type="number" value="0"/>
+        <small class="field-hint">
+         Avise quando uma variação atingir esta quantidade.
+        </small>
+       </div>
+       <div class="variation-section">
+        <div class="variation-heading">
+         <div>
+          <h3>
+           Variações do produto
+          </h3>
+          <p>
+           Cadastre somente as combinações que realmente existem.
+          </p>
+         </div>
+        </div>
+        <!-- =========================================
+     ADICIONAR VARIAÇÃO
+     ========================================= -->
+        <div class="product-variation-form">
+         <div class="product-variation-field">
+          <label for="productVariationColor">
+           Cor
+          </label>
+          <select id="productVariationColor">
+           <option value="">
+            Cor
+           </option>
+          </select>
+         </div>
+         <div class="product-variation-field">
+          <label for="productVariationSize">
+           Tamanho
+          </label>
+          <select id="productVariationSize">
+           <option value="">
+            Tamanho
+           </option>
+          </select>
+         </div>
+         <div class="product-variation-field">
+          <label for="productVariationQuantity">
+           Quantidade
+          </label>
+          <input id="productVariationQuantity" inputmode="numeric" min="0" placeholder="Ex.: 3" step="1" type="number" value="1"/>
+         </div>
+         <button class="secondary-button" id="addProductVariationButton" type="button">
+          + Adicionar variação
+         </button>
+        </div>
+        <!-- =========================================
+     LISTA DE VARIAÇÕES
+     ========================================= -->
+        <div class="product-variants-list" id="productVariantsList">
+         <div class="empty-state compact">
+          <strong>
+           Nenhuma variação adicionada
+          </strong>
+          <p>
+           Selecione cor, tamanho e quantidade acima.
+          </p>
+         </div>
+        </div>
+        <!-- =========================================
+     CRIAÇÃO EM LOTE
+     ========================================= -->
+        <details class="product-variation-batch">
+         <summary>
+          Gerar combinações em lote
+         </summary>
+         <p>
+          Combina todas as cores e tamanhos ativos. As combinações existentes são mantidas.
+         </p>
+         <div class="form-group">
+          <label for="batchVariationQuantity">
+           Quantidade em cada combinação
+          </label>
+          <input id="batchVariationQuantity" inputmode="numeric" min="0" step="1" type="number" value="1"/>
+         </div>
+         <button class="secondary-button" id="openBatchVariationButton" type="button">
+          Gerar combinações
+         </button>
+        </details>
+       </div>
+      </div>
+      <!-- =========================================
+ FOTOS DO PRODUTO
+ ========================================= -->
+      <!-- =========================================
+     VARIAÇÕES DO PRODUTO
+     ========================================= -->
+      <div aria-live="polite" class="form-message" id="productFormMessage">
+      </div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="productModal" type="button">
+        Cancelar
+       </button>
+       <button class="primary-button" type="submit">
+        Salvar produto
+       </button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — CATEGORIA
+     ===================================================== -->
+   <div aria-labelledby="categoryModalTitle" aria-modal="true" class="modal" hidden="" id="categoryModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        ORGANIZAÇÃO
+       </span>
+       <h2 id="categoryModalTitle">
+        Categoria
+       </h2>
+      </div>
+      <button aria-label="Fechar categoria" class="modal-close" data-close-modal="categoryModal" type="button">
+       ×
+      </button>
+     </div>
+     <form id="categoryForm">
+      <input id="categoryId" type="hidden"/>
+      <div class="form-group">
+       <label for="categoryName">
+        Nome
+       </label>
+       <input id="categoryName" placeholder="Ex.: Leggings" required="" type="text"/>
+      </div>
+      <div class="form-group">
+       <label for="categoryDescription">
+        Descrição
+       </label>
+       <textarea id="categoryDescription" placeholder="Descrição da categoria" rows="2"></textarea>
+      </div>
+      <label class="checkbox-label">
+       <input checked="" id="categoryActive" type="checkbox"/>
+       <span>
+        Categoria ativa
+       </span>
+      </label>
+      <div aria-live="polite" class="form-message" id="categoryFormMessage">
+      </div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="categoryModal" type="button">
+        Cancelar
+       </button>
+       <button class="primary-button" type="submit">
+        Salvar
+       </button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — COR
+     ===================================================== -->
+   <div aria-labelledby="colorModalTitle" aria-modal="true" class="modal" hidden="" id="colorModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        VARIAÇÕES
+       </span>
+       <h2 id="colorModalTitle">
+        Cor
+       </h2>
+      </div>
+      <button aria-label="Fechar cor" class="modal-close" data-close-modal="colorModal" type="button">
+       ×
+      </button>
+     </div>
+     <form id="colorForm">
+      <input id="colorId" type="hidden"/>
+      <div class="form-group">
+       <label for="colorName">
+        Nome da cor
+       </label>
+       <input id="colorName" placeholder="Ex.: Rosa" required="" type="text"/>
+      </div>
+      <div class="form-group">
+       <label>
+        Cor
+       </label>
+       <div class="color-input-row">
+        <input aria-label="Selecionar cor" id="colorHex" type="color" value="#E8A0B8"/>
+        <input aria-label="Código hexadecimal da cor" id="colorHexText" maxlength="7" placeholder="#E8A0B8" type="text" value="#E8A0B8"/>
+       </div>
+       <div class="color-preview-wrapper">
+        <span>
+         Pré-visualização
+        </span>
+        <span class="color-preview" id="colorPreview" style="background:#E8A0B8;">
+        </span>
+       </div>
+      </div>
+      <label class="checkbox-label">
+       <input checked="" id="colorActive" type="checkbox"/>
+       <span>
+        Cor ativa
+       </span>
+      </label>
+      <div aria-live="polite" class="form-message" id="colorFormMessage">
+      </div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="colorModal" type="button">
+        Cancelar
+       </button>
+       <button class="primary-button" type="submit">
+        Salvar
+       </button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — TAMANHO
+     ===================================================== -->
+   <div aria-labelledby="sizeModalTitle" aria-modal="true" class="modal" hidden="" id="sizeModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        VARIAÇÕES
+       </span>
+       <h2 id="sizeModalTitle">
+        Tamanho
+       </h2>
+      </div>
+      <button aria-label="Fechar tamanho" class="modal-close" data-close-modal="sizeModal" type="button">
+       ×
+      </button>
+     </div>
+     <form id="sizeForm">
+      <input id="sizeId" type="hidden"/>
+      <div class="form-group">
+       <label for="sizeName">
+        Tamanho
+       </label>
+       <input id="sizeName" placeholder="Ex.: M" required="" type="text"/>
+      </div>
+      <div class="form-group">
+       <label for="sizeDisplayOrder">
+        Ordem de exibição
+       </label>
+       <input id="sizeDisplayOrder" min="0" step="1" type="number" value="0"/>
+      </div>
+      <label class="checkbox-label">
+       <input checked="" id="sizeActive" type="checkbox"/>
+       <span>
+        Tamanho ativo
+       </span>
+      </label>
+      <div aria-live="polite" class="form-message" id="sizeFormMessage">
+      </div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="sizeModal" type="button">
+        Cancelar
+       </button>
+       <button class="primary-button" type="submit">
+        Salvar
+       </button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — VENDA
+     ===================================================== -->
+   <div aria-labelledby="saleModalTitle" aria-modal="true" class="modal" hidden="" id="saleModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        COMERCIAL
+       </span>
+       <h2 id="saleModalTitle">
+        Nova venda
+       </h2>
+      </div>
+      <button aria-label="Fechar nova venda" class="modal-close" data-close-modal="saleModal" type="button">
+       ×
+      </button>
+     </div>
+     <div class="modal-body">
+      <div class="sale-management" id="saleManagementWorkspace">
+       <div class="sale-management-actions" data-sale-stage="items">
+        <button aria-controls="saleProductPicker" aria-expanded="false" class="secondary-button" id="saleAddProductButton" type="button">
+         + Adicionar produto
+        </button>
+       </div>
+       <div class="sale-product-picker" hidden="" id="saleProductPicker">
+        <div class="sale-picker-heading">
+         <strong id="salePickerTitle" tabindex="-1">
+          Selecionar produto
+         </strong>
+         <button aria-label="Voltar à venda" class="icon-button" id="saleClosePickerButton" type="button">
+          ‹
+         </button>
+        </div>
+        <label class="sr-only" for="saleProductSearchInput">
+         Buscar produto
+        </label>
+        <input autocomplete="off" id="saleProductSearchInput" placeholder="Buscar produto..." type="search"/>
+        <div class="sale-product-picker-list" id="saleProductPickerList">
+        </div>
+        <div class="sale-variant-picker" hidden="" id="saleVariantPicker">
+        </div>
+       </div>
+       <section aria-labelledby="saleItemsTitle" class="sale-items-section" data-sale-stage="items">
+        <strong id="saleItemsTitle">
+         Produtos da venda
+        </strong>
+        <div class="sale-items-list" id="saleItemsList">
+        </div>
+       </section>
+       <div class="sale-cart-footer" data-sale-stage="items">
+        <span>
+         <small>
+          Total dos produtos
+         </small>
+         <strong id="saleCartTotal">
+          R$ 0,00
+         </strong>
+        </span>
+        <button class="primary-button" id="saleContinueButton" type="button">
+         Pagamento ›
+        </button>
+       </div>
+       <button class="text-button" data-sale-stage="payment" hidden="" id="saleBackToItems" type="button">
+        ‹ Voltar aos produtos
+       </button>
+       <div class="sale-summary" data-sale-stage="payment" hidden="">
+        <div>
+         <span>
+          Subtotal
+         </span>
+         <strong id="saleSubtotalValue">
+          R$ 0,00
+         </strong>
+        </div>
+        <div>
+         <label for="saleDiscountInput">
+          Desconto (R$)
+         </label>
+         <input id="saleDiscountInput" inputmode="decimal" min="0" step="0.01" type="number" value="0"/>
+        </div>
+        <div class="total">
+         <span>
+          Total
+         </span>
+         <strong id="saleTotalValue">
+          R$ 0,00
+         </strong>
+        </div>
+       </div>
+       <div class="sale-payment form-group" data-sale-stage="payment" hidden="">
+        <label for="salePaymentMethod">
+         Forma de pagamento
+        </label>
+        <select id="salePaymentMethod" required="">
+         <option value="">
+          Selecione
+         </option>
+         <option value="pix">
+          Pix
+         </option>
+         <option value="credit_card">
+          Cartão de crédito
+         </option>
+         <option value="debit_card">
+          Cartão de débito
+         </option>
+         <option value="cash">
+          Dinheiro
+         </option>
+         <option value="transfer">
+          Transferência
+         </option>
+         <option value="other">
+          Outro
+         </option>
+        </select>
+       </div>
+       <details class="optional-fields" data-sale-stage="payment" hidden="">
+        <summary>
+         Observação
+         <span>
+          Opcional
+         </span>
+        </summary>
+        <div class="sale-notes form-group">
+         <label for="saleNotesInput">
+          Observações
+         </label>
+         <textarea id="saleNotesInput" placeholder="Opcional" rows="2"></textarea>
+        </div>
+       </details>
+       <div aria-live="polite" class="form-message" id="saleFormMessage">
+       </div>
+       <div class="sale-management-footer" data-sale-stage="payment" hidden="">
+        <button class="secondary-button" data-close-modal="saleModal" type="button">
+         Cancelar
+        </button>
+        <button class="primary-button" id="saleRegisterButton" type="button">
+         Registrar venda
+        </button>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — CANCELAMENTO DE VENDA
+     ===================================================== -->
+   <div aria-labelledby="cancelSaleTitle" aria-describedby="cancelSaleExplanation" aria-modal="true" class="modal" hidden="" id="cancelSaleModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <h2 id="cancelSaleTitle">Cancelar venda?</h2>
+      <button aria-label="Fechar cancelamento" class="modal-close" data-close-modal="cancelSaleModal" type="button">×</button>
+     </div>
+     <form id="cancelSaleForm">
+      <p id="cancelSaleExplanation">Esta operação irá devolver os itens ao estoque, desfazer o lançamento financeiro interno e manter a venda registrada como cancelada.</p>
+      <div class="form-group">
+       <label for="cancelSaleReason">Motivo do cancelamento (opcional)</label>
+       <textarea id="cancelSaleReason" rows="2"></textarea>
+      </div>
+      <div aria-live="polite" class="form-message" id="cancelSaleMessage"></div>
+      <div class="modal-actions">
+       <button class="secondary-button" id="cancelSaleBack" type="button">Voltar</button>
+       <button class="destructive-button" id="cancelSaleConfirm" type="submit">Confirmar cancelamento</button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — DETALHES DA VENDA
+     ===================================================== -->
+   <div aria-labelledby="saleDetailsTitle" aria-modal="true" class="modal" hidden="" id="saleDetailsModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <h2 id="saleDetailsTitle">Detalhes da venda</h2>
+      <button aria-label="Fechar detalhes da venda" class="modal-close" data-close-modal="saleDetailsModal" type="button">×</button>
+     </div>
+     <div class="modal-body">
+      <div aria-live="polite" class="form-message" id="saleDetailsMessage"></div>
+      <div id="saleDetailsContent"></div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="saleDetailsModal" type="button">Voltar</button>
+      </div>
+     </div>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — EXCLUSÃO FINANCEIRA
+     ===================================================== -->
+   <div aria-labelledby="deleteFinanceTitle" aria-describedby="deleteFinanceExplanation" aria-modal="true" class="modal" hidden="" id="deleteFinanceModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <h2 id="deleteFinanceTitle">Excluir este lançamento?</h2>
+      <button aria-label="Fechar confirmação" class="modal-close" data-close-modal="deleteFinanceModal" type="button">×</button>
+     </div>
+     <form id="deleteFinanceForm">
+      <p id="deleteFinanceSummary"></p>
+      <p id="deleteFinanceExplanation">Esta ação removerá o lançamento financeiro.</p>
+      <div aria-live="polite" class="form-message" id="deleteFinanceMessage"></div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="deleteFinanceModal" type="button">Cancelar</button>
+       <button class="destructive-button" id="deleteFinanceConfirm" type="submit">Excluir</button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <!-- =====================================================
+     MODAL — FINANCEIRO
+     ===================================================== -->
+   <div aria-labelledby="transactionModalTitle" aria-modal="true" class="modal" hidden="" id="transactionModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header">
+      <div>
+       <span class="section-eyebrow">
+        FINANCEIRO
+       </span>
+       <h2 id="transactionModalTitle">
+        Lançamento
+       </h2>
+      </div>
+      <button aria-label="Fechar lançamento" class="modal-close" data-close-modal="transactionModal" type="button">
+       ×
+      </button>
+     </div>
+     <form id="transactionForm">
+      <div class="form-group">
+       <label for="transactionType">
+        Tipo
+       </label>
+       <select id="transactionType" required="">
+        <option value="">
+         Selecione
+        </option>
+        <option value="income">
+         Receita
+        </option>
+        <option value="expense">
+         Despesa
+        </option>
+       </select>
+      </div>
+      <div class="form-group">
+       <label for="transactionDescription">
+        Descrição
+       </label>
+       <input id="transactionDescription" placeholder="Ex.: Embalagens, fornecedor, transporte" required="" type="text"/>
+      </div>
+      <div class="form-group">
+       <label for="transactionCategory">
+        Categoria (obrigatória)
+       </label>
+       <input id="transactionCategory" placeholder="Ex.: Fornecedores" required="" pattern=".*\S.*" title="Informe uma categoria; espaços em branco não são suficientes." type="text"/>
+      </div>
+      <div class="form-row compact-row">
+       <div class="form-group">
+        <label for="transactionAmount">
+         Valor
+        </label>
+        <input id="transactionAmount" inputmode="decimal" min="0" placeholder="0,00" required="" step="0.01" type="number"/>
+       </div>
+       <div class="form-group">
+        <label for="transactionDate">
+         Data
+        </label>
+        <input id="transactionDate" required="" type="date"/>
+       </div>
+      </div>
+      <div class="form-group">
+       <label for="transactionPaymentMethod">
+        Forma de pagamento (opcional)
+       </label>
+       <select id="transactionPaymentMethod">
+        <option value="">
+         Selecione
+        </option>
+        <option value="cash">
+         Dinheiro
+        </option>
+        <option value="pix">
+         Pix
+        </option>
+        <option value="debit_card">
+         Cartão de débito
+        </option>
+        <option value="credit_card">
+         Cartão de crédito
+        </option>
+        <option value="transfer">
+         Transferência
+        </option>
+        <option value="boleto">
+         Boleto
+        </option>
+       </select>
+      </div>
+      <details class="optional-fields">
+       <summary>
+        Observações
+        <span>
+         Opcional
+        </span>
+       </summary>
+
+       <div class="form-group">
+        <label for="transactionNotes">
+         Observações
+        </label>
+        <textarea id="transactionNotes" placeholder="Observações" rows="2"></textarea>
+       </div>
+      </details>
+      <div aria-live="polite" class="form-message" id="transactionFormMessage">
+      </div>
+      <div class="modal-actions">
+       <button class="secondary-button" data-close-modal="transactionModal" type="button">
+        Cancelar
+       </button>
+       <button class="primary-button" type="submit">
+        Salvar lançamento
+       </button>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div>
+  <!-- =====================================================
+     SUPABASE
+     ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <script src="js/supabase.js">
+  </script>
+  <script src="js/app.js">
+  </script>
+  <!-- =====================================================
+     SERVICE WORKER
+     ===================================================== -->
+  <script>
+   if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            navigator.serviceWorker.register(
+                "service-worker.js", { updateViaCache: "none" }
+            ).catch(
+                error =>
+                    console.error(
+                        "Erro no Service Worker:",
+                        error
+                    )
+            );
+
+        }
+    );
+
+}
+  </script>
+  <div aria-live="polite" class="app-toast" hidden="" id="appToast" role="status">
+  </div>
+ </body>
+</html>
