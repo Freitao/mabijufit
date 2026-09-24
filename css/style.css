@@ -3685,3 +3685,24 @@ button.sale-card { width: 100%; text-align: left; color: var(--text); cursor: po
 .sale-details-items span { color: var(--text-muted); font-size: 13px; }
 .sale-details-text { white-space: pre-wrap; }
 .sale-details-actions { margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted); }
+
+/* Gerenciamento de cores: controles de toque, sem depender de hover. */
+.pc-tabs { flex-wrap: wrap; overflow: visible; }
+.pc-tabs button { display: flex; flex-direction: column; align-items: flex-start; white-space: normal; }
+.pc-tabs small { font-size: .7rem; font-weight: 400; }
+.pc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.pc-actions button, .pc-photo button, .pc-choices button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 10px; background: var(--surface, #fff); color: inherit; }
+.pc-photo button[aria-pressed="true"] { background: #f8e6ed; color: #702044; }
+.pc-size { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
+.pc-size label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.pc-size input[type="number"] { width: 85px; min-height: 44px; }
+.pc-size input[type="checkbox"] { width: 24px; height: 24px; }
+.pc-photo { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pc-photo > img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
+.pc-photo select { width: 100%; min-height: 44px; }
+#productPhotoPreview { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.pc-gallery { display:flex; overflow-x:auto; gap:8px; padding: 8px 0; }
+.pc-gallery img { width: 140px; height: 160px; object-fit:cover; border-radius:12px; }
+
+.pc-swatch { display: inline-block; width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; border: 1px solid #ccc; vertical-align: middle; }
+.pc-picker-image { display: inline-block; width: 44px; height: 48px; object-fit: cover; border-radius: 8px; vertical-align: middle; }

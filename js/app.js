@@ -23,6 +23,12 @@ let colorsCache = [];
 let sizesCache = [];
 let productsCache = [];
 let variantsCache = [];
+let productColorsCache = [];
+let productColorsDraft = [];
+let selectedProductColor = null;
+let productEditRevision = null;
+let productSaveUncertain = false;
+let removedProductImageIds = [];
 let salesCache = [];
 let financeCache = [];
 
@@ -33,8 +39,6 @@ let productPhotosDraft = [];
 let productPhotoPreviewUrls = [];
 
 let editingProductId = null;
-let editingProductActiveVariantIds = [];
-let editingVariantStocks = {};
 
 let saleDraft = [];
 let saleProductPickerOpen = false;
@@ -56,8 +60,6 @@ let currentProfile = null;
 let profileLoadPromise = null;
 let saleCancelling = false;
 let saleCancellationTarget = null;
-// movement_type é texto livre; sale_cancel foi confirmado pelo responsável pelo banco.
-const SALE_RETURN_MOVEMENT_TYPE = "sale_cancel";
 
 
 // =========================================================
@@ -98,6 +100,7 @@ function sessionClient(userId, generation) {
     };
     return {
         from(table) { assertSession(); return supabaseClient.from(table); },
+        async rpc(name, args) { assertSession(); const result = await supabaseClient.rpc(name, args); assertSession(); return result; },
         storage: { from(bucket) { assertSession(); return supabaseClient.storage.from(bucket); } }
     };
 }
@@ -505,6 +508,10 @@ function getAuthErrorMessage(error) {
 }
 
 
+function getProductColorImage(productId, groupId) {
+    const images = (productImagesCache[productId] || []).filter(i => i.product_color_id === groupId);
+    return images.find(i => i.is_color_primary)?.public_url || images[0]?.public_url || "";
+}
 function getProductMainImage(
     productId
 ) {
@@ -530,13 +537,13 @@ function getProductMainImage(
 
 function productImageHtml(
     productId,
-    className = "product-thumbnail"
+    className = "product-thumbnail",
+    productColorId = undefined
 ) {
 
-    const image =
-        getProductMainImage(
-            productId
-        );
+    const groupImages = (productImagesCache[productId] || []).filter(p => p.product_color_id === productColorId);
+    const image = productColorId === undefined ? getProductMainImage(productId) :
+        (groupImages.find(p => p.is_color_primary)?.public_url || groupImages[0]?.public_url || "");
 
     if (image) {
 
@@ -561,67 +568,15 @@ function productImageHtml(
 }
 
 
-function getProductVariants(
-    productId
-) {
-
-    return variantsCache.filter(
-        variant =>
-            variant.product_id ===
-                productId &&
-            variant.is_active !==
-                false
-    );
+function getProductVariants(productId) {
+    return getOperationalVariants().filter(v => v.product_id === productId);
 }
-
-
-function getProductTotalStock(
-    productId
-) {
-
-    return getProductVariants(
-        productId
-    ).reduce(
-        (
-            sum,
-            variant
-        ) =>
-            sum +
-            Number(
-                variant.stock_quantity ||
-                0
-            ),
-        0
-    );
+function getProductTotalStock(productId) {
+    return variantsCache.filter(v => v.product_id === productId).reduce((n, v) => n + Number(v.stock_quantity || 0), 0);
 }
-
-
-function getProductColorNames(
-    productId
-) {
-
-    const names = [];
-
-    getProductVariants(
-        productId
-    ).forEach(
-        variant => {
-
-            const name =
-                variant.colors?.name;
-
-            if (
-                name &&
-                !names.includes(name)
-            ) {
-                names.push(name);
-            }
-        }
-    );
-
-    return names;
+function getProductColorNames(productId) {
+    return productColorsCache.filter(c => c.product_id === productId).map(c => c.colors?.name || "Sem cor");
 }
-
 
 function getProductSizeNames(
     productId
@@ -731,175 +686,35 @@ function clearProductPhotosDraft() {
 }
 
 
+function normalizePhotoPrincipals() {
+    if (productPhotosDraft.length && !productPhotosDraft.some(p => p.is_primary)) productPhotosDraft[0].is_primary = true;
+    for (const group of productColorsDraft) {
+        const photos = productPhotosDraft.filter(p => p.groupKey === group.key);
+        if (photos.length && !photos.some(p => p.is_color_primary)) photos[0].is_color_primary = true;
+    }
+}
 function renderProductPhotoPreview() {
-
-    const container =
-        $("productPhotoPreview");
-
-    if (!container) {
-        return;
-    }
-
-    revokeProductPhotoPreviewUrls();
-
-    if (
-        !productPhotosDraft.length
-    ) {
-
-        container.innerHTML = "";
-
-        return;
-    }
-
-    const fragment =
-        document.createDocumentFragment();
-
-    productPhotosDraft.forEach(
-        (
-            file,
-            index
-        ) => {
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-            item.className =
-                "product-photo-preview-item";
-
-            const image =
-                document.createElement(
-                    "img"
-                );
-
-            image.alt =
-                `Pré-visualização da foto ${index + 1}`;
-
-            image.loading =
-                "lazy";
-
-            const url =
-                URL.createObjectURL(
-                    file
-                );
-
-            productPhotoPreviewUrls.push(
-                url
-            );
-
-            image.src =
-                url;
-
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-            info.className =
-                "product-photo-preview-info";
-
-            const name =
-                document.createElement(
-                    "span"
-                );
-
-            name.className =
-                "product-photo-preview-name";
-
-            name.textContent =
-                file.name ||
-                `Foto ${index + 1}`;
-
-            const order =
-                document.createElement(
-                    "small"
-                );
-
-            order.textContent = index === 0 && !(productImagesCache[editingProductId] || []).some(image => image.is_primary)
-                ? "Principal ao salvar" : "Nova foto";
-
-            info.appendChild(name);
-            info.appendChild(order);
-
-            item.appendChild(image);
-            item.appendChild(info);
-            const remove = document.createElement("button");
-            remove.type = "button";
-            remove.className = "photo-remove";
-            remove.dataset.removePhoto = String(index);
-            remove.setAttribute("aria-label", `Remover foto ${index + 1} selecionada`);
-            remove.textContent = "Remover";
-            item.appendChild(remove);
-
-
-            fragment.appendChild(item);
-        }
-    );
-
-    container.innerHTML = "";
-
-    container.appendChild(
-        fragment
-    );
+    const photos = productPhotosDraft.filter(p => p.groupKey === selectedProductColor);
+    $("productPhotoPreview").innerHTML = photos.map(p => `<div class="pc-photo">
+        <img src="${escapeHtml(p.public_url || p.preview)}" alt="Foto ${escapeHtml(colorDraftName(p.groupKey))}"/>
+        <button type="button" data-pc-photo="cover" data-key="${p.key}" aria-pressed="${!!p.is_primary}">${p.is_primary ? "★ Capa do produto" : "Usar como capa"}</button>
+        ${p.groupKey ? `<button type="button" data-pc-photo="primary" data-key="${p.key}" aria-pressed="${!!p.is_color_primary}">${p.is_color_primary ? "★ Principal da cor" : "Principal da cor"}</button>` : ""}
+        <label>Associar à cor<select data-pc-photo-group="${p.key}"><option value="">Fotos gerais</option>${productColorsDraft.map(c => `<option value="${c.key}" ${p.groupKey === c.key ? "selected" : ""}>${escapeHtml(colorDraftName(c.key))}</option>`).join("")}</select></label>
+        <div class="pc-actions"><button type="button" data-pc-photo="up" data-key="${p.key}" aria-label="Mover foto para antes">↑</button><button type="button" data-pc-photo="down" data-key="${p.key}" aria-label="Mover foto para depois">↓</button><button type="button" data-pc-photo="remove" data-key="${p.key}">Remover</button></div>
+    </div>`).join("") || '<p class="field-hint">Nenhuma foto neste grupo.</p>';
 }
-
-
-function handleProductPhotoSelection(
-    event
-) {
-
-    const files =
-        Array.from(
-            event.target.files || []
-        );
-
-    if (!files.length) return;
-
-    const invalidFiles =
-        files.filter(
-            file =>
-                !file.type ||
-                !file.type.startsWith(
-                    "image/"
-                )
-        );
-
-    const validFiles =
-        files.filter(
-            file =>
-                file.type &&
-                file.type.startsWith(
-                    "image/"
-                )
-        );
-
-    productPhotosDraft.push(...validFiles);
+function handleProductPhotoSelection(event) {
+    for (const file of Array.from(event.target.files || [])) {
+        if (!file.type.startsWith("image/")) { showMessage("productFormMessage", "Selecione somente imagens."); continue; }
+        const preview = URL.createObjectURL(file);
+        productPhotoPreviewUrls.push(preview);
+        productPhotosDraft.push({ key: crypto.randomUUID(), file, preview, groupKey: selectedProductColor,
+            is_primary: !productPhotosDraft.length,
+            is_color_primary: !!selectedProductColor && !productPhotosDraft.some(p => p.groupKey === selectedProductColor) });
+    }
     event.target.value = "";
-
-    renderProductPhotoPreview();
-
-    if (
-        invalidFiles.length
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            `${invalidFiles.length} arquivo(s) não são imagens válidas e foram ignorados.`
-        );
-
-        return;
-    }
-
-    showMessage(
-        "productFormMessage",
-        validFiles.length === 1
-            ? "1 foto selecionada."
-            : `${validFiles.length} fotos selecionadas.`,
-        "success"
-    );
+    renderProductColorEditor();
 }
-
 
 async function loadImageForOptimization(
     file
@@ -1370,6 +1185,8 @@ async function loadProductImages(
                     storage_path,
                     public_url,
                     is_primary,
+                    product_color_id,
+                    is_color_primary,
                     display_order
                 `)
                 .eq(
@@ -1421,282 +1238,61 @@ async function loadProductImages(
 }
 
 
-async function uploadProductImages(
-    productId,
-    options = {}
-) {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
-    const client = sessionClient(userId, generation);
-
-    if (
-        !currentUser ||
-        !productId
-    ) {
-
-        return {
-            uploaded: [],
-            failed: []
-        };
+async function uploadProductImages(client, userId, generation, productId) {
+    for (const photo of productPhotosDraft) {
+        if (!photo.file || photo.storage_path) continue;
+        const file = await optimizeProductImage(photo.file);
+        if (generation !== sessionGeneration) throw new Error("A sessão mudou.");
+        if (file.size > PRODUCT_IMAGE_MAX_SIZE) throw new Error("A imagem excede 8 MB após otimização.");
+        const path = createProductImageStoragePath(productId, file, 0, userId);
+        const { error } = await client.storage.from("product-images").upload(path, file, { contentType: "image/jpeg", upsert: false });
+        if (error) throw error;
+        if (generation !== sessionGeneration) throw new Error("A sessão mudou.");
+        photo.storage_path = path;
+        photo.public_url = client.storage.from("product-images").getPublicUrl(path).data.publicUrl;
     }
-
-    if (
-        !productPhotosDraft.length
-    ) {
-
-        return {
-            uploaded: [],
-            failed: []
-        };
-    }
-
-    const uploaded = [];
-    const failed = [];
-
-    const existingImages =
-        options.existingImages ||
-        [];
-
-    const hasExistingPrimary =
-        existingImages.some(
-            image =>
-                image.is_primary ===
-                true
-        );
-
-    const existingMaxOrder =
-        existingImages.reduce(
-            (
-                max,
-                image
-            ) =>
-                Math.max(
-                    max,
-                    Number(
-                        image.display_order ||
-                        0
-                    )
-                ),
-            -1
-        );
-
-    for (
-        let index = 0;
-        index <
-            productPhotosDraft.length;
-        index++
-    ) {
-
-        const originalFile =
-            productPhotosDraft[
-                index
-            ];
-
-        try {
-
-            showMessage(
-                "productFormMessage",
-                `Processando foto ${index + 1} de ${productPhotosDraft.length}...`,
-                "success"
-            );
-
-            const optimizedFile =
-                await optimizeProductImage(
-                    originalFile
-                );
-
-            if (
-                optimizedFile.size >
-                PRODUCT_IMAGE_MAX_SIZE
-            ) {
-
-                throw new Error(
-                    "A imagem otimizada ainda ultrapassou o limite de 8 MB."
-                );
-            }
-
-            const path =
-                createProductImageStoragePath(
-                    productId,
-                    optimizedFile,
-                    index,
-                    userId
-                );
-
-            showMessage(
-                "productFormMessage",
-                `Enviando foto ${index + 1} de ${productPhotosDraft.length}...`,
-                "success"
-            );
-
-            const {
-                error:
-                    uploadError
-            } =
-                await client
-                    .storage
-                    .from(
-                        "product-images"
-                    )
-                    .upload(
-                        path,
-                        optimizedFile,
-                        {
-                            upsert:
-                                false,
-                            contentType:
-                                "image/jpeg",
-                            cacheControl:
-                                "31536000"
-                        }
-                    );
-
-            if (
-                uploadError
-            ) {
-                throw uploadError;
-            }
-
-            const {
-                data:
-                    publicUrlData
-            } =
-                client
-                    .storage
-                    .from(
-                        "product-images"
-                    )
-                    .getPublicUrl(
-                        path
-                    );
-
-            const publicUrl =
-                publicUrlData?.publicUrl ||
-                "";
-
-            if (!publicUrl) {
-
-                try {
-
-                    const { error: cleanupError } = await client
-                        .storage
-                        .from(
-                            "product-images"
-                        )
-                        .remove([
-                            path
-                        ]);
-                    if (cleanupError) throw cleanupError;
-
-                } catch (
-                    cleanupError
-                ) {
-
-                    console.error(
-                        "Erro ao limpar arquivo:",
-                        cleanupError
-                    );
-                }
-
-                throw new Error(
-                    "A imagem foi enviada, mas não foi possível obter sua URL pública."
-                );
-            }
-
-            const isPrimary =
-                !hasExistingPrimary &&
-                uploaded.length === 0;
-
-            const displayOrder =
-                existingMaxOrder +
-                index +
-                1;
-
-            const {
-                error:
-                    imageInsertError
-            } =
-                await client
-                    .from(
-                        "product_images"
-                    )
-                    .insert({
-                        user_id:
-                            userId,
-                        product_id:
-                            productId,
-                        storage_path:
-                            path,
-                        public_url:
-                            publicUrl,
-                        is_primary:
-                            isPrimary,
-                        display_order:
-                            displayOrder
-                    });
-
-            if (
-                imageInsertError
-            ) {
-
-                try {
-
-                    const { error: cleanupError } = await client
-                        .storage
-                        .from(
-                            "product-images"
-                        )
-                        .remove([
-                            path
-                        ]);
-                    if (cleanupError) throw cleanupError;
-
-                } catch (
-                    cleanupError
-                ) {
-
-                    console.error(
-                        "Erro ao limpar imagem:",
-                        cleanupError
-                    );
-                }
-
-                throw imageInsertError;
-            }
-
-            uploaded.push({
-                path,
-                publicUrl,
-                displayOrder,
-                isPrimary
-            });
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                `Erro ao processar a foto ${index + 1}:`,
-                error
-            );
-
-            failed.push({
-                index,
-                fileName:
-                    originalFile?.name ||
-                    `Foto ${index + 1}`,
-                error
-            });
-        }
-    }
-
-    return {
-        uploaded,
-        failed
-    };
 }
-
+function isConfirmedRpcRejection(error) {
+    return /^(22|23|28|42|P0)[0-9A-Z]{3}$/.test(error.code || "") || ["40001","40P01"].includes(error.code);
+}
+function productOperationError(error) {
+    if (error.code === "42501") return "Operação bloqueada pelas permissões do banco. O modo de manutenção pode estar ativo. Seu rascunho foi mantido.";
+    if (error.code === "40001") return "O produto ou estoque mudou. Seu rascunho foi mantido; reabra o produto para conferir os dados atuais antes de salvar.";
+    return error.message || "Não foi possível confirmar a operação. Confira sua conexão.";
+}
+async function productRpc(client, args) {
+    const { data, error } = await client.rpc("pc_save_product", args);
+    if (error) throw error;
+    if (!data?.product) throw new Error("Resposta do produto não confirmada.");
+    return data;
+}
+async function removeConfirmedProductFiles(client, paths, userId) {
+    // A transação já confirmou a remoção dos metadados. Storage não participa dela.
+    // Guarda o manifesto para tentar novamente em uma próxima gravação confirmada.
+    const key = `mabijufit-storage-cleanup:${userId}`;
+    try {
+        const queued = JSON.parse(localStorage.getItem(key) || "[]");
+        const safe = [...new Set([...queued, ...(paths || [])])].filter(path => typeof path === "string" && path.startsWith(`${userId}/products/`));
+        if (!safe.length) return true;
+        localStorage.setItem(key, JSON.stringify(safe));
+        for (let offset = 0; offset < safe.length; offset += 100) {
+            const batch = safe.slice(offset, offset + 100);
+            const {data, error: readError} = await client.from("product_images").select("storage_path").eq("user_id", userId).in("storage_path", batch);
+            if (readError) return false;
+            const unreferenced = batch.filter(path => !data.some(image => image.storage_path === path));
+            if (unreferenced.length) {
+                const {error} = await client.storage.from("product-images").remove(unreferenced);
+                if (error) return false;
+            }
+            const remaining = JSON.parse(localStorage.getItem(key) || "[]").filter(path => !batch.includes(path));
+            localStorage.setItem(key, JSON.stringify(remaining));
+        }
+        return true;
+    } catch (error) {
+        console.warn("Limpeza de arquivos pendente após confirmação dos metadados", error);
+        return false;
+    }
+}
 
 // =========================================================
 // NAVEGAÇÃO
@@ -2153,6 +1749,8 @@ async function handleLogout() {
 }
 
 function resetSessionState() {
+    productColorsCache = []; productColorsDraft = []; selectedProductColor = null;
+    $("productForm").inert = false;
     saleCancellationTarget = null;
     currentProfile = null;
     profileLoadPromise = null;
@@ -2176,7 +1774,7 @@ function resetSessionState() {
     productsCache = []; variantsCache = []; salesCache = []; financeCache = [];
     productImagesCache = {};
     productVariationsDraft = []; editingProductId = null;
-    editingProductActiveVariantIds = []; editingVariantStocks = {}; saleDraft = [];
+    saleDraft = []; productEditRevision = null; productSaveUncertain = false; removedProductImageIds = [];
     saleProductPickerOpen = false; saleVariantSelectionProductId = null;
     currentUser =
         null;
@@ -2443,7 +2041,7 @@ function renderCategories() {
 }
 
 
-function populateCategorySelect() {
+function populateCategorySelect(preservedCategoryId = null) {
 
     const select =
         $("productCategory");
@@ -2465,7 +2063,7 @@ function populateCategorySelect() {
         .filter(
             category =>
                 category.is_active !== false ||
-                category.id === (productsCache.find(product => product.id === editingProductId)?.category_id)
+                category.id === (preservedCategoryId || productsCache.find(product => product.id === editingProductId)?.category_id)
         )
         .forEach(
             category => {
@@ -3427,588 +3025,106 @@ async function deleteSize(
 
 
 // =========================================================
-// VARIAÇÕES
+// CORES E TAMANHOS
 // =========================================================
 
-function renderProductVariationOptions() {
-
-    const colorSelect =
-        $("productVariationColor");
-
-    const sizeSelect =
-        $("productVariationSize");
-
-    if (colorSelect) {
-
-        const currentColor =
-            colorSelect.value;
-
-        colorSelect.innerHTML = `
-            <option value="">
-                Selecione a cor
-            </option>
-        `;
-
-        colorsCache
-            .filter(
-                color =>
-                    color.is_active !==
-                    false
-            )
-            .forEach(
-                color => {
-
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    option.value =
-                        color.id;
-
-                    option.textContent =
-                        color.name;
-
-                    option.dataset.colorName =
-                        color.name || "";
-
-                    option.dataset.colorHex =
-                        color.hex_code ||
-                        "#cccccc";
-
-                    colorSelect.appendChild(
-                        option
-                    );
-                }
-            );
-
-        if (
-            [
-                ...colorSelect.options
-            ].some(
-                option =>
-                    option.value ===
-                    currentColor
-            )
-        ) {
-
-            colorSelect.value =
-                currentColor;
-        }
-    }
-
-    if (sizeSelect) {
-
-        const currentSize =
-            sizeSelect.value;
-
-        sizeSelect.innerHTML = `
-            <option value="">
-                Selecione o tamanho
-            </option>
-        `;
-
-        sizesCache
-            .filter(
-                size =>
-                    size.is_active !==
-                    false
-            )
-            .forEach(
-                size => {
-
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    option.value =
-                        size.id;
-
-                    option.textContent =
-                        size.name;
-
-                    option.dataset.sizeName =
-                        size.name || "";
-
-                    sizeSelect.appendChild(
-                        option
-                    );
-                }
-            );
-
-        if (
-            [
-                ...sizeSelect.options
-            ].some(
-                option =>
-                    option.value ===
-                    currentSize
-            )
-        ) {
-
-            sizeSelect.value =
-                currentSize;
-        }
-    }
+function colorSwatch(colorId) {
+    const hex = colorsCache.find(c => c.id === colorId)?.hex_code || "#cccccc";
+    return `<span class="pc-swatch" aria-hidden="true" style="background:${/^#[a-f0-9]{6}$/i.test(hex) ? hex : "#cccccc"}"></span>`;
 }
-
-
-function renderProductVariationsList() {
-
-    const container =
-        $("productVariantsList");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        !productVariationsDraft.length
-    ) {
-
-        container.innerHTML = `
-            <div class="empty-state compact">
-                <strong>Nenhuma variação adicionada</strong>
-                <p>Selecione cor, tamanho e quantidade acima.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML =
-        productVariationsDraft
-            .map(
-                (
-                    variation,
-                    index
-                ) => {
-
-                    const hex =
-                        variation.colorHex ||
-                        "#cccccc";
-
-                    return `
-
-                    <div
-                        class="product-variant-draft-item"
-                        data-variation-index="${index}"
-                    >
-
-                        <div class="product-variant-draft-info">
-
-                            <span
-                                class="variation-color-dot"
-                                style="background:${escapeHtml(
-                                    hex
-                                )}"
-                            ></span>
-
-                            <strong>
-                                ${escapeHtml(
-                                    variation.colorName ||
-                                    "Sem cor"
-                                )}
-                            </strong>
-
-                            <span class="product-variant-draft-size">
-                                ${escapeHtml(
-                                    variation.sizeName ||
-                                    "Sem tamanho"
-                                )}
-                            </span>
-
-                        </div>
-
-                        <div class="product-variant-draft-actions">
-
-                            <label class="product-variant-quantity-control">
-
-                                <span>Qtd.</span>
-
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    inputmode="numeric"
-                                    value="${Number(
-                                        variation.quantity ||
-                                        0
-                                    )}"
-                                    data-variation-quantity="${index}"
-                                >
-
-                            </label>
-
-                            <button
-                                type="button"
-                                class="icon-button danger"
-                                data-remove-variation="${index}"
-                                aria-label="Remover variação ${escapeHtml(variation.colorName)} ${escapeHtml(variation.sizeName)}"
-                            >
-                                ${iconSvg("trash")}
-                            </button>
-
-                        </div>
-
-                    </div>
-                `;
-                }
-            )
-            .join("");
+function colorDraftName(key) {
+    if (!key) return "Fotos gerais";
+    const group = productColorsDraft.find(c => c.key === key);
+    return colorsCache.find(c => c.id === group?.color_id)?.name || "Sem cor";
 }
-
-
-function addProductVariation() {
-
-    const colorSelect =
-        $("productVariationColor");
-
-    const sizeSelect =
-        $("productVariationSize");
-
-    const quantityInput =
-        $("productVariationQuantity");
-
-    if (
-        !colorSelect ||
-        !sizeSelect ||
-        !quantityInput
-    ) {
-        return;
-    }
-
-    const colorId =
-        colorSelect.value;
-
-    const sizeId =
-        sizeSelect.value;
-
-    const quantity =
-        Number(
-            quantityInput.value ||
-            0
-        );
-
-    if (!colorId) {
-
-        showMessage(
-            "productFormMessage",
-            "Selecione uma cor para adicionar a variação."
-        );
-
-        colorSelect.focus();
-
-        return;
-    }
-
-    if (!sizeId) {
-
-        showMessage(
-            "productFormMessage",
-            "Selecione um tamanho para adicionar a variação."
-        );
-
-        sizeSelect.focus();
-
-        return;
-    }
-
-    if (
-        !Number.isInteger(
-            quantity
-        ) ||
-        quantity < 0
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "Informe uma quantidade inteira igual ou maior que zero."
-        );
-
-        quantityInput.focus();
-
-        return;
-    }
-
-    const alreadyExists =
-        productVariationsDraft.some(
-            variation =>
-                variation.colorId ===
-                    colorId &&
-                variation.sizeId ===
-                    sizeId
-        );
-
-    if (
-        alreadyExists
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "Essa combinação de cor e tamanho já foi adicionada."
-        );
-
-        return;
-    }
-
-    const color =
-        colorsCache.find(
-            item =>
-                item.id ===
-                colorId
-        );
-
-    const size =
-        sizesCache.find(
-            item =>
-                item.id ===
-                sizeId
-        );
-
-    const existingVariant =
-        editingProductId
-            ? variantsCache.find(
-                variant =>
-                    variant.product_id ===
-                        editingProductId &&
-                    variant.color_id ===
-                        colorId &&
-                    variant.size_id ===
-                        sizeId
-            )
-            : null;
-
-    productVariationsDraft.push({
-        variantId:
-            existingVariant?.id ||
-            null,
-        colorId,
-        colorName:
-            color?.name ||
-            colorSelect
-                .selectedOptions[0]
-                ?.textContent ||
-            "",
-        colorHex:
-            color?.hex_code ||
-            "#cccccc",
-        sizeId,
-        sizeName:
-            size?.name ||
-            sizeSelect
-                .selectedOptions[0]
-                ?.textContent ||
-            "",
-        quantity
+function renderProductVariationOptions() { renderProductColorEditor(); }
+function renderProductVariationsList() { renderProductColorEditor(); }
+function renderProductColorEditor() {
+    if (!$("productColorChoices")) return;
+    normalizePhotoPrincipals();
+    $("productColorChoices").innerHTML = [...colorsCache.filter(c => c.is_active !== false), { id: null, name: "Sem cor" }].filter(c => !productColorsDraft.some(g => g.color_id === c.id)).map(c => `<button type="button" data-pc-add="${c.id || "none"}">+ ${colorSwatch(c.id)} ${escapeHtml(c.name)}</button>`).join("");
+    $("productColorTabs").innerHTML = productColorsDraft.map(c => {
+        const rows = productVariationsDraft.filter(v => v.groupKey === c.key);
+        const total = rows.reduce((n,v) => n + Number(v.quantity),0);
+        return `<button type="button" data-pc-select="${c.key}" aria-pressed="${selectedProductColor === c.key}">${colorSwatch(c.color_id)}${escapeHtml(colorDraftName(c.key))}${c.is_active ? "" : " · Inativa"}<small>${rows.filter(v => v.is_active).length} tamanhos · ${total} un. · ${productPhotosDraft.filter(p => p.groupKey === c.key).length} fotos</small></button>`;
+    }).join("") + `<button type="button" data-pc-select="" aria-pressed="${selectedProductColor === null}">Fotos gerais</button>`;
+    $("productColorTitle").textContent = colorDraftName(selectedProductColor);
+    const group = productColorsDraft.find(c => c.key === selectedProductColor);
+    $("productColorSettings").hidden = !group;
+    $("productColorActive").checked = group?.is_active !== false;
+    $("productColorStock").textContent = `Estoque total do produto: ${productVariationsDraft.reduce((n,v) => n + Number(v.quantity), 0)} unidades`;
+    $("productVariantsList").innerHTML = group ? sizesCache.filter(z => z.is_active !== false || productVariationsDraft.some(v => v.groupKey === group.key && v.sizeId === z.id)).map(size => {
+        const v = productVariationsDraft.find(v => v.groupKey === group.key && v.sizeId === size.id);
+        return `<div class="pc-size"><label><input type="checkbox" data-pc-size="${size.id}" ${v?.is_active ? "checked" : ""}/> ${escapeHtml(size.name)}</label><label>Quantidade<input type="number" inputmode="numeric" min="0" max="2147483647" step="1" data-pc-quantity="${size.id}" value="${v?.quantity || 0}" ${v?.is_active ? "" : "disabled"}/></label>${v && !v.is_active ? '<small>Indisponível · estoque preservado</small>' : ""}</div>`;
+    }).join("") : "";
+    renderProductPhotoPreview();
+}
+function openProductDetails(productId, colorId = undefined) {
+    const product = productsCache.find(p => p.id === productId); if (!product) return;
+    const groups = productColorsCache.filter(c => c.product_id === productId);
+    if (colorId === undefined) colorId = groups.find(c => c.is_active)?.id || groups[0]?.id || null;
+    const images = (productImagesCache[productId] || []).filter(p => p.product_color_id === colorId).sort((a,b) => Number(b.is_color_primary)-Number(a.is_color_primary) || a.display_order-b.display_order);
+    const group = groups.find(c => c.id === colorId);
+    const stock = variantsCache.filter(v => v.product_id === productId && v.product_color_id === colorId);
+    $("productDetailsTitle").textContent = product.name;
+    $("productDetailsContent").innerHTML = `<p>${formatCurrency(product.sale_price)} · Estoque total: ${getProductTotalStock(productId)}</p>
+        <div class="filter-chips pc-tabs">${groups.map(c => `<button type="button" data-view-product="${productId}" data-view-color="${c.id}" aria-pressed="${c.id === colorId}">${escapeHtml(c.colors?.name || "Sem cor")}${c.is_active ? "" : " · Inativa"}</button>`).join("")}<button type="button" data-view-product="${productId}" data-view-color="" aria-pressed="${colorId === null}">Fotos gerais</button></div>
+        <h3>${escapeHtml(group?.colors?.name || (group ? "Sem cor" : "Fotos gerais"))}</h3>
+        <div class="pc-gallery">${images.map(p => `<img src="${escapeHtml(p.public_url)}" alt="${escapeHtml(group?.colors?.name || "Foto geral")}${p.is_color_primary ? " · Principal" : ""}"/>`).join("") || '<p>Sem fotos neste grupo.</p>'}</div>
+        ${stock.map(v => `<p>${escapeHtml(v.sizes?.name || "Tamanho")} · ${v.stock_quantity} unidades${v.is_active ? "" : " · Indisponível"}</p>`).join("") || (group ? '<p>Nenhum tamanho cadastrado.</p>' : "")}`;
+    if ($("productDetailsModal").hidden) openModal("productDetailsModal");
+}
+function bindProductColorEvents() {
+    $("productForm").addEventListener("click", event => {
+        const b = event.target.closest("button"); if (!b || productSaving) return;
+        if (b.hasAttribute("data-pc-add")) {
+            const color_id = b.dataset.pcAdd === "none" ? null : b.dataset.pcAdd;
+            const group = { key: crypto.randomUUID(), color_id, is_active: true };
+            productColorsDraft.push(group); selectedProductColor = group.key;
+        } else if (b.hasAttribute("data-pc-select")) selectedProductColor = b.dataset.pcSelect || null;
+        else if (b.dataset.pcOrder) {
+            const i = productColorsDraft.findIndex(c => c.key === selectedProductColor), j = i + Number(b.dataset.pcOrder);
+            if (i >= 0 && j >= 0 && j < productColorsDraft.length) [productColorsDraft[i],productColorsDraft[j]] = [productColorsDraft[j],productColorsDraft[i]];
+        } else if (b.dataset.pcPhoto) {
+            const p = productPhotosDraft.find(p => p.key === b.dataset.key); if (!p) return;
+            if (b.dataset.pcPhoto === "cover") productPhotosDraft.forEach(x => x.is_primary = x === p);
+            if (b.dataset.pcPhoto === "primary") productPhotosDraft.filter(x => x.groupKey === p.groupKey).forEach(x => x.is_color_primary = x === p);
+            if (b.dataset.pcPhoto === "remove") {
+                if (p.id) removedProductImageIds.push(p.id);
+                productPhotosDraft = productPhotosDraft.filter(x => x !== p);
+            }
+            if (["up","down"].includes(b.dataset.pcPhoto)) {
+                const group = productPhotosDraft.filter(x => x.groupKey === p.groupKey);
+                const other = group[group.indexOf(p) + (b.dataset.pcPhoto === "up" ? -1 : 1)];
+                if (other) { const i = productPhotosDraft.indexOf(p), j = productPhotosDraft.indexOf(other); [productPhotosDraft[i],productPhotosDraft[j]] = [other,p]; }
+            }
+        } else return;
+        renderProductColorEditor();
     });
-
-    renderProductVariationsList();
-
-    quantityInput.value =
-        "1";
-
-    colorSelect.value =
-        "";
-
-    sizeSelect.value =
-        "";
-
-    showMessage(
-        "productFormMessage",
-        "Variação adicionada.",
-        "success"
-    );
+    $("productForm").addEventListener("change", event => {
+        const el = event.target;
+        if (el.id === "productColorActive") productColorsDraft.find(c => c.key === selectedProductColor).is_active = el.checked;
+        else if (el.dataset.pcSize) {
+            let v = productVariationsDraft.find(v => v.groupKey === selectedProductColor && v.sizeId === el.dataset.pcSize);
+            if (v) v.is_active = el.checked;
+            else productVariationsDraft.push({ groupKey: selectedProductColor, sizeId: el.dataset.pcSize, quantity: 0, is_active: true });
+        } else if (el.dataset.pcQuantity) {
+            const n = Number(el.value);
+            if (!Number.isInteger(n) || n < 0 || n > 2147483647) { el.reportValidity(); return; }
+            productVariationsDraft.find(v => v.groupKey === selectedProductColor && v.sizeId === el.dataset.pcQuantity).quantity = n;
+            $("productColorStock").textContent = `Estoque total do produto: ${productVariationsDraft.reduce((sum,v) => sum + Number(v.quantity),0)} unidades`;
+            const rows = productVariationsDraft.filter(v => v.groupKey === selectedProductColor);
+            const label = document.querySelector(`[data-pc-select="${CSS.escape(selectedProductColor)}"] small`);
+            if (label) label.textContent = `${rows.filter(v => v.is_active).length} tamanhos · ${rows.reduce((sum,v) => sum + Number(v.quantity),0)} un. · ${productPhotosDraft.filter(p => p.groupKey === selectedProductColor).length} fotos`;
+            return;
+        } else if (el.dataset.pcPhotoGroup) {
+            const p = productPhotosDraft.find(p => p.key === el.dataset.pcPhotoGroup);
+            p.groupKey = el.value || null; p.is_color_primary = false;
+        } else return;
+        renderProductColorEditor();
+        if (el.dataset.pcSize) document.querySelector(`[data-pc-size="${CSS.escape(el.dataset.pcSize)}"]`)?.focus({preventScroll:true});
+    });
 }
-
-
-function removeProductVariation(
-    index
-) {
-
-    const numericIndex =
-        Number(index);
-
-    if (
-        !Number.isInteger(
-            numericIndex
-        ) ||
-        numericIndex < 0 ||
-        numericIndex >=
-            productVariationsDraft.length
-    ) {
-        return;
-    }
-
-    productVariationsDraft.splice(
-        numericIndex,
-        1
-    );
-
-    renderProductVariationsList();
-}
-
-
-function updateProductVariationQuantity(
-    index,
-    value
-) {
-
-    const numericIndex =
-        Number(index);
-
-    if (
-        !productVariationsDraft[
-            numericIndex
-        ]
-    ) {
-        return;
-    }
-
-    const quantity =
-        Number(value);
-
-    if (
-        !Number.isInteger(
-            quantity
-        ) ||
-        quantity < 0
-    ) {
-        return;
-    }
-
-    productVariationsDraft[
-        numericIndex
-    ].quantity =
-        quantity;
-}
-
-
-function generateBatchVariations() {
-
-    const activeColors =
-        colorsCache.filter(
-            color =>
-                color.is_active !==
-                false
-        );
-
-    const activeSizes =
-        sizesCache.filter(
-            size =>
-                size.is_active !==
-                false
-        );
-
-    if (
-        !activeColors.length ||
-        !activeSizes.length
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "Cadastre pelo menos uma cor e um tamanho antes de gerar combinações."
-        );
-
-        return;
-    }
-
-    const quantityValue = $("batchVariationQuantity").value;
-
-    if (
-        quantityValue ===
-        null
-    ) {
-        return;
-    }
-
-    const quantity =
-        Number(
-            quantityValue
-        );
-
-    if (
-        !Number.isInteger(
-            quantity
-        ) ||
-        quantity < 0
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "Informe uma quantidade inteira igual ou maior que zero."
-        );
-
-        return;
-    }
-
-    let added = 0;
-
-    activeColors.forEach(
-        color => {
-
-            activeSizes.forEach(
-                size => {
-
-                    const exists =
-                        productVariationsDraft.some(
-                            variation =>
-                                variation.colorId ===
-                                    color.id &&
-                                variation.sizeId ===
-                                    size.id
-                        );
-
-                    if (exists) {
-                        return;
-                    }
-
-                    productVariationsDraft.push({
-                        variantId:
-                            variantsCache.find(
-                                variant =>
-                                    variant.product_id ===
-                                        editingProductId &&
-                                    variant.color_id ===
-                                        color.id &&
-                                    variant.size_id ===
-                                        size.id
-                            )?.id ||
-                            null,
-                        colorId:
-                            color.id,
-                        colorName:
-                            color.name ||
-                            "",
-                        colorHex:
-                            color.hex_code ||
-                            "#cccccc",
-                        sizeId:
-                            size.id,
-                        sizeName:
-                            size.name ||
-                            "",
-                        quantity
-                    });
-
-                    added++;
-                }
-            );
-        }
-    );
-
-    renderProductVariationsList();
-
-    showMessage(
-        "productFormMessage",
-        added
-            ? `${added} combinação(ões) adicionada(s).`
-            : "Todas as combinações já estavam adicionadas.",
-        "success"
-    );
-}
-
 
 // =========================================================
 // PRODUTOS
@@ -4112,11 +3228,12 @@ function renderProductCard(
                     <span class="product-stock-status ${inactive ? "inactive" : status.className}">${inactive ? "Inativo" : status.label}</span>
                 </div>
                 <div class="product-card-details" title="${escapeHtml(colors.join(", "))}">
-                    ${getProductVariants(product.id).length} ${getProductVariants(product.id).length === 1 ? "variação" : "variações"} · ${escapeHtml(sizes.join(", ") || "Sem tamanhos")}
+                    ${colors.length} ${colors.length === 1 ? "cor" : "cores"} · ${escapeHtml(sizes.join(", ") || "Sem tamanhos")}
                 </div>
+                <button type="button" class="text-button" data-view-product="${product.id}">Ver cores e fotos</button>
                 <div class="product-card-actions">
                     <button type="button" class="product-card-edit-button" data-edit-product-button="${product.id}">Editar</button>
-                    <button type="button" class="product-card-sell-button" data-quick-sell-product="${product.id}" ${inactive || totalStock <= 0 ? "disabled" : ""}>Vender</button>
+                    <button type="button" class="product-card-sell-button" data-quick-sell-product="${product.id}" ${inactive || !getProductVariants(product.id).some(v => v.stock_quantity > 0) ? "disabled" : ""}>Vender</button>
                     <details class="product-more"><summary aria-label="Mais ações de ${escapeHtml(product.name)}">Mais</summary><div>
                     <button type="button" class="product-card-toggle-button" data-toggle-product="${product.id}">${inactive ? "Ativar" : "Desativar"}</button>
                     <button type="button" class="product-card-delete-button" data-delete-product="${product.id}">Excluir</button>
@@ -4135,6 +3252,7 @@ function renderProducts() {
 
 
 function resetProductForm() {
+    productColorsDraft = []; selectedProductColor = null; productEditRevision = null; productSaveUncertain = false; removedProductImageIds = [];
     setProductPanel("details");
     $("productForm").querySelectorAll("details").forEach(element => { element.open = false; });
 
@@ -4164,8 +3282,6 @@ function resetProductForm() {
     editingProductId =
         null;
 
-    editingProductActiveVariantIds =
-        [];
 
     const title =
         document.querySelector(
@@ -4197,226 +3313,30 @@ function resetProductForm() {
 }
 
 
-async function loadProductForEdit(
-    product
-) {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
+async function loadProductForEdit(product) {
+    const userId = currentUser?.id, generation = sessionGeneration;
     const client = sessionClient(userId, generation);
-
     resetProductForm();
-
-    editingProductId =
-        product.id;
-    populateCategorySelect();
-
-    $("productId").value =
-        product.id;
-
-    $("productName").value =
-        product.name || "";
-
-    $("productSku").value =
-        product.sku || "";
-
-    $("productCategory").value =
-        product.category_id || "";
-
-    $("productDescription").value =
-        product.description || "";
-
-    $("productCostPrice").value =
-        product.cost_price ??
-        0;
-
-    $("productSalePrice").value =
-        product.sale_price ??
-        0;
-
-    $("productMinimumStock").value =
-        product.minimum_stock ??
-        0;
-
-    $("productActive").checked =
-        product.is_active !==
-        false;
-
-    const {
-        data:
-            variants,
-        error
-    } =
-        await fetchAllRows(() => client
-            .from(
-                "product_variants"
-            )
-            .select(`
-                id,
-                product_id,
-                color_id,
-                size_id,
-                stock_quantity,
-                minimum_stock,
-                is_active,
-                colors (
-                    id,
-                    name,
-                    hex_code
-                ),
-                sizes (
-                    id,
-                    name
-                )
-            `)
-            .eq(
-                "user_id",
-                userId
-            )
-            .eq(
-                "product_id",
-                product.id
-            )
-            .order("id"));
-
-    if (generation !== sessionGeneration || editingProductId !== product.id) return;
-    if (error) {
-        throw error;
-    }
-
-    editingVariantStocks = Object.fromEntries((variants || []).map(variant => [variant.id, variant.stock_quantity]));
-
-    editingProductActiveVariantIds =
-        (
-            variants || []
-        )
-            .filter(
-                variant =>
-                    variant.is_active !==
-                    false
-            )
-            .map(
-                variant =>
-                    variant.id
-            );
-
-    productVariationsDraft =
-        (
-            variants || []
-        )
-            .filter(
-                variant =>
-                    variant.is_active !==
-                    false
-            )
-            .map(
-            variant => ({
-                variantId:
-                    variant.id,
-                colorId:
-                    variant.color_id,
-                colorName:
-                    variant.colors?.name ||
-                    "Sem cor",
-                colorHex:
-                    variant.colors?.hex_code ||
-                    "#cccccc",
-                sizeId:
-                    variant.size_id,
-                sizeName:
-                    variant.sizes?.name ||
-                    "Sem tamanho",
-                quantity:
-                    Number(
-                        variant.stock_quantity ||
-                        0
-                    )
-            })
-        );
-
-    renderProductVariationOptions();
-    renderProductVariationsList();
-
-    renderExistingProductPhotos(
-        productImagesCache[
-            product.id
-        ] || []
-    );
-
-    const title =
-        document.querySelector(
-            "#productModal [data-modal-title]"
-        );
-
-    if (title) {
-
-        title.textContent =
-            "Editar produto";
-    }
-
-    openModal(
-        "productModal"
-    );
+    const results = await Promise.all([
+        client.from("products").select("*").eq("user_id",userId).eq("id",product.id).single(),
+        fetchAllRows(() => client.from("product_colors").select("*").eq("user_id",userId).eq("product_id",product.id)),
+        fetchAllRows(() => client.from("product_variants").select("*").eq("user_id",userId).eq("product_id",product.id)),
+        fetchAllRows(() => client.from("product_images").select("*").eq("user_id",userId).eq("product_id",product.id))
+    ]);
+    if (generation !== sessionGeneration) return;
+    for (const r of results) if (r.error) throw r.error;
+    product = results[0].data;
+    editingProductId = product.id; productEditRevision = product.edit_revision;
+    populateCategorySelect(product.category_id);
+    for (const [field,key] of Object.entries({productId:"id",productName:"name",productSku:"sku",productCategory:"category_id",productDescription:"description",productCostPrice:"cost_price",productSalePrice:"sale_price",productMinimumStock:"minimum_stock"})) $(field).value = product[key] ?? "";
+    $("productActive").checked = product.is_active !== false;
+    productColorsDraft = results[1].data.sort((a,b) => a.display_order-b.display_order || a.id.localeCompare(b.id)).map(c => ({...c,key:c.id}));
+    productVariationsDraft = results[2].data.map(v => ({ variantId:v.id, groupKey:v.product_color_id, sizeId:v.size_id, quantity:Number(v.stock_quantity), expectedQuantity:Number(v.stock_quantity), minimum_stock:v.minimum_stock, is_active:v.is_active }));
+    productPhotosDraft = results[3].data.sort((a,b) => a.display_order-b.display_order || a.id.localeCompare(b.id)).map(p => ({...p,key:p.id,groupKey:p.product_color_id}));
+    selectedProductColor = productColorsDraft[0]?.key || null;
+    $("productModalTitle").textContent = "Editar produto";
+    renderProductColorEditor(); openModal("productModal");
 }
-
-
-function renderExistingProductPhotos(
-    images
-) {
-
-    const container = $("productExistingPhotos");
-    if (!container) return;
-
-    if (
-        !images.length
-    ) {
-
-        container.innerHTML =
-            "";
-
-        return;
-    }
-
-    container.innerHTML = `
-
-        <div class="product-existing-photos-title">
-            Fotos atuais
-        </div>
-
-        <div class="product-existing-photos-grid">
-
-            ${images.map(
-                (
-                    image,
-                    index
-                ) => `
-
-                <div class="product-existing-photo">
-
-                    <img
-                        src="${escapeHtml(
-                            image.public_url
-                        )}"
-                        alt="Foto atual do produto"
-                        loading="lazy"
-                    >
-
-                    <small>
-                        ${
-                            image.is_primary
-                                ? "Principal"
-                                : `Foto ${index + 1}`
-                        }
-                    </small>
-
-                </div>
-            `
-            ).join("")}
-
-        </div>
-    `;
-}
-
 
 function openProductModal(
     product = null
@@ -4452,6 +3372,12 @@ function openProductModal(
         return;
     }
 
+    const pendingKey = `mabijufit-pending-product:${currentUser?.id}`;
+    if (localStorage.getItem(pendingKey)) {
+        showToast("Um cadastro anterior ficou sem confirmação. Atualize a lista e confira se o produto já existe antes de cadastrar novamente.");
+        if (!confirm("Você já atualizou a lista e confirmou que o cadastro anterior não existe? Só confirme após conferir para evitar duplicação.")) return;
+        localStorage.removeItem(pendingKey);
+    }
     resetProductForm();
 
     openModal(
@@ -4460,574 +3386,60 @@ function openProductModal(
 }
 
 
-async function saveProduct(
-    event
-) {
+async function saveProduct(event) {
     event.preventDefault();
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
-    const client = sessionClient(userId, generation);
-
-    if (productSaving) return;
-    if (!currentUser) {
-        return;
-    }
-
-    const button =
-        event.submitter;
-
-    const id =
-        $("productId")
-            .value
-            .trim();
-
-    const name =
-        $("productName")
-            .value
-            .trim();
-
-    const sku =
-        $("productSku")
-            .value
-            .trim();
-
-    const categoryId =
-        $("productCategory")
-            .value ||
-        null;
-
-    const description =
-        $("productDescription")
-            .value
-            .trim();
-
-    const costPrice =
-        Number(
-            $("productCostPrice")
-                .value ||
-            0
-        );
-
-    const salePrice =
-        Number(
-            $("productSalePrice")
-                .value ||
-            0
-        );
-
-    const minimumStock =
-        Number(
-            $("productMinimumStock")
-                .value ||
-            0
-        );
-
-    const isActive =
-        $("productActive")
-            .checked;
-
-    if (!name) {
-
-        showMessage(
-            "productFormMessage",
-            "Informe o nome do produto."
-        );
-
-        return;
-    }
-
-    if (
-        !Number.isFinite(costPrice) || !Number.isFinite(salePrice) ||
-        costPrice < 0 || salePrice < 0
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "Os preços não podem ser negativos."
-        );
-
-        return;
-    }
-
-    if (
-        !Number.isInteger(
-            minimumStock
-        ) ||
-        minimumStock < 0
-    ) {
-
-        showMessage(
-            "productFormMessage",
-            "O estoque mínimo deve ser um número inteiro igual ou maior que zero."
-        );
-
-        return;
-    }
-
-    setLoading(
-        button,
-        true,
-        "Salvando..."
-    );
-
-    productSaving = true;
-    $("productForm").inert = true;
-    $("productModal").setAttribute("aria-busy", "true");
-    let createdProductId =
-        null;
-
-    let productAndVariantsCreated =
-        false;
-
+    if (productSaving || !currentUser) return;
+    if (productSaveUncertain) { showMessage("productFormMessage", "A última gravação ficou sem confirmação. Reabra o produto na lista antes de tentar novamente; não duplique o cadastro."); return; }
+    const userId = currentUser.id, generation = sessionGeneration, client = sessionClient(userId,generation);
+    const button = event.submitter || $("productForm").querySelector('[type="submit"]');
+    productSaving = true; $("productForm").inert = true; setLoading(button,true,"Salvando…");
+    let rpcPending = false;
+    let filesCleaned = true;
     try {
-
-        const payload = {
-
-            category_id:
-                categoryId,
-
-            name,
-
-            sku:
-                sku || null,
-
-            description:
-                description || null,
-
-            cost_price:
-                costPrice,
-
-            sale_price:
-                salePrice,
-
-            minimum_stock:
-                minimumStock,
-
-            is_active:
-                isActive
-        };
-
-        let product;
-
-        if (!id) {
-
-            const {
-                data,
-                error
-            } =
-                await client
-                    .from(
-                        "products"
-                    )
-                    .insert({
-                        ...payload,
-                        user_id:
-                            userId
-                    })
-                    .select()
-                    .single();
-
-            if (error) {
-                throw error;
-            }
-
-            product =
-                data;
-
-            createdProductId =
-                product.id;
-
-            if (
-                productVariationsDraft.length
-            ) {
-
-                const variants =
-                    productVariationsDraft.map(
-                        variation => ({
-                            user_id:
-                                userId,
-
-                            product_id:
-                                product.id,
-
-                            color_id:
-                                variation.colorId,
-
-                            size_id:
-                                variation.sizeId,
-
-                            stock_quantity:
-                                Number(
-                                    variation.quantity ||
-                                    0
-                                ),
-
-                            minimum_stock:
-                                minimumStock,
-
-                            is_active:
-                                true
-                        })
-                    );
-
-                const {
-                    error:
-                        variantsError
-                } =
-                    await client
-                        .from(
-                            "product_variants"
-                        )
-                        .insert(
-                            variants
-                        );
-
-                if (
-                    variantsError
-                ) {
-                    console.error("Erro ao criar variações:", variantsError);
-
-                    throw new Error(
-                        "Não foi possível criar as variações do produto. O produto será desfeito."
-                    );
-                }
-            }
-
-            productAndVariantsCreated =
-                true;
-
-        } else {
-
-            const {
-                data,
-                error
-            } =
-                await client
-                    .from(
-                        "products"
-                    )
-                    .update(
-                        payload
-                    )
-                    .eq(
-                        "id",
-                        id
-                    )
-                    .eq(
-                        "user_id",
-                        userId
-                    )
-                    .select()
-                    .single();
-
-            if (error) {
-                throw error;
-            }
-
-            product =
-                data;
-
-            createdProductId =
-                id;
-
-            for (
-                const variation
-                of productVariationsDraft
-            ) {
-
-                if (
-                    variation.variantId
-                ) {
-
-                    const {
-                        error:
-                            variantUpdateError
-                    } =
-                        await client
-                            .from(
-                                "product_variants"
-                            )
-                            .update({
-                                color_id:
-                                    variation.colorId,
-
-                                size_id:
-                                    variation.sizeId,
-
-                                stock_quantity:
-                                    Number(
-                                        variation.quantity ||
-                                        0
-                                    ),
-
-                                minimum_stock:
-                                    minimumStock,
-
-                                is_active:
-                                    true
-                            })
-                            .eq(
-                                "id",
-                                variation.variantId
-                            )
-                            .eq(
-                                "user_id",
-                                userId
-                            )
-                            .eq(
-                                "product_id",
-                                id
-                            )
-                            .eq("stock_quantity", editingVariantStocks[variation.variantId] ?? variantsCache.find(item => item.id === variation.variantId)?.stock_quantity)
-                            .select("id").single();
-
-                    if (
-                        variantUpdateError
-                    ) {
-
-                        throw variantUpdateError;
-                    }
-
-                    editingVariantStocks[variation.variantId] = Number(variation.quantity || 0);
-                } else {
-
-                    const {
-                        error:
-                            newVariantError,
-                        data: newVariant
-                    } =
-                        await client
-                            .from(
-                                "product_variants"
-                            )
-                            .insert({
-                                user_id:
-                                    userId,
-
-                                product_id:
-                                    id,
-
-                                color_id:
-                                    variation.colorId,
-
-                                size_id:
-                                    variation.sizeId,
-
-                                stock_quantity:
-                                    Number(
-                                        variation.quantity ||
-                                        0
-                                    ),
-
-                                minimum_stock:
-                                    minimumStock,
-
-                                is_active:
-                                    true
-                            })
-                            .select("id")
-                            .single();
-
-                    if (
-                        newVariantError
-                    ) {
-
-                        throw newVariantError;
-                    }
-                    variation.variantId = newVariant.id;
-                }
-            }
-
-            const retainedVariantIds =
-                productVariationsDraft
-                    .map(
-                        variation =>
-                            variation.variantId
-                    )
-                    .filter(Boolean);
-
-            const removedVariantIds =
-                editingProductActiveVariantIds
-                    .filter(
-                        variantId =>
-                            !retainedVariantIds
-                                .includes(
-                                    variantId
-                                )
-                    );
-
-            if (
-                removedVariantIds.length
-            ) {
-
-                const {
-                    error:
-                        deactivateVariantsError
-                } =
-                    await client
-                        .from(
-                            "product_variants"
-                        )
-                        .update({
-                            is_active:
-                                false
-                        })
-                        .eq(
-                            "user_id",
-                            userId
-                        )
-                        .eq(
-                            "product_id",
-                            id
-                        )
-                        .in(
-                            "id",
-                            removedVariantIds
-                        );
-
-                if (
-                    deactivateVariantsError
-                ) {
-                    throw deactivateVariantsError;
-                }
-            }
-
-            /*
-             * Variações removidas do cadastro são somente
-             * desativadas. Os registros permanecem intactos
-             * para preservar vendas e movimentações antigas.
-             */
-
-            productAndVariantsCreated =
-                true;
+        const data = { name:$("productName").value.trim(), sku:$("productSku").value.trim() || null,
+            category_id:$("productCategory").value || null, description:$("productDescription").value.trim() || null,
+            cost_price:Number($("productCostPrice").value || 0), sale_price:Number($("productSalePrice").value || 0),
+            minimum_stock:Number($("productMinimumStock").value || 0), is_active:$("productActive").checked };
+        if (!data.name || ![data.cost_price,data.sale_price].every(n => Number.isFinite(n) && n >= 0) || !Number.isInteger(data.minimum_stock) || data.minimum_stock < 0 || productVariationsDraft.some(v => !Number.isInteger(v.quantity) || v.quantity < 0)) throw new Error("Confira o nome, os preços e as quantidades do produto.");
+        const colors = productColorsDraft.map((c,i) => ({...(c.id ? {id:c.id}:{}), key:c.key,color_id:c.color_id,is_active:c.is_active,display_order:i}));
+        const variants = productVariationsDraft.filter(v => v.variantId || v.is_active).map(v => ({
+            ...(v.variantId ? {id:v.variantId,expected_stock_quantity:v.expectedQuantity}:{}),color_key:v.groupKey,size_id:v.sizeId,
+            stock_quantity:v.quantity,minimum_stock:data.minimum_stock,is_active:v.is_active }));
+        if (!editingProductId) localStorage.setItem(`mabijufit-pending-product:${userId}`, JSON.stringify({name:data.name,at:new Date().toISOString()}));
+        rpcPending = true;
+        const result = await productRpc(client,{p_product_id:editingProductId,p_expected_revision:productEditRevision,p_product:data,p_colors:colors,p_variants:variants});
+        rpcPending = false;
+        localStorage.removeItem(`mabijufit-pending-product:${userId}`);
+        editingProductId = result.product.id; productEditRevision = result.product.edit_revision; $("productId").value = editingProductId;
+        for (const c of productColorsDraft) c.id = result.color_keys[c.key];
+        for (const v of productVariationsDraft) {
+            const group = productColorsDraft.find(c => c.key === v.groupKey);
+            const row = result.variants.find(x => x.product_color_id === group.id && x.size_id === v.sizeId);
+            if (row) { v.variantId = row.id; v.expectedQuantity = Number(row.stock_quantity); }
         }
-
-        let photoResult = {
-            uploaded: [],
-            failed: []
-        };
-
-        if (
-            productPhotosDraft.length
-        ) {
-
-            photoResult =
-                await uploadProductImages(
-                    product.id,
-                    {
-                        existingImages:
-                            productImagesCache[
-                                product.id
-                            ] || []
-                    }
-                );
+        await uploadProductImages(client,userId,generation,editingProductId);
+        const images = productPhotosDraft.map((p,i) => ({...(p.id ? {id:p.id}:{storage_path:p.storage_path,public_url:p.public_url}),
+            product_color_id:productColorsDraft.find(c => c.key === p.groupKey)?.id || null,display_order:i,is_primary:!!p.is_primary,is_color_primary:!!p.is_color_primary }));
+        if (images.length || removedProductImageIds.length) {
+            rpcPending = true;
+            const saved = await productRpc(client,{p_product_id:editingProductId,p_expected_revision:productEditRevision,p_product:{},p_images:images,p_remove_image_ids:removedProductImageIds});
+            rpcPending = false; productEditRevision = saved.product.edit_revision;
+            for (const photo of productPhotosDraft) photo.id = saved.images.find(p => p.storage_path === photo.storage_path)?.id;
+            removedProductImageIds = [];
+            filesCleaned = await removeConfirmedProductFiles(client,saved.removed_storage_paths,userId);
         }
-
-        productSaving = false;
-        closeModal(
-            "productModal"
-        );
-        showToast("Produto salvo.");
-
-        productVariationsDraft =
-            [];
-
-        clearProductPhotosDraft();
-
-        editingProductId =
-            null;
-
-        editingProductActiveVariantIds =
-            [];
-
-        await Promise.all([
-            loadProducts(),
-            loadVariants(false)
-        ]);
-
-        renderProducts();
-        await loadDashboard();
-
-        if (
-            photoResult.failed.length
-        ) {
-
-            const failedNames =
-                photoResult.failed
-                    .map(
-                        item =>
-                            item.fileName
-                    )
-                    .join(", ");
-
-            alert(
-                `Produto salvo com sucesso, mas ${photoResult.failed.length} foto(s) não puderam ser processadas ou enviadas.\n\nFoto(s): ${failedNames}`
-            );
-        }
-
-    } catch (
-        error
-    ) {
-
-        console.error(
-            "Erro ao salvar produto:",
-            error
-        );
-
-        if (
-            !id &&
-            createdProductId &&
-            !productAndVariantsCreated
-        ) {
-
-            const {
-                error:
-                    cleanupError
-            } =
-                await client
-                    .from(
-                        "products"
-                    )
-                    .delete()
-                    .eq(
-                        "id",
-                        createdProductId
-                    )
-                    .eq(
-                        "user_id",
-                        userId
-                    );
-
-            if (
-                cleanupError
-            ) {
-
-                console.error(
-                    "Erro ao desfazer produto:",
-                    cleanupError
-                );
-            }
-        }
-
-        showMessage(
-            "productFormMessage",
-            id
-                ? "Não foi possível concluir a edição. Algumas alterações podem ter sido salvas; reabra o produto para conferir."
-                : "Não foi possível salvar o produto. Confira sua conexão e tente novamente."
-        );
-
+        if (generation !== sessionGeneration) return;
+        productSaving = false; closeModal("productModal"); resetProductForm();
+        await Promise.all([loadProducts(),loadVariants()]); await loadStock(); await loadDashboard(); showToast(filesCleaned ? "Produto salvo." : "Produto salvo. Alguns arquivos aguardam limpeza no Storage; tentaremos novamente ao salvar fotos.");
+    } catch(error) {
+        if (generation !== sessionGeneration) return;
+        if (rpcPending && !isConfirmedRpcRejection(error)) productSaveUncertain = true;
+        if (isConfirmedRpcRejection(error)) localStorage.removeItem(`mabijufit-pending-product:${userId}`);
+        showMessage("productFormMessage", productOperationError(error) + (editingProductId ? " Dados já confirmados foram preservados." : ""));
     } finally {
-        productSaving = false;
-        $("productForm").inert = false;
-        $("productModal").removeAttribute("aria-busy");
-        setLoading(
-            button,
-            false
-        );
+        if (generation === sessionGeneration) { productSaving = false; $("productForm").inert = false; setLoading(button,false); }
     }
 }
-
 
 // =========================================================
 // VENDA RÁPIDA A PARTIR DO PRODUTO
@@ -5063,259 +3475,49 @@ async function openQuickSale(
 // EXCLUSÃO DE PRODUTO
 // =========================================================
 
-async function toggleProductActive(
-    productId
-) {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
-    const client = sessionClient(userId, generation);
-
-
-    const product =
-        productsCache.find(
-            item =>
-                item.id ===
-                productId
-        );
-
-    if (!product) {
-        return;
-    }
-
-    const nextActive =
-        product.is_active ===
-        false;
-
-    const action =
-        nextActive
-            ? "ativar"
-            : "desativar";
-
-    if (
-        !confirm(
-            `Deseja ${action} o produto "${product.name}"?`
-        )
-    ) {
-        return;
-    }
-
-    const {
-        error
-    } =
-        await client
-            .from(
-                "products"
-            )
-            .update({
-                is_active:
-                    nextActive
-            })
-            .eq(
-                "id",
-                productId
-            )
-            .eq(
-                "user_id",
-                userId
-            ).select("id").single();
-
-    if (error) {
-        console.error(
-            "Erro ao alterar produto:",
-            error
-        );
-
-        alert(
-            "Não foi possível alterar o status do produto."
-        );
-
-        return;
-    }
-
-    await Promise.all([
-        loadProducts(),
-        loadVariants(false)
-    ]);
-
-    renderProducts();
-    await loadDashboard();
-}
-
-async function deleteProduct(productId) {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId || productSaving || saleSubmitting) return;
-    const client = sessionClient(userId, generation);
-    const product = productsCache.find(item => item.id === productId);
-    if (!product) return;
-    if (!confirm(`Excluir "${product.name}" e suas variações e fotos? Esta ação não pode ser desfeita. Produtos com vendas ou movimentações serão preservados.`)) return;
-    productSaving = true;
-    let deletionStarted = false;
+async function toggleProductActive(productId) {
+    const product = productsCache.find(p => p.id === productId); if (!product || !currentUser) return;
     try {
-        const variantsResult = await fetchAllRows(() => client.from("product_variants")
-            .select("id").eq("user_id", userId).eq("product_id", productId));
-        if (variantsResult.error) throw variantsResult.error;
-        const variantIds = variantsResult.data.map(variant => variant.id);
-        for (let index = 0; index < variantIds.length; index += 100) {
-            const ids = variantIds.slice(index, index + 100);
-            const history = await Promise.all([
-                client.from("sale_items").select("id").eq("user_id", userId)
-                    .in("product_variant_id", ids).limit(1),
-                client.from("inventory_movements").select("id").eq("user_id", userId)
-                    .in("product_variant_id", ids).limit(1)
-            ]);
-            for (const result of history) if (result.error) throw result.error;
-            if (history.some(result => result.data?.length)) {
-                alert("Este produto possui vendas ou movimentações e não pode ser excluído. Use Desativar para preservar o histórico.");
-                return;
-            }
-        }
-        const imagesResult = await fetchAllRows(() => client.from("product_images")
-            .select("id, storage_path").eq("user_id", userId).eq("product_id", productId));
-        if (imagesResult.error) throw imagesResult.error;
-        // Impede novas seleções de venda enquanto a exclusão está em andamento.
-        const inactive = await client.from("products").update({ is_active: false })
-            .eq("user_id", userId).eq("id", productId).select("id").single();
-        if (inactive.error) throw inactive.error;
-        deletionStarted = true;
-        const variantsDelete = await client.from("product_variants").delete()
-            .eq("user_id", userId).eq("product_id", productId).select("id");
-        if (variantsDelete.error) throw variantsDelete.error;
-        if (variantsDelete.data?.length !== variantIds.length) throw new Error("Nem todas as variações foram removidas. Confira permissões e operações concorrentes.");
-        const imagesDelete = await client.from("product_images").delete()
-            .eq("user_id", userId).eq("product_id", productId).select("id");
-        if (imagesDelete.error) throw imagesDelete.error;
-        if (imagesDelete.data?.length !== imagesResult.data.length) throw new Error("Nem todas as fotos foram removidas. Confira permissões e operações concorrentes.");
-        const deleted = await client.from("products").delete()
-            .eq("user_id", userId).eq("id", productId).select("id").single();
-        if (deleted.error) throw deleted.error;
-        const paths = imagesResult.data.map(image => image.storage_path).filter(Boolean);
-        if (paths.length) {
-            try {
-                const { error } = await client.storage.from("product-images").remove(paths);
-                if (error) throw error;
-            } catch (error) {
-                console.error("Produto excluído; falha ao remover arquivos do Storage:", { productId, paths, error });
-                alert("Produto excluído, mas algumas fotos permaneceram no Storage. Confira o console para a limpeza manual.");
-            }
-        }
-        delete productImagesCache[productId];
-    } catch (error) {
-        console.error("Erro ao excluir produto:", { productId, error });
-        alert(deletionStarted
-            ? "A exclusão não foi concluída. O produto foi desativado e pode ter sido parcialmente removido. Confira o cadastro antes de tentar novamente."
-            : "Não foi possível verificar ou excluir o produto. Nenhum registro foi removido.");
-    } finally {
-        productSaving = false;
-        if (generation === sessionGeneration) {
-            await loadProductsPage();
-            await loadDashboard();
-        }
-    }
+        await productRpc(sessionClient(currentUser.id,sessionGeneration),{p_product_id:product.id,p_expected_revision:product.edit_revision,p_product:{is_active:!product.is_active}});
+        await loadProducts(); await loadVariants(); await loadDashboard();
+    } catch(error) { showToast(productOperationError(error)); }
 }
-
+async function deleteProduct(productId) {
+    const product = productsCache.find(p => p.id === productId);
+    if (!product || !currentUser || !confirm(`Excluir ${product.name}? Produtos com estoque ou histórico devem ser desativados.`)) return;
+    const userId=currentUser.id, generation=sessionGeneration, client=sessionClient(userId,generation);
+    try {
+        const {data,error} = await client.rpc("pc_delete_product",{p_product_id:productId,p_expected_revision:product.edit_revision});
+        if (error) throw error;
+        if (data?.product_id !== productId) throw new Error("Exclusão não confirmada. Atualize a lista antes de tentar novamente.");
+        const filesCleaned = await removeConfirmedProductFiles(client,data.removed_storage_paths,userId);
+        await loadProducts(); await loadVariants(); await loadDashboard(); showToast(filesCleaned ? "Produto excluído." : "Produto excluído. Alguns arquivos aguardam limpeza no Storage.");
+    } catch(error) { if (generation === sessionGeneration) showToast(productOperationError(error)); }
+}
 
 // =========================================================
 // ESTOQUE
 // =========================================================
 
 async function loadVariants(includeImages = true) {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
-    const client = sessionClient(userId, generation);
-
-
+    const userId=currentUser?.id, generation=sessionGeneration; if (!userId) return;
+    const client=sessionClient(userId,generation);
     try {
-        const {
-            data,
-            error
-        } =
-            await fetchAllRows(() => client
-                .from(
-                    "product_variants"
-                )
-                .select(`
-                    *,
-                    products (
-                        id,
-                        name,
-                        sale_price,
-                        cost_price,
-                        minimum_stock,
-                        is_active
-                    ),
-                    colors (
-                        id,
-                        name,
-                        hex_code
-                    ),
-                    sizes (
-                        id,
-                        name
-                    )
-                `)
-                .eq(
-                    "user_id",
-                    userId
-                ));
-
+        const [groups,variants] = await Promise.all([
+            fetchAllRows(() => client.from("product_colors").select("*,colors(id,name,hex_code)").eq("user_id",userId)),
+            fetchAllRows(() => client.from("product_variants").select("*,products(id,name,sale_price,cost_price,minimum_stock,is_active),sizes(id,name)").eq("user_id",userId))
+        ]);
         if (generation !== sessionGeneration) return;
-        if (error) throw error;
-
-        variantsCache =
-            data || [];
-
-        const productIds =
-            [
-                ...new Set(
-                    variantsCache
-                        .map(
-                            variant =>
-                                variant.products?.id
-                        )
-                        .filter(
-                            Boolean
-                        )
-                )
-            ];
-
-        const allProductIds =
-            [
-                ...new Set([
-                    ...productIds,
-                    ...productsCache.map(
-                        product =>
-                            product.id
-                    )
-                ])
-            ];
-
-        if (
-            includeImages && allProductIds.length
-        ) {
-
-            await loadProductImages(
-                allProductIds
-            );
-        }
-    } catch (error) {
-        if (generation !== sessionGeneration) return;
-        console.error("Falha em loadVariants", error);
-        showDataLoadError();
-    }
+        if (groups.error || variants.error) throw groups.error || variants.error;
+        productColorsCache=groups.data.sort((a,b) => a.display_order-b.display_order || a.id.localeCompare(b.id));
+        variantsCache=variants.data.map(v => ({...v,colors:productColorsCache.find(c => c.id === v.product_color_id)?.colors}));
+        if (includeImages) await loadProductImages([...new Set([...productsCache.map(p=>p.id),...variantsCache.map(v=>v.product_id)])]);
+        renderProducts();
+    } catch(error) { if (generation === sessionGeneration) { console.error(error); showDataLoadError(); } }
 }
-
-
 function getOperationalVariants() {
-    return variantsCache.filter(variant => {
-        const product = productsCache.find(item => item.id === variant.product_id);
-        return variant.is_active !== false &&
-            (product || variant.products)?.is_active !== false;
-    });
+    return variantsCache.filter(v => v.is_active !== false && productColorsCache.find(c => c.id === v.product_color_id)?.is_active === true && (productsCache.find(p => p.id === v.product_id) || v.products)?.is_active !== false);
 }
-
 
 async function loadStock() {
 
@@ -5451,7 +3653,8 @@ function renderStockCard(
 
                 ${productImageHtml(
                     productId,
-                    "stock-card-image"
+                    "stock-card-image",
+                    variant.product_color_id
                 )}
 
             </div>
@@ -5631,6 +3834,7 @@ async function openNewSaleModal(
         }
     }
 
+    $("salePendingRetry").hidden = !localStorage.getItem(`mabijufit-pending-sale:${currentUser?.id}`);
     openModal(
         "saleModal"
     );
@@ -5900,18 +4104,18 @@ function renderSaleVariantPicker(productId) {
     container.hidden = false;
     const groups = new Map();
     getProductVariants(productId).forEach(variant => {
-        const color = variant.colors?.name || "Sem cor";
-        if (!groups.has(color)) groups.set(color, []);
-        groups.get(color).push(variant);
+        const group = variant.product_color_id;
+        if (!groups.has(group)) groups.set(group, []);
+        groups.get(group).push(variant);
     });
     container.innerHTML = `<div class="variant-product-heading"><strong>${escapeHtml(product.name)}</strong><button type="button" class="text-button" data-sale-back-picker>‹ Produtos</button></div>
         <p class="field-hint">${formatCurrency(product.sale_price)} · Toque no tamanho para adicionar.</p>
-        <div class="variant-color-groups">${[...groups].map(([color, variants]) => `<section class="variant-color-group"><h3>${escapeHtml(color)}</h3><div class="variant-size-options">${variants.map(variant => {
+        <div class="variant-color-groups">${[...groups].sort(([a],[b]) => productColorsCache.findIndex(c=>c.id===a)-productColorsCache.findIndex(c=>c.id===b)).map(([group, variants]) => `<section class="variant-color-group"><h3>${productImageHtml(productId,"pc-picker-image",group)} ${escapeHtml(variants[0].colors?.name || "Sem cor")}</h3><div class="variant-size-options">${variants.map(variant => {
             const stock = Number(variant.stock_quantity || 0);
             const reserved = saleDraft.find(item => item.variantId === variant.id)?.quantity || 0;
             const available = Math.max(0, stock - reserved);
             return `<button type="button" class="sale-variant-picker-item" data-sale-select-variant="${variant.id}" ${available <= 0 ? "disabled" : ""}><strong>${escapeHtml(variant.sizes?.name || "Único")}</strong><span>${available > 0 ? `${available} disponíveis` : "Indisponível"}</span></button>`;
-        }).join("")}</div></section>`).join("") || emptyState("Sem variações", "Cadastre cores e tamanhos no produto.")}</div>`;
+        }).join("")}</div></section>`).join("") || emptyState("Sem tamanhos disponíveis", "Cadastre cores e tamanhos no produto.")}</div>`;
     syncSalePickerView();
 }
 
@@ -5927,7 +4131,7 @@ function addSaleVariant(
                 variantId
         );
 
-    if (!variant || variant.is_active === false) {
+    if (!variant || !getOperationalVariants().some(v => v.id === variant.id)) {
         return;
     }
 
@@ -5954,7 +4158,7 @@ function addSaleVariant(
 
         showMessage(
             "saleFormMessage",
-            "Esta variação está sem estoque."
+            "Este tamanho está sem estoque."
         );
 
         return;
@@ -5999,9 +4203,7 @@ function addSaleVariant(
                 product.name,
 
             productImage:
-                getProductMainImage(
-                    product.id
-                ),
+                getProductColorImage(product.id, variant.product_color_id),
 
             variantDescription:
                 `${variant.colors?.name || "Sem cor"} / ${variant.sizes?.name || "Sem tamanho"}`,
@@ -6512,7 +4714,7 @@ async function openSaleDetails(id) {
             <h3>Produtos</h3>
             ${items.length ? `<ul class="sale-details-items">${items.map(item => `
                 <li><strong>${escapeHtml(item.product_name || "Produto não informado")}</strong>
-                    <span>${escapeHtml(item.variant_description || "Variação não informada")}</span>
+                    <span>${escapeHtml(item.variant_description || "Cor e tamanho não informados")}</span>
                     <span>${escapeHtml(item.quantity)} un. × ${money(item.unit_price)}</span>
                     <strong>Total do item: ${money(item.total)}</strong></li>`).join("")}</ul>`
                 : '<p>Nenhum item encontrado para esta venda.</p>'}
@@ -6551,125 +4753,11 @@ function openSaleCancellation(id, number) {
 
 // Cada escrita é confirmada antes de prosseguir. Uma resposta perdida não é
 // confundida com rollback: a marca persistida mantém novas tentativas bloqueadas.
-async function performSaleCancellation(client, userId, id, reason, movementType) {
-    const read = async query => {
-        const { data, error } = await query;
-        if (error) throw new Error("Não foi possível conferir os dados da venda. Feche e tente novamente.", { cause: error });
-        return data;
-    };
-    const sale = await read(client.from("sales").select("*").eq("id", id).eq("user_id", userId).single());
-    if (sale.status === "cancelled") return { alreadyCancelled: true };
-    if (sale.status !== "completed" || sale.cancelled_at) {
-        throw new Error("Esta venda não está disponível para cancelamento. Se houver uma tentativa pendente, confira os registros com o suporte.");
-    }
-    if (!movementType) throw new Error("Antes de cancelar, o suporte precisa confirmar o tipo de movimentação de devolução permitido no estoque. Nenhum dado foi alterado.");
-    const [items, receipts, originalMovements] = await Promise.all([
-        read(fetchAllRows(() => client.from("sale_items").select("*").eq("sale_id", id).eq("user_id", userId))),
-        read(fetchAllRows(() => client.from("financial_transactions").select("*").eq("reference_id", id).eq("user_id", userId))),
-        read(fetchAllRows(() => client.from("inventory_movements").select("*").eq("reference_id", id).eq("user_id", userId)))
-    ]);
-    const quantities = new Map();
-    for (const item of items) {
-        const quantity = Number(item.quantity);
-        if (!item.product_variant_id || !Number.isSafeInteger(quantity) || quantity <= 0) throw new Error("Itens da venda inconsistentes. Confira a venda com o suporte.");
-        quantities.set(item.product_variant_id, (quantities.get(item.product_variant_id) || 0) + quantity);
-    }
-    if (!quantities.size || receipts.length !== 1 || receipts[0].transaction_type !== "income" ||
-        !Number.isFinite(Number(sale.total)) || Number(sale.total) <= 0 ||
-        !Number.isFinite(Number(receipts[0].amount)) || Number(receipts[0].amount) <= 0 ||
-        Math.round(Number(receipts[0].amount) * 100) !== Math.round(Number(sale.total) * 100)) {
-        throw new Error("Os itens ou a receita interna da venda precisam de conferência antes do cancelamento.");
-    }
-    if (originalMovements.some(row => row.movement_type !== "sale" || !Number.isSafeInteger(Number(row.quantity)) || Number(row.quantity) <= 0) ||
-        originalMovements.some(row => !quantities.has(row.product_variant_id)) ||
-        [...quantities].some(([variantId, quantity]) => originalMovements.filter(row => row.product_variant_id === variantId)
-            .reduce((sum, row) => sum + Number(row.quantity), 0) !== quantity)) {
-        throw new Error("O histórico de estoque da venda precisa de conferência antes do cancelamento.");
-    }
-    const stamp = new Date().toISOString();
-    let claimed = false;
-    let uncertain = false;
-    let financeRemoved = false;
-    const stocks = [];
-    let movements = [];
-    const write = async (query, expectedRows) => {
-        uncertain = true;
-        const { data, error } = await query;
-        if (error) {
-            // Erro PostgreSQL confirma rejeição da instrução; erro de rede não.
-            if (/^(22|23|42)[0-9A-Z]{3}$/.test(error.code || "")) uncertain = false;
-            throw error;
-        }
-        if (!Array.isArray(data)) throw new Error("Resposta da escrita não pôde ser confirmada.");
-        if (data.length === 0) {
-            uncertain = false;
-            throw new Error("O registro mudou ou a operação não foi autorizada.");
-        }
-        if (data.length !== expectedRows) throw new Error("Quantidade inesperada de registros alterados.");
-        uncertain = false;
-        return data;
-    };
-    try {
-        // Usa somente os campos existentes: completed + cancelled_at representa
-        // uma tentativa em andamento/pendente. O CAS também protege entre abas.
-        await write(client.from("sales").update({ cancelled_at: stamp, cancellation_reason: reason || null })
-            .eq("id", id).eq("user_id", userId).eq("status", "completed").is("cancelled_at", null).select("id"), 1);
-        claimed = true;
-        for (const [variantId, quantity] of [...quantities].sort(([a], [b]) => a.localeCompare(b))) {
-            const variant = await read(client.from("product_variants").select("id,stock_quantity")
-                .eq("id", variantId).eq("user_id", userId).single());
-            const previous = Number(variant.stock_quantity);
-            const next = previous + quantity;
-            if (!Number.isSafeInteger(previous) || previous < 0 || !Number.isSafeInteger(next)) throw new Error("Estoque inválido para devolução.");
-            await write(client.from("product_variants").update({ stock_quantity: next }).eq("id", variantId)
-                .eq("user_id", userId).eq("stock_quantity", previous).select("id"), 1);
-            stocks.push({ id: variantId, previous, next });
-        }
-        movements = await write(client.from("inventory_movements").insert([...quantities].map(([variantId, quantity]) => ({
-            user_id: userId, product_variant_id: variantId, movement_type: movementType, quantity,
-            reference_id: id, reason: `Cancelamento da venda #${sale.sale_number}`, notes: reason || null
-        }))).select("id"), quantities.size);
-        const receipt = receipts[0];
-        await write(client.from("financial_transactions").delete().eq("id", receipt.id).eq("user_id", userId)
-            .eq("reference_id", id).eq("transaction_type", "income").eq("amount", receipt.amount).select("id"), 1);
-        financeRemoved = true;
-        await write(client.from("sales").update({ status: "cancelled" }).eq("id", id).eq("user_id", userId)
-            .eq("status", "completed").eq("cancelled_at", stamp).select("id"), 1);
-        return { alreadyCancelled: false };
-    } catch (error) {
-        console.error("Falha no cancelamento da venda", { saleId: id, stamp, claimed, uncertain, financeRemoved, stocks, movements, error });
-        let rollbackFailed = false;
-        // Depois de remover a receita, não recria registros/IDs por suposição.
-        // Tampouco compensa escritas cujo resultado é desconhecido.
-        if (claimed && !uncertain && !financeRemoved) {
-            for (const stock of [...stocks].reverse()) {
-                try {
-                    await write(client.from("product_variants").update({ stock_quantity: stock.previous }).eq("id", stock.id)
-                        .eq("user_id", userId).eq("stock_quantity", stock.next).select("id"), 1);
-                } catch (rollbackError) {
-                    rollbackFailed = true;
-                    console.error("Falha ao compensar estoque no cancelamento", { saleId: id, stock, error: rollbackError });
-                }
-            }
-            if (!rollbackFailed) {
-                try {
-                    if (movements.length) await write(client.from("inventory_movements").delete().eq("user_id", userId)
-                        .eq("reference_id", id).in("id", movements.map(row => row.id)).select("id"), movements.length);
-                    await write(client.from("sales").update({ cancelled_at: null, cancellation_reason: sale.cancellation_reason || null })
-                        .eq("id", id).eq("user_id", userId).eq("status", "completed").eq("cancelled_at", stamp).select("id"), 1);
-                } catch (rollbackError) {
-                    rollbackFailed = true;
-                    console.error("Falha ao compensar movimentos/marca de cancelamento", { saleId: id, error: rollbackError });
-                }
-            }
-        }
-        const pending = uncertain || financeRemoved || rollbackFailed;
-        const failure = new Error(pending
-            ? "Não foi possível concluir ou confirmar o cancelamento. Não repita a operação. Confira esta venda, o estoque e o financeiro com o suporte."
-            : "Não foi possível cancelar a venda. As alterações confirmadas foram desfeitas. Reabra os detalhes para conferir antes de tentar novamente.");
-        failure.cause = error;
-        throw failure;
-    }
+async function performSaleCancellation(client, userId, id, reason) {
+    const {data,error}=await client.rpc("pc_cancel_sale",{p_sale_id:id,p_reason:reason || null});
+    if (error) throw new Error(productOperationError(error));
+    if (!data?.sale) throw new Error("Cancelamento não confirmado. Reabra a venda para conferir ou repetir com segurança.");
+    return {alreadyCancelled:data.already_cancelled};
 }
 
 async function cancelSale(event) {
@@ -6684,7 +4772,7 @@ async function cancelSale(event) {
     let result;
     let failure;
     try {
-        result = await performSaleCancellation(sessionClient(userId, generation), userId, id, $("cancelSaleReason").value.trim(), SALE_RETURN_MOVEMENT_TYPE);
+        result = await performSaleCancellation(sessionClient(userId, generation), userId, id, $("cancelSaleReason").value.trim());
     } catch (error) {
         failure = error;
         console.error("Não foi possível cancelar venda", { saleId: id, error });
@@ -6716,581 +4804,35 @@ async function cancelSale(event) {
 }
 
 async function registerSale() {
-    const userId = currentUser?.id;
-    const generation = sessionGeneration;
-    if (!userId) return;
-    const client = sessionClient(userId, generation);
-
-    if (saleSubmitting) return;
-    if (!currentUser) {
-        return;
-    }
-
-    if (
-        !saleDraft.length
-    ) {
-
-        showMessage(
-            "saleFormMessage",
-            "Adicione pelo menos um produto à venda."
-        );
-
-        return;
-    }
-
-    const paymentMethod =
-        normalizePaymentMethod(
-            $("salePaymentMethod")
-                ?.value ||
-            ""
-        );
-
-    if (!paymentMethod) {
-
-        showMessage(
-            "saleFormMessage",
-            "Selecione a forma de pagamento."
-        );
-
-        return;
-    }
-
-    const summary =
-        renderSaleSummary();
-
-    if (
-        summary.total <= 0
-    ) {
-
-        showMessage(
-            "saleFormMessage",
-            "O total da venda deve ser maior que zero."
-        );
-
-        return;
-    }
-
-    const registerButton =
-        $("saleRegisterButton");
-
-    setLoading(
-        registerButton,
-        true,
-        "Registrando..."
-    );
-
-    saleSubmitting = true;
-    $("saleManagementWorkspace").inert = true;
-    $("saleModal").setAttribute("aria-busy", "true");
-    const saleTimestamp = new Date();
-
-    let saleId =
-        null;
-
-    const updatedVariants =
-        [];
-
-    let saleItemsInserted =
-        false;
-
-    let inventoryMovementsInserted =
-        false;
-
-    let financeInserted =
-        false;
-
+    if (saleSubmitting || !currentUser) return;
+    const userId=currentUser.id,generation=sessionGeneration,client=sessionClient(userId,generation);
+    const storageKey=`mabijufit-pending-sale:${userId}`;
+    let payload;
     try {
-
-        /*
-         * Revalida estoque antes de registrar.
-         */
-
-        for (
-            const item
-            of saleDraft
-        ) {
-
-            const {
-                data:
-                    currentVariant,
-                error:
-                    variantReadError
-            } =
-                await client
-                    .from(
-                        "product_variants"
-                    )
-                    .select(`
-                        id,
-                        product_id,
-                        stock_quantity,
-                        is_active,
-                        products (is_active)
-                    `)
-                    .eq(
-                        "id",
-                        item.variantId
-                    )
-                    .eq(
-                        "user_id",
-                        userId
-                    )
-                    .single();
-
-            if (
-                variantReadError ||
-                !currentVariant
-            ) {
-                console.error("Erro ao verificar variação:", variantReadError);
-
-                throw new Error(
-                    `Não foi possível verificar o estoque de "${item.productName}".`
-                );
-            }
-
-            if (currentVariant.is_active === false || currentVariant.products?.is_active === false) {
-                throw new Error(`"${item.productName}" ou sua variação foi desativada. Reabra a venda para atualizar os produtos.`);
-            }
-            const currentStock =
-                Number(
-                    currentVariant.stock_quantity ||
-                    0
-                );
-
-            if (
-                item.quantity >
-                currentStock
-            ) {
-
-                throw new Error(
-                    `Estoque insuficiente para "${item.productName}" (${item.variantDescription}). Disponível: ${currentStock}.`
-                );
-            }
-
-            item.currentStock =
-                currentStock;
+        payload=JSON.parse(localStorage.getItem(storageKey) || "null");
+        if (!payload) {
+            const payment=normalizePaymentMethod($("salePaymentMethod").value);
+            if (!saleDraft.length || !payment) throw new Error("Adicione produtos e selecione a forma de pagamento.");
+            payload={p_client_request_id:crypto.randomUUID(),p_items:saleDraft.map(i=>({variant_id:i.variantId,quantity:i.quantity})),p_discount:renderSaleSummary().discount,p_payment_method:payment,p_notes:$("saleNotesInput").value.trim() || null};
+            localStorage.setItem(storageKey,JSON.stringify(payload));
+        } else if (!confirm("Existe uma venda aguardando confirmação. Conferir a tentativa anterior usando os mesmos itens e pagamento? A venda atual não será enviada.")) return;
+        saleSubmitting=true; $("saleManagementWorkspace").inert=true; setLoading($("saleRegisterButton"),true,"Registrando…");
+        const {data,error}=await client.rpc("pc_register_sale",payload);
+        if (error) {
+            if (isConfirmedRpcRejection(error)) localStorage.removeItem(storageKey);
+            throw error;
         }
-
-        const notes =
-            $("saleNotesInput")
-                ?.value
-                ?.trim() ||
-            null;
-
-        const {
-            data:
-                sale,
-            error:
-                saleError
-        } =
-            await client
-                .from(
-                    "sales"
-                )
-                .insert({
-                    user_id:
-                        userId,
-
-                    sale_date:
-                        saleTimestamp.toISOString(),
-
-                    subtotal:
-                        summary.subtotal,
-
-                    discount:
-                        summary.discount,
-
-                    total:
-                        summary.total,
-
-                    payment_method:
-                        paymentMethod,
-
-                    status:
-                        "completed",
-
-                    notes
-                })
-                .select()
-                .single();
-
-        if (saleError) {
-            throw saleError;
-        }
-
-        saleId =
-            sale.id;
-
-        const saleNumber = sale.sale_number;
-
-        const saleItems =
-            saleDraft.map(
-                item => ({
-
-                    user_id:
-                        userId,
-
-                    sale_id:
-                        sale.id,
-
-                    product_variant_id:
-                        item.variantId,
-
-                    product_name:
-                        item.productName,
-
-                    variant_description:
-                        item.variantDescription,
-
-                    quantity:
-                        item.quantity,
-
-                    unit_price:
-                        item.unitPrice,
-
-                    unit_cost:
-                        item.unitCost,
-
-                    discount:
-                        0,
-
-                    total:
-                        item.quantity *
-                        item.unitPrice
-                })
-            );
-
-        const {
-            error:
-                saleItemsError
-        } =
-            await client
-                .from(
-                    "sale_items"
-                )
-                .insert(
-                    saleItems
-                );
-
-        if (
-            saleItemsError
-        ) {
-            throw saleItemsError;
-        }
-
-        saleItemsInserted =
-            true;
-
-        const movements =
-            [];
-
-        for (
-            const item
-            of saleDraft
-        ) {
-
-            const previousStock =
-                Number(
-                    item.currentStock ||
-                    0
-                );
-
-            const newStock =
-                previousStock -
-                item.quantity;
-
-            const {
-                data:
-                    updatedVariant,
-                error:
-                    stockError
-            } =
-                await client
-                    .from(
-                        "product_variants"
-                    )
-                    .update({
-                        stock_quantity:
-                            newStock
-                    })
-                    .eq(
-                        "id",
-                        item.variantId
-                    )
-                    .eq(
-                        "user_id",
-                        userId
-                    )
-                    .eq(
-                        "stock_quantity",
-                        previousStock
-                    )
-                    .select()
-                    .single();
-
-            if (
-                stockError ||
-                !updatedVariant
-            ) {
-                console.error("Erro ao atualizar estoque:", stockError);
-
-                throw new Error(
-                    `O estoque de "${item.productName}" mudou enquanto a venda era registrada. A operação será desfeita.`
-                );
-            }
-
-            updatedVariants.push({
-                id:
-                    item.variantId,
-
-                previousStock,
-
-                newStock
-            });
-
-            movements.push({
-                user_id:
-                    userId,
-
-                product_variant_id:
-                    item.variantId,
-
-                movement_type:
-                    "sale",
-
-                quantity:
-                    item.quantity,
-
-                reference_id:
-                    sale.id,
-
-                reason:
-                    `Venda #${saleNumber}`,
-
-                notes:
-                    item.variantDescription
-            });
-        }
-
-        const {
-            error:
-                movementError
-        } =
-            await client
-                .from(
-                    "inventory_movements"
-                )
-                .insert(
-                    movements
-                );
-
-        if (
-            movementError
-        ) {
-            throw movementError;
-        }
-
-        inventoryMovementsInserted =
-            true;
-
-        const {
-            error:
-                financeError
-        } =
-            await client
-                .from(
-                    "financial_transactions"
-                )
-                .insert({
-                    user_id:
-                        userId,
-
-                    transaction_type:
-                        "income",
-
-                    category:
-                        "Venda",
-
-                    description:
-                        `Venda #${saleNumber}`,
-
-                    amount:
-                        summary.total,
-
-                    transaction_date:
-                        localDateKey(saleTimestamp),
-
-                    payment_method:
-                        paymentMethod,
-
-                    reference_id:
-                        sale.id,
-
-                    notes
-                });
-
-        if (
-            financeError
-        ) {
-            throw financeError;
-        }
-
-        financeInserted =
-            true;
-
-        saleSubmitting = false;
-        closeModal(
-            "saleModal"
-        );
-        showToast("Venda registrada.");
-
-        resetSaleDraft();
-
-        await Promise.all([
-            loadProducts(),
-            loadStock(),
-            loadSales(),
-            loadFinance()
-        ]);
-
-        await loadDashboard();
-
-    } catch (
-        error
-    ) {
-
-        console.error(
-            "Erro ao registrar venda:",
-            error
-        );
-
-        if (financeInserted) {
-            alert("Venda registrada, mas a atualização da tela falhou. Atualize a página; não registre novamente.");
-            return;
-        }
-        let rollbackFailed = false;
-        const compensate = async (query, label, requireRow = false) => {
-            try {
-                const { data, error } = await query();
-                if (error) throw error;
-                if (requireRow && !data) throw new Error("Registro não encontrado ou estoque alterado por outra operação.");
-            } catch (error) {
-                rollbackFailed = true;
-                console.error(`Falha no rollback (${label}); venda ${saleId}:`, error);
-            }
-        };
-
-        for (
-            const variant
-            of updatedVariants
-        ) {
-
-            await compensate(() => client
-                .from(
-                    "product_variants"
-                )
-                .update({
-                    stock_quantity:
-                        variant.previousStock
-                })
-                .eq(
-                    "id",
-                    variant.id
-                )
-                .eq(
-                    "user_id",
-                    userId
-                )
-                .eq(
-                    "stock_quantity",
-                    variant.newStock
-                ).select().single(), "estoque", true);
-        }
-
-        if (rollbackFailed) {
-            showMessage("saleFormMessage", "A venda falhou e o estoque não pôde ser restaurado. Não tente novamente antes de conferir a venda " + saleId + " no Supabase.");
-            return;
-        }
-        if (
-            inventoryMovementsInserted &&
-            saleId
-        ) {
-
-            await compensate(() => client
-                .from(
-                    "inventory_movements"
-                )
-                .delete()
-                .eq(
-                    "user_id",
-                    userId
-                )
-                .eq(
-                    "reference_id",
-                    saleId
-                ), "exclusão");
-        }
-
-        if (
-            saleItemsInserted &&
-            saleId
-        ) {
-
-            await compensate(() => client
-                .from(
-                    "sale_items"
-                )
-                .delete()
-                .eq(
-                    "user_id",
-                    userId
-                )
-                .eq(
-                    "sale_id",
-                    saleId
-                ), "exclusão");
-        }
-
-        if (saleId && !rollbackFailed) {
-
-            await compensate(() => client
-                .from(
-                    "sales"
-                )
-                .delete()
-                .eq(
-                    "id",
-                    saleId
-                )
-                .eq(
-                    "user_id",
-                    userId
-                ), "exclusão");
-        }
-
-        if (rollbackFailed) {
-            showMessage("saleFormMessage", "A venda falhou e o rollback ficou incompleto. Confira a venda " + saleId + " no Supabase antes de tentar novamente.");
-            return;
-        }
-        showMessage(
-            "saleFormMessage",
-            error instanceof Error && /^(Estoque insuficiente|O estoque de|Não foi possível verificar o estoque|".*desativada)/.test(error.message)
-                ? error.message
-                : "Não foi possível registrar a venda. Confira os registros e o estoque antes de tentar novamente."
-        );
-
-    } finally {
-
-        saleSubmitting = false;
-        $("saleManagementWorkspace").inert = false;
-        $("saleModal").removeAttribute("aria-busy");
-        setLoading(
-            registerButton,
-            false
-        );
-    }
+        if (!data?.sale) throw new Error("Venda sem confirmação. Tente novamente para conferir a mesma venda.");
+        localStorage.removeItem(storageKey);
+        saleSubmitting=false; closeModal("saleModal"); resetSaleDraft();
+        await Promise.all([loadSales(),loadVariants(),loadProducts(),loadFinance()]); await loadDashboard();
+        showToast(data.replayed ? "Venda anterior confirmada. Não houve duplicação." : "Venda registrada.");
+    } catch(error) { if (generation===sessionGeneration) {
+        showMessage("saleFormMessage",productOperationError(error));
+        $("salePendingRetry").hidden = !localStorage.getItem(storageKey);
+    } }
+    finally { if (generation===sessionGeneration) { saleSubmitting=false; $("saleManagementWorkspace").inert=false; setLoading($("saleRegisterButton"),false); } }
 }
-
 
 // =========================================================
 // FINANCEIRO
@@ -8121,7 +5663,7 @@ const stock =
         <button type="button" class="stock-alert-row" data-adjust-stock="${escapeHtml(item.product_id)}">
             <span><strong>${escapeHtml(item.products?.name || "Produto")}</strong><small>${escapeHtml(item.colors?.name || "Sem cor")} · ${escapeHtml(item.sizes?.name || "Sem tamanho")}</small></span>
             <span class="status-badge ${Number(item.stock_quantity) === 0 ? "zero" : "low"}">${Number(item.stock_quantity) === 0 ? "Sem estoque" : `${Number(item.stock_quantity)} un.`}</span>
-        </button>`).join("") : (getOperationalVariants().length ? emptyState("Estoque em dia", "Nenhuma variação ativa precisa de reposição.") : emptyState("Estoque ainda não cadastrado", "Adicione as peças e suas quantidades para acompanhar a reposição.", "new-product", "+ Cadastrar produto"));
+        </button>`).join("") : (getOperationalVariants().length ? emptyState("Estoque em dia", "Nenhum tamanho disponível precisa de reposição.") : emptyState("Estoque ainda não cadastrado", "Adicione as peças e suas quantidades para acompanhar a reposição.", "new-product", "+ Cadastrar produto"));
 
     renderRecentActivity();
 }
@@ -8132,6 +5674,8 @@ const stock =
 // =========================================================
 
 function bindEvents() {
+    bindProductColorEvents();
+    $("salePendingRetry").addEventListener("click", registerSale);
     $("togglePassword").addEventListener("click", () => {
         const show = $("password").type === "password";
         $("password").type = show ? "text" : "password";
@@ -8153,6 +5697,7 @@ function bindEvents() {
     document.addEventListener("click", async event => {
         const button = event.target.closest("button");
         if (!button) return;
+        if (button.dataset.viewProduct) openProductDetails(button.dataset.viewProduct, button.hasAttribute("data-view-color") ? button.dataset.viewColor || null : undefined);
         if (button.dataset.productPanelTarget) setProductPanel(button.dataset.productPanelTarget);
         if (button.dataset.registration) showRegistration(button.dataset.registration);
         if (button.dataset.productFilter) { productFilter = button.dataset.productFilter; selectFilter("productFilters", "productFilter", productFilter); renderProducts(); }
@@ -8162,7 +5707,7 @@ function bindEvents() {
         if (button.dataset.adjustStock) {
             const product = productsCache.find(item => item.id === button.dataset.adjustStock);
             if (product) {
-                try { await loadProductForEdit(product); setProductPanel("stock"); }
+                try { await loadProductForEdit(product); setProductPanel("colors"); }
                 catch (error) { console.error("Erro ao abrir estoque:", error); showToast("Não foi possível abrir o estoque. Tente novamente."); }
             }
         }
@@ -8440,74 +5985,8 @@ function bindEvents() {
 
 
     // =================================================
-    // VARIAÇÕES
+    // CORES E TAMANHOS
     // =================================================
-
-    $("addProductVariationButton")
-        ?.addEventListener(
-            "click",
-            addProductVariation
-        );
-
-    $("openBatchVariationButton")
-        ?.addEventListener(
-            "click",
-            generateBatchVariations
-        );
-
-
-    // =================================================
-    // EVENTOS DE VARIAÇÃO
-    // =================================================
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            const removeVariation =
-                event.target.closest(
-                    "[data-remove-variation]"
-                );
-
-            if (
-                removeVariation
-            ) {
-
-                removeProductVariation(
-                    removeVariation
-                        .dataset
-                        .removeVariation
-                );
-
-                return;
-            }
-        }
-    );
-
-
-    document.addEventListener(
-        "input",
-        event => {
-
-            const quantityInput =
-                event.target.closest(
-                    "[data-variation-quantity]"
-                );
-
-            if (
-                quantityInput
-            ) {
-
-                updateProductVariationQuantity(
-                    quantityInput
-                        .dataset
-                        .variationQuantity,
-                    quantityInput.value
-                );
-            }
-        }
-    );
-
 
     // =================================================
     // FECHAMENTO DE MODAIS
@@ -9237,7 +6716,7 @@ function renderStockCollection(
         !variants.length
     ) {
 
-        container.innerHTML = emptyState("Nenhuma variação encontrada", "Ajuste os filtros ou cadastre o estoque de uma peça.", "products", "Ver produtos");
+        container.innerHTML = emptyState("Nenhum tamanho encontrado", "Ajuste os filtros ou cadastre o estoque de uma peça.", "products", "Ver produtos");
 
         return;
     }

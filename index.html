@@ -139,7 +139,7 @@
          0
         </strong>
         <small>
-         Variações
+         Tamanhos
         </small>
        </article>
        <article class="metric-card">
@@ -300,7 +300,7 @@
          Cadastros
         </h2>
         <p>
-         Opções usadas nos produtos e variações.
+         Opções usadas nas cores e tamanhos dos produtos.
         </p>
        </div>
        <button class="secondary-button small" data-section="products" type="button">
@@ -342,7 +342,7 @@
        <div class="subsection-heading">
         <div>
          <span class="section-eyebrow">
-          VARIAÇÕES
+          CADASTROS
          </span>
          <h3>
           Cores
@@ -362,7 +362,7 @@
        <div class="subsection-heading">
         <div>
          <span class="section-eyebrow">
-          VARIAÇÕES
+          CADASTROS
          </span>
          <h3>
           Tamanhos
@@ -393,7 +393,7 @@
       <div class="metrics-grid">
        <article class="metric-card">
         <span>
-         Total
+         Disponível
         </span>
         <strong id="stockTotal">
          0
@@ -410,7 +410,7 @@
          0
         </strong>
         <small>
-         Variações
+         Tamanhos
         </small>
        </article>
        <article class="metric-card">
@@ -421,7 +421,7 @@
          0
         </strong>
         <small>
-         Variações
+         Tamanhos
         </small>
        </article>
       </div>
@@ -683,12 +683,7 @@
        <button aria-pressed="true" data-product-panel-target="details" type="button">
         1 · Dados
        </button>
-       <button aria-pressed="false" data-product-panel-target="photos" type="button">
-        2 · Fotos
-       </button>
-       <button aria-pressed="false" data-product-panel-target="stock" type="button">
-        3 · Estoque
-       </button>
+       <button aria-pressed="false" data-product-panel-target="colors" type="button">2 · Cores, tamanhos e fotos</button>
       </div>
       <div class="product-panel" data-product-panel="details">
        <div class="form-group">
@@ -741,6 +736,7 @@
          <textarea id="productDescription" placeholder="Descrição do produto" rows="2"></textarea>
         </div>
        </details>
+       <div class="form-group"><label for="productMinimumStock">Estoque mínimo por tamanho</label><input id="productMinimumStock" inputmode="numeric" min="0" step="1" type="number" value="0"/></div>
        <label class="checkbox-label">
         <input checked="" id="productActive" type="checkbox"/>
         <span>
@@ -748,141 +744,31 @@
         </span>
        </label>
       </div>
-      <div class="product-panel" data-product-panel="photos" hidden="">
-       <div class="variation-section product-photo-section">
-        <div class="variation-heading">
-         <div>
-          <h3>
-           Fotos do produto
-          </h3>
-          <p>
-           Adicione fotos para identificar melhor a peça.
-          </p>
-         </div>
-        </div>
-        <label class="camera-button secondary-button" for="productCameraInput">
-         Fotografar a peça
-        </label>
-        <label class="product-photo-upload" for="productPhotoInput">
-         <span aria-hidden="true" class="product-photo-upload-icon">
-          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
-           <path d="M4 6h4l2-3h4l2 3h4v15H4Z">
-           </path>
-           <circle cx="12" cy="13" r="4">
-           </circle>
-          </svg>
-         </span>
-         <strong>
-          Escolher da galeria
-         </strong>
-         <span>
-          Uma ou mais fotos da peça
-         </span>
-        </label>
-        <input accept="image/*" class="sr-only" id="productPhotoInput" multiple="" type="file"/>
-        <input accept="image/*" aria-label="Fotografar produto" capture="environment" class="sr-only" id="productCameraInput" type="file"/>
-        <div class="product-existing-photos" id="productExistingPhotos">
-        </div>
-        <div class="product-photo-preview" id="productPhotoPreview">
-        </div>
+      <div class="product-panel" data-product-panel="colors" hidden="">
+       <h3>Cores do produto</h3>
+       <p class="field-hint">Adicione uma cor e organize suas fotos e tamanhos. Uma cor pode ficar sem fotos ou tamanhos.</p>
+       <div class="filter-chips pc-choices" id="productColorChoices" aria-label="Adicionar cor"></div>
+       <div class="filter-chips pc-tabs" id="productColorTabs" aria-label="Cores do produto"></div>
+       <h3 id="productColorTitle">Fotos gerais</h3>
+       <div id="productColorSettings" hidden="">
+        <label class="checkbox-label"><input id="productColorActive" type="checkbox" checked=""/>Cor ativa neste produto</label>
+        <div class="pc-actions"><button type="button" data-pc-order="-1" aria-label="Mover cor para antes">← Antes</button><button type="button" data-pc-order="1" aria-label="Mover cor para depois">Depois →</button></div>
+        <h4>Tamanhos e quantidades</h4>
+        <p class="field-hint">Marque os tamanhos disponíveis. Quantidade zero mantém o tamanho cadastrado. Desmarcar o torna indisponível e preserva o estoque e histórico.</p>
+        <div id="productVariantsList" class="product-variants-list"></div>
        </div>
+       <p id="productColorStock" aria-live="polite"></p>
+       <h4>Fotos</h4>
+       <div class="pc-actions">
+        <label class="camera-button secondary-button" for="productCameraInput">Fotografar</label>
+        <label class="camera-button secondary-button" for="productPhotoInput">Adicionar fotos</label>
+       </div>
+       <input accept="image/*" class="sr-only" id="productPhotoInput" multiple="" type="file"/>
+       <input accept="image/*" aria-label="Fotografar produto" capture="environment" class="sr-only" id="productCameraInput" type="file"/>
+       <p class="field-hint">A capa representa o produto. Cada cor pode ter sua própria foto principal. Alterar a associação não envia a foto novamente.</p>
+       <div id="productExistingPhotos"></div>
+       <div class="product-photo-preview" id="productPhotoPreview"></div>
       </div>
-      <div class="product-panel" data-product-panel="stock" hidden="">
-       <div class="form-group">
-        <label for="productMinimumStock">
-         Estoque mínimo
-        </label>
-        <input id="productMinimumStock" inputmode="numeric" min="0" step="1" type="number" value="0"/>
-        <small class="field-hint">
-         Avise quando uma variação atingir esta quantidade.
-        </small>
-       </div>
-       <div class="variation-section">
-        <div class="variation-heading">
-         <div>
-          <h3>
-           Variações do produto
-          </h3>
-          <p>
-           Cadastre somente as combinações que realmente existem.
-          </p>
-         </div>
-        </div>
-        <!-- =========================================
-     ADICIONAR VARIAÇÃO
-     ========================================= -->
-        <div class="product-variation-form">
-         <div class="product-variation-field">
-          <label for="productVariationColor">
-           Cor
-          </label>
-          <select id="productVariationColor">
-           <option value="">
-            Cor
-           </option>
-          </select>
-         </div>
-         <div class="product-variation-field">
-          <label for="productVariationSize">
-           Tamanho
-          </label>
-          <select id="productVariationSize">
-           <option value="">
-            Tamanho
-           </option>
-          </select>
-         </div>
-         <div class="product-variation-field">
-          <label for="productVariationQuantity">
-           Quantidade
-          </label>
-          <input id="productVariationQuantity" inputmode="numeric" min="0" placeholder="Ex.: 3" step="1" type="number" value="1"/>
-         </div>
-         <button class="secondary-button" id="addProductVariationButton" type="button">
-          + Adicionar variação
-         </button>
-        </div>
-        <!-- =========================================
-     LISTA DE VARIAÇÕES
-     ========================================= -->
-        <div class="product-variants-list" id="productVariantsList">
-         <div class="empty-state compact">
-          <strong>
-           Nenhuma variação adicionada
-          </strong>
-          <p>
-           Selecione cor, tamanho e quantidade acima.
-          </p>
-         </div>
-        </div>
-        <!-- =========================================
-     CRIAÇÃO EM LOTE
-     ========================================= -->
-        <details class="product-variation-batch">
-         <summary>
-          Gerar combinações em lote
-         </summary>
-         <p>
-          Combina todas as cores e tamanhos ativos. As combinações existentes são mantidas.
-         </p>
-         <div class="form-group">
-          <label for="batchVariationQuantity">
-           Quantidade em cada combinação
-          </label>
-          <input id="batchVariationQuantity" inputmode="numeric" min="0" step="1" type="number" value="1"/>
-         </div>
-         <button class="secondary-button" id="openBatchVariationButton" type="button">
-          Gerar combinações
-         </button>
-        </details>
-       </div>
-      </div>
-      <!-- =========================================
- FOTOS DO PRODUTO
- ========================================= -->
-      <!-- =========================================
-     VARIAÇÕES DO PRODUTO
-     ========================================= -->
       <div aria-live="polite" class="form-message" id="productFormMessage">
       </div>
       <div class="modal-actions">
@@ -895,6 +781,9 @@
       </div>
      </form>
     </div>
+   </div>
+   <div aria-labelledby="productDetailsTitle" aria-modal="true" class="modal" hidden="" id="productDetailsModal" role="dialog">
+    <div class="modal-content"><div class="modal-header"><h2 id="productDetailsTitle">Produto</h2><button class="modal-close" data-close-modal="productDetailsModal" type="button" aria-label="Fechar detalhes do produto">×</button></div><div class="modal-body" id="productDetailsContent"></div></div>
    </div>
    <!-- =====================================================
      MODAL — CATEGORIA
@@ -955,7 +844,7 @@
      <div class="modal-header">
       <div>
        <span class="section-eyebrow">
-        VARIAÇÕES
+        CADASTROS
        </span>
        <h2 id="colorModalTitle">
         Cor
@@ -1016,7 +905,7 @@
      <div class="modal-header">
       <div>
        <span class="section-eyebrow">
-        VARIAÇÕES
+        CADASTROS
        </span>
        <h2 id="sizeModalTitle">
         Tamanho
@@ -1078,6 +967,7 @@
       </button>
      </div>
      <div class="modal-body">
+      <button id="salePendingRetry" type="button" class="secondary-button" hidden="">Conferir venda pendente</button>
       <div class="sale-management" id="saleManagementWorkspace">
        <div class="sale-management-actions" data-sale-stage="items">
         <button aria-controls="saleProductPicker" aria-expanded="false" class="secondary-button" id="saleAddProductButton" type="button">

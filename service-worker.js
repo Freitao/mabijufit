@@ -1,5 +1,5 @@
 // Somente o shell local é armazenado. Supabase e autenticação exigem rede.
-const CACHE_NAME = "mabijufit-v6";
+const CACHE_NAME = "mabijufit-v7";
 const APP_FILES = [
     "./", "./index.html", "./css/style.css", "./js/app.js",
     "./js/supabase.js", "./manifest.json",

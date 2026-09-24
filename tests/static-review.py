@@ -57,3 +57,11 @@ for icon in manifest['icons']:
         assert f'{image.width}x{image.height}'==icon['sizes']
 assert not re.search(r'(^|[},])\s*main\s*[{,]',c)
 print(f'OK: HTML balanceado; {len(ids)} IDs únicos; referências e labels válidos; {len(functions)} funções únicas; CSS válido; manifest e ícones válidos.')
+
+# Contrato frontend da arquitetura product_colors; operações agregadas usam RPCs.
+assert not re.search(r"\bvariant\.color_id\b", j)
+assert not re.search(r'\.from\(\s*"(?:products|product_colors|product_variants|product_images|sales|sale_items|inventory_movements)"\s*\)\s*\.(?:insert|update|delete)\(', j)
+assert not re.search('variante|variação|variações', h, re.I)
+for rpc in ['pc_save_product', 'pc_delete_product', 'pc_register_sale', 'pc_cancel_sale']:
+    assert rpc in j
+print('OK: contrato product_colors; agregados por RPC; terminologia da interface.')
