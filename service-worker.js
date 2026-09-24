@@ -1,8 +1,8 @@
 // Somente o shell local é armazenado. Supabase e autenticação exigem rede.
-const CACHE_NAME = "mabijufit-v8";
+const CACHE_NAME = "mabijufit-v9";
 const APP_FILES = [
     "./", "./index.html", "./css/style.css", "./js/app.js",
-    "./js/supabase.js", "./manifest.json",
+    "./js/supabase.js", "./js/post-generator.js", "./css/post-generator.css", "./manifest.json",
     "./assets/icons/icon-192.png", "./assets/icons/icon-512.png"
 ];
 const APP_URLS = new Set(APP_FILES.map(path => new URL(path, self.registration.scope).href));

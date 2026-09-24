@@ -11,6 +11,7 @@
   <title>
    MabijuFit
   </title>
+  <link href="css/post-generator.css" rel="stylesheet"/>
  </head>
  <body>
   <div id="app">
@@ -167,6 +168,10 @@
        <span aria-hidden="true">
         ›
        </span>
+      </button>
+      <button class="post-entry" data-section="divulgacao" type="button">
+       <svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17 6h1"/></svg>
+       <span><strong>Divulgação</strong><small>Crie stories com suas peças, fotos e preços</small></span>
       </button>
       <div class="section-block">
        <h3>
@@ -410,18 +415,18 @@
          0
         </strong>
         <small>
-         Tamanhos
+         Itens (cor + tamanho)
         </small>
        </article>
        <article class="metric-card">
         <span>
-         Zerado
+         Sem estoque
         </span>
         <strong id="stockZero">
          0
         </strong>
         <small>
-         Tamanhos
+         Itens (cor + tamanho)
         </small>
        </article>
       </div>
@@ -577,6 +582,7 @@
       <div class="cards-list finance-list" id="financeList">
       </div>
      </section>
+     <section class="app-section" id="divulgacaoScreen" hidden="" aria-label="Divulgação"></section>
     </div>
     <!-- =================================================
          NAVEGAÇÃO INFERIOR
@@ -869,21 +875,35 @@
        </label>
        <input id="colorName" placeholder="Ex.: Rosa" required="" type="text"/>
       </div>
-      <div class="form-group">
-       <label>
-        Cor
-       </label>
+      <div class="color-editor">
+       <div class="color-editor-preview" id="colorPreview" role="img" aria-label="Cor selecionada: #E8A0B8" style="background:#E8A0B8;"></div>
        <div class="color-input-row">
-        <input aria-label="Selecionar cor" id="colorHex" type="color" value="#E8A0B8"/>
-        <input aria-label="Código hexadecimal da cor" id="colorHexText" maxlength="7" placeholder="#E8A0B8" type="text" value="#E8A0B8"/>
+        <label class="color-native-label" for="colorHex">Escolher cor
+         <input aria-label="Selecionar cor visualmente" id="colorHex" type="color" value="#E8A0B8"/>
+        </label>
+        <div class="form-group">
+         <label for="colorHexText">Código HEX</label>
+         <input id="colorHexText" maxlength="7" placeholder="#8E2D43" type="text" value="#E8A0B8" required spellcheck="false" autocapitalize="characters" autocomplete="off"/>
+        </div>
        </div>
-       <div class="color-preview-wrapper">
-        <span>
-         Pré-visualização
-        </span>
-        <span class="color-preview" id="colorPreview" style="background:#E8A0B8;">
-        </span>
+       <fieldset class="color-rgb-controls">
+        <legend>Ajustar a cor · RGB</legend>
+       <div class="color-rgb-row">
+        <label for="colorR">R</label>
+        <input aria-label="Vermelho: ajustar intensidade" id="colorRRange" type="range" min="0" max="255" step="1" value="232"/>
+        <input id="colorR" aria-label="Vermelho: valor de 0 a 255" type="number" inputmode="numeric" min="0" max="255" step="1" required value="232"/>
        </div>
+       <div class="color-rgb-row">
+        <label for="colorG">G</label>
+        <input aria-label="Verde: ajustar intensidade" id="colorGRange" type="range" min="0" max="255" step="1" value="160"/>
+        <input id="colorG" aria-label="Verde: valor de 0 a 255" type="number" inputmode="numeric" min="0" max="255" step="1" required value="160"/>
+       </div>
+       <div class="color-rgb-row">
+        <label for="colorB">B</label>
+        <input aria-label="Azul: ajustar intensidade" id="colorBRange" type="range" min="0" max="255" step="1" value="184"/>
+        <input id="colorB" aria-label="Azul: valor de 0 a 255" type="number" inputmode="numeric" min="0" max="255" step="1" required value="184"/>
+       </div>
+       </fieldset>
       </div>
       <label class="checkbox-label">
        <input checked="" id="colorActive" type="checkbox"/>
@@ -902,6 +922,13 @@
        </button>
       </div>
      </form>
+    </div>
+   </div>
+   <div aria-labelledby="stockDetailTitle" aria-modal="true" class="modal" hidden id="stockDetailModal" role="dialog">
+    <div class="modal-content">
+     <div class="modal-header"><div><span class="section-eyebrow">ESTOQUE</span><h2 id="stockDetailTitle">Estoque do produto</h2><p id="stockDetailTotal"></p></div><button type="button" class="modal-close" aria-label="Fechar estoque" data-close-modal="stockDetailModal">×</button></div>
+     <div id="stockDetailContent"></div>
+     <div class="modal-actions"><button type="button" class="secondary-button" data-close-modal="stockDetailModal">Fechar</button></div>
     </div>
    </div>
    <!-- =====================================================
@@ -1288,6 +1315,7 @@
   </script>
   <script src="js/supabase.js">
   </script>
+  <script src="js/post-generator.js"></script>
   <script src="js/app.js">
   </script>
   <!-- =====================================================

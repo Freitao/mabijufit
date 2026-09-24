@@ -1308,6 +1308,7 @@ async function removeConfirmedProductFiles(client, paths, userId) {
 // =========================================================
 
 const sectionMap = {
+    divulgacao: "divulgacaoScreen",
 
     home:
         "homeScreen",
@@ -1343,8 +1344,16 @@ function showSection(
             "home";
     }
 
+    if (sectionName === "divulgacao" && typeof PostGenerator === "undefined") {
+        showToast("Divulgação ainda não carregou. Abra o app conectado e tente novamente.");
+        sectionName = "home";
+    }
     currentSection =
         sectionName;
+    if (sectionName === "divulgacao" && currentUser) {
+        PostGenerator.open({userId:currentUser.id, navigate:showSection,
+            data:() => ({products:productsCache,groups:productColorsCache,variants:variantsCache,images:productImagesCache,colors:colorsCache,sizes:sizesCache})});
+    }
 
     Object.entries(
         sectionMap
@@ -1758,6 +1767,7 @@ async function handleLogout() {
 }
 
 function resetSessionState() {
+    if (typeof PostGenerator !== "undefined") PostGenerator.reset();
     productColorsCache = []; productColorsDraft = []; selectedProductColor = null;
     $("productForm").inert = false;
     saleCancellationTarget = null;
@@ -2449,26 +2459,41 @@ function renderColors() {
 
 
 function syncColorPreview() {
+    const hex = $("colorHex").value.toUpperCase();
+    $("colorHexText").value = hex;
+    $("colorHexText").setCustomValidity("");
+    $("colorPreview").style.background = hex;
+    $("colorPreview").setAttribute("aria-label", `Cor selecionada: ${hex}`);
+    ["R", "G", "B"].forEach((channel, index) => {
+        const value = parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16);
+        const number = $("color" + channel);
+        number.value = value;
+        number.setCustomValidity("");
+        $("color" + channel + "Range").value = value;
+    });
+}
 
-    const color =
-        $("colorHex")?.value ||
-        "#E8A0B8";
-
-    const text =
-        $("colorHexText");
-
-    const preview =
-        $("colorPreview");
-
-    if (text) {
-        text.value =
-            color.toUpperCase();
+function syncColorHexInput() {
+    const input = $("colorHexText");
+    const hex = "#" + input.value.trim().replace(/^#/, "");
+    const valid = /^#[0-9a-f]{6}$/i.test(hex);
+    input.setCustomValidity(valid ? "" : "Use seis dígitos HEX, por exemplo #8E2D43.");
+    if (valid) {
+        $("colorHex").value = hex;
+        syncColorPreview();
     }
+}
 
-    if (preview) {
-        preview.style.background =
-            color;
-    }
+function syncColorRGB(channel, source) {
+    const number = $("color" + channel);
+    number.value = source.value;
+    const values = ["R", "G", "B"].map(key => $("color" + key).value);
+    const valid = values.every(value => /^\d{1,3}$/.test(value) && Number(value) <= 255);
+    number.setCustomValidity(/^\d{1,3}$/.test(number.value) && Number(number.value) <= 255
+        ? "" : "Informe um número inteiro entre 0 e 255.");
+    if (!valid) return;
+    $("colorHex").value = "#" + values.map(value => Number(value).toString(16).padStart(2, "0")).join("");
+    syncColorPreview();
 }
 
 
@@ -2520,6 +2545,10 @@ async function saveColor(
     event
 ) {
     event.preventDefault();
+    if (!$("colorForm").checkValidity()) {
+        $("colorForm").reportValidity();
+        return;
+    }
     const userId = currentUser?.id;
     const generation = sessionGeneration;
     if (!userId) return;
@@ -3668,103 +3697,52 @@ async function loadStock() {
 }
 
 
-function renderStockCard(
-    variant
-) {
+function stockItemStatus(item) {
+    return getStockStatus(item.stock_quantity, item.minimum_stock ?? item.products?.minimum_stock);
+}
 
-    const productId =
-        variant.products?.id;
+function stockProductSummaries() {
+    const items = getOperationalVariants();
+    return productsCache.filter(p => p.is_active !== false).map(product => {
+        const variants = items.filter(v => v.product_id === product.id);
+        const groups = productColorsCache.filter(g => g.product_id === product.id && g.is_active !== false);
+        const sizes = [...new Set(variants.map(v => v.size_id))].map(id => sizesCache.find(s => s.id === id) || variants.find(v => v.size_id === id)?.sizes)
+            .filter(Boolean).sort((a,b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
+        return { product, variants, groups, sizes,
+            total: variants.reduce((sum,v) => sum + Number(v.stock_quantity || 0),0),
+            low: variants.filter(v => stockItemStatus(v).className === "low").length,
+            zero: variants.filter(v => stockItemStatus(v).className === "zero").length };
+    }).sort((a,b) => (b.zero > 0) - (a.zero > 0) || (b.low > 0) - (a.low > 0) || a.product.name.localeCompare(b.product.name));
+}
 
-    const productName =
-        variant.products?.name ||
-        "Produto";
+function renderStockCard(summary) {
+    const {product,total,groups,sizes,low,zero} = summary;
+    return `<article class="stock-card stock-product-card">
+        ${productImageHtml(product.id,"stock-card-image")}
+        <div class="stock-card-info"><strong>${escapeHtml(product.name)}</strong>
+            <span>${groups.length} ${groups.length === 1 ? "cor" : "cores"} · ${escapeHtml(sizes.map(s => s.name).join(" • ") || "Sem tamanhos")}</span>
+            <div class="stock-alert-badges">${zero ? `<span class="status-text zero">${zero} sem estoque</span>` : ""}${low ? `<span class="status-text low">${low} ${low === 1 ? "baixo" : "baixos"}</span>` : ""}</div>
+            <button type="button" class="text-button" data-stock-detail="${escapeHtml(product.id)}" aria-label="Ver estoque de ${escapeHtml(product.name)}">Ver estoque</button>
+        </div><div class="stock-card-quantity"><strong>${total}</strong><small>${total === 1 ? "unidade" : "unidades"}</small></div>
+    </article>`;
+}
 
-    const colorName =
-        variant.colors?.name ||
-        "Sem cor";
-
-    const sizeName =
-        variant.sizes?.name ||
-        "Sem tamanho";
-
-    const stock =
-        Number(
-            variant.stock_quantity ||
-            0
-        );
-
-    const minimum =
-        Number(
-            variant.minimum_stock ??
-            variant.products
-                ?.minimum_stock ??
-            0
-        );
-
-    const status =
-        getStockStatus(
-            stock,
-            minimum
-        );
-
-    return `
-
-        <div class="stock-card">
-
-            <div class="stock-card-image-wrapper">
-
-                ${productImageHtml(
-                    productId,
-                    "stock-card-image",
-                    variant.product_color_id
-                )}
-
-            </div>
-
-            <div class="stock-card-info">
-
-                <strong>
-                    ${escapeHtml(
-                        productName
-                    )}
-                </strong>
-
-                <span>
-                    ${escapeHtml(
-                        colorName
-                    )}
-                    /
-                    ${escapeHtml(
-                        sizeName
-                    )}
-                </span>
-
-                <small>
-                    Mínimo:
-                    ${minimum}
-                </small>
-
-                <span class="status-text ${status.className}">${escapeHtml(status.label)}</span>
-                <button type="button" class="text-button" data-adjust-stock="${escapeHtml(productId)}">Ajustar estoque</button>
-
-            </div>
-
-            <div
-                class="stock-card-quantity ${status.className}"
-            >
-
-                <strong>
-                    ${stock}
-                </strong>
-
-                <small>
-                    ${stock === 1 ? "unidade" : "unidades"}
-                </small>
-
-            </div>
-
-        </div>
-    `;
+function openStockDetails(productId) {
+    const summary = stockProductSummaries().find(s => s.product.id === productId);
+    if (!summary) return;
+    $("stockDetailTitle").textContent = summary.product.name;
+    $("stockDetailTotal").textContent = `Estoque total: ${summary.total} unidades`;
+    $("stockDetailContent").innerHTML = summary.groups.slice().sort((a,b) => a.display_order - b.display_order).map(group => {
+        const variants = summary.variants.filter(v => v.product_color_id === group.id).sort((a,b) => {
+            const order = id => sizesCache.find(s => s.id === id)?.display_order ?? 999;
+            return order(a.size_id)-order(b.size_id) || (a.sizes?.name || "").localeCompare(b.sizes?.name || "");
+        });
+        const hex = /^#[0-9a-f]{6}$/i.test(group.colors?.hex_code || "") ? group.colors.hex_code : "#eeeeee";
+        return `<section class="stock-color-detail"><header><span class="stock-color-dot" style="background:${hex}"></span><strong>${escapeHtml(group.colors?.name || "Sem cor")}</strong><span>${variants.reduce((n,v) => n+Number(v.stock_quantity || 0),0)} un.</span></header>
+            ${variants.map(v => { const status = stockItemStatus(v); return `<div class="stock-size-detail"><strong>${escapeHtml(v.sizes?.name || "Sem tamanho")}</strong><span>${Number(v.stock_quantity || 0)} un.</span>${status.className !== "normal" ? `<small class="status-text ${status.className}">${status.label}</small>` : '<small class="stock-normal">Normal</small>'}</div>`; }).join("") || '<p class="muted">Nenhum tamanho cadastrado.</p>'}
+            <button type="button" class="text-button" data-adjust-stock="${escapeHtml(productId)}" data-stock-color="${escapeHtml(group.id)}">Ajustar estoque</button></section>`;
+    }).join("") || `<p>Nenhuma cor cadastrada.</p><button type="button" class="text-button" data-adjust-stock="${escapeHtml(productId)}">Ajustar estoque</button>`;
+    openModal("stockDetailModal");
 }
 
 
@@ -5766,10 +5744,19 @@ function bindEvents() {
         if (button.dataset.stockFilter) { stockFilter = button.dataset.stockFilter; selectFilter("stockFilters", "stockFilter", stockFilter); renderStock(); }
         if (button.dataset.financeFilter) { financeFilter = button.dataset.financeFilter; selectFilter("financeFilters", "financeFilter", financeFilter); renderFinance(); }
         if (button.dataset.removePhoto !== undefined) { productPhotosDraft.splice(Number(button.dataset.removePhoto), 1); renderProductPhotoPreview(); }
+        if (button.dataset.stockDetail) openStockDetails(button.dataset.stockDetail);
         if (button.dataset.adjustStock) {
             const product = productsCache.find(item => item.id === button.dataset.adjustStock);
             if (product) {
-                try { await loadProductForEdit(product); setProductPanel("colors"); }
+                try {
+                    await loadProductForEdit(product);
+                    closeModal("stockDetailModal");
+                    if (button.dataset.stockColor) {
+                        selectedProductColor = productColorsDraft.find(g => g.id === button.dataset.stockColor)?.key || selectedProductColor;
+                        renderProductColorEditor();
+                    }
+                    setProductPanel("colors");
+                }
                 catch (error) { console.error("Erro ao abrir estoque:", error); showToast("Não foi possível abrir o estoque. Tente novamente."); }
             }
         }
@@ -6012,38 +5999,12 @@ function bindEvents() {
             syncColorPreview
         );
 
-    $("colorHexText")
-        ?.addEventListener(
-            "input",
-            event => {
-
-                let value =
-                    event.target.value
-                        .trim();
-
-                if (
-                    !value.startsWith(
-                        "#"
-                    )
-                ) {
-
-                    value =
-                        "#" +
-                        value;
-                }
-
-                if (
-                    /^#[0-9A-Fa-f]{6}$/
-                        .test(value)
-                ) {
-
-                    $("colorHex").value =
-                        value;
-
-                    syncColorPreview();
-                }
-            }
-        );
+    $("colorHexText")?.addEventListener("input", syncColorHexInput);
+    ["R", "G", "B"].forEach(channel => {
+        [$("color" + channel), $("color" + channel + "Range")].forEach(input => {
+            input.addEventListener("input", event => syncColorRGB(channel, event.target));
+        });
+    });
 
 
     // =================================================
@@ -6724,71 +6685,22 @@ function renderProductCollection(
 }
 
 
-function filterStock(
-    event
-) {
-
-    const search =
-        event.target.value
-            .toLowerCase()
-            .trim();
-
-    const filtered =
-        getOperationalVariants()
-            .filter(
-            variant => {
-                const status = getStockStatus(variant.stock_quantity, variant.minimum_stock ?? variant.products?.minimum_stock).className;
-                if (stockFilter !== "all" && status !== stockFilter) return false;
-
-                const text =
-                    [
-                        variant.products?.name,
-                        variant.colors?.name,
-                        variant.sizes?.name
-                    ]
-                        .filter(
-                            Boolean
-                        )
-                        .join(" ")
-                        .toLowerCase();
-
-                return text.includes(
-                    search
-                );
-            }
-        );
-
-    filtered.sort((a, b) => Number(a.stock_quantity || 0) - Number(b.stock_quantity || 0));
+function filterStock(event) {
+    const search = event.target.value.toLocaleLowerCase().trim();
+    const filtered = stockProductSummaries().filter(s => {
+        if (stockFilter === "low" && !s.low) return false;
+        if (stockFilter === "zero" && !s.zero) return false;
+        if (stockFilter === "normal" && (s.low || s.zero)) return false;
+        return [s.product.name, ...s.groups.map(g => g.colors?.name || "Sem cor"), ...s.sizes.map(size => size.name)].join(" ").toLocaleLowerCase().includes(search);
+    });
     renderStockCollection(filtered);
 }
 
-
-function renderStockCollection(
-    variants
-) {
-
-    const container =
-        $("stockList");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        !variants.length
-    ) {
-
-        container.innerHTML = emptyState("Nenhum tamanho encontrado", "Ajuste os filtros ou cadastre o estoque de uma peça.", "products", "Ver produtos");
-
-        return;
-    }
-
-    container.innerHTML =
-        variants
-            .map(
-                renderStockCard
-            )
-            .join("");
+function renderStockCollection(products) {
+    const container = $("stockList");
+    if (!container) return;
+    container.innerHTML = products.length ? products.map(renderStockCard).join("") :
+        emptyState("Nenhum produto encontrado", "Ajuste os filtros ou cadastre uma peça.", "products", "Ver produtos");
 }
 
 

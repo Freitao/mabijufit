@@ -29,3 +29,21 @@ O runner atual executa:
 Os arquivos `browser-checks.js`, `ux-checks.js` e `sale-cancel-checks.js` documentam cenários da arquitetura anterior e não fazem parte do runner atual: pressupõem formulários antigos e gravações/compensações diretas. Os cenários da nova arquitetura estão em `product-colors-checks.js`; as RPCs simuladas não reproduzem locks ou policies PostgreSQL.
 
 A verificação estática valida HTML balanceado, IDs/referências/labels, nomes de funções únicos, CSS, manifest e ícones. A execução do navegador também detecta erros JavaScript não tratados. Nenhum SQL de implantação é executado. O modo de manutenção deve permanecer ativo até a revisão e autorização de ativação.
+
+
+O módulo Divulgação acrescenta `post-generator-checks.js` ao runner: leitura dos caches,
+snapshot sem writes, disponibilidade por cor/tamanho, ordenação, visibilidade dos campos,
+preço visual, promoção e percentual, três templates, contraste da paleta, enquadramento,
+PNG real 1080×1920, Web Share simulado, cancelamento/falha, reset durante exportação,
+imagem ausente/com erro, erro de Canvas e renderização offline com imagem já carregada.
+Os PNGs `post-editorial.png`, `post-showcase.png` e `post-promotion.png` são gerados em
+`/tmp/mabijufit-review` usando uma ilustração vetorial de roupa como fixture local.
+São inspecionadas as seis etapas em 375 e 430 px, além das verificações de layout do app.
+O gerador usa fontes do sistema, sem CDN de fontes ou serviço de renderização.
+
+Ainda exigem validação em aparelhos reais: exportar fotos reais do bucket (CORS), salvar
+em Fotos/Arquivos no Safari/PWA, abrir a folha nativa de compartilhamento no Android/iPhone,
+a disponibilidade de Instagram/WhatsApp nessa folha, teclado, memória e comportamento offline.
+O usuário conclui a publicação no aplicativo de destino; não há API direta do Instagram.
+
+O seletor RGB é coberto por `color-picker-checks.js` (sincronização, limites, HEX, bloqueio de valores inválidos, gravação e edição com identidade preservada). `stock-grouped-checks.js` cobre resumos por produto, alertas, filtros, buscas, cores/tamanhos ordenados e acesso ao editor existente. Os dois modais também são medidos em 375 e 430 px.

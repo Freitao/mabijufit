@@ -8,7 +8,7 @@ from PIL import Image
 import tinycss2
 
 ROOT=Path(__file__).resolve().parents[1]
-h=(ROOT/'index.html').read_text();j=(ROOT/'js/app.js').read_text();c=(ROOT/'css/style.css').read_text()
+h=(ROOT/'index.html').read_text();j=(ROOT/'js/app.js').read_text();c=(ROOT/'css/style.css').read_text()+(ROOT/'css/post-generator.css').read_text()
 soup=BeautifulSoup(h,'html.parser')
 ids=[x['id'] for x in soup.select('[id]')]
 assert len(ids)==len(set(ids)), 'IDs duplicados'
@@ -65,3 +65,10 @@ assert not re.search('variante|variação|variações', h, re.I)
 for rpc in ['pc_save_product', 'pc_delete_product', 'pc_register_sale', 'pc_cancel_sale']:
     assert rpc in j
 print('OK: contrato product_colors; agregados por RPC; terminologia da interface.')
+
+post=(ROOT/'js/post-generator.js').read_text()
+assert not re.search(r'\.(?:rpc|from)\(\s*["\'](?:pc_|products|product_colors|product_variants|product_images)',post)
+assert not re.search(r'variant\.color_id',post)
+assert 'service_role' not in post
+assert './js/post-generator.js' in (ROOT/'service-worker.js').read_text()
+print('OK: Divulgação isolada; sem writes de banco nem coluna antiga; recursos no cache PWA.')

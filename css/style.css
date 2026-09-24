@@ -3774,3 +3774,36 @@ button.sale-card { width: 100%; text-align: left; color: var(--text); cursor: po
 #productModal .pc-photo:nth-child(3n + 2) .pc-photo-options > div { left:50%; right:auto; transform:translateX(-50%); }
 
 #productModal #productForm { scroll-padding-block:12px 100px; }
+
+/* Seletor visual do catálogo de cores. */
+#colorModal .color-editor { margin-bottom: 20px; }
+#colorModal .color-editor-preview { height: 100px; border-radius: 16px; border: 1px solid var(--gray-300); margin-bottom: 16px; }
+#colorModal .color-input-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; }
+#colorModal .color-input-row .form-group { margin: 0; min-width: 0; }
+#colorModal .color-native-label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; }
+#colorModal input[type="color"] { width: 100%; height: 48px; cursor: pointer; }
+#colorModal .color-rgb-controls { border: 0; padding: 0; margin: 20px 0 0; min-width: 0; }
+#colorModal .color-rgb-controls legend { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+#colorModal .color-rgb-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) 72px; gap: 10px; align-items: center; margin-top: 8px; }
+#colorModal .color-rgb-row label { margin: 0; font-weight: 600; }
+#colorModal .color-rgb-row input[type="range"] { padding: 0; min-width: 0; width: 100%; height: 44px; accent-color: var(--pink-600); cursor: pointer; }
+#colorModal .color-rgb-row input[type="number"] { min-width: 0; min-height: 44px; padding: 8px; text-align: center; }
+
+/* Estoque resumido por produto, com detalhe por cor. */
+.stock-product-card { align-items: start; gap: 12px; grid-template-columns: 58px minmax(0, 1fr) auto; }
+.stock-product-card > .stock-card-image { width: 58px; height: 82px; flex: 0 0 58px; object-fit: cover; border-radius: 10px; }
+.stock-product-card .stock-card-info { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.stock-product-card .stock-card-quantity { min-width: 48px; }
+.stock-product-card .text-button, .stock-color-detail .text-button { min-height: 44px; }
+.stock-alert-badges { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.stock-alert-badges:empty { display: none; }
+.stock-alert-badges .status-text { font-size: 12px; }
+.stock-color-detail { padding: 16px 0; border-bottom: 1px solid var(--gray-200); }
+.stock-color-detail header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.stock-color-detail header strong { flex: 1; overflow-wrap: anywhere; min-width: 0; }
+.stock-color-dot { flex: 0 0 22px; width: 22px; height: 22px; border: 1px solid var(--gray-300); border-radius: 50%; }
+.stock-size-detail { display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center; min-height: 44px; }
+.stock-size-detail small { font-size: 12px; }
+.stock-normal { color: var(--gray-500); }
+#stockDetailContent { padding: 0 16px; }
+#stockDetailModal .modal-actions { margin: 0; padding: 12px 16px 16px; }

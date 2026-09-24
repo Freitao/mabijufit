@@ -66,18 +66,30 @@ async def main():
             await evaluate('''const portrait = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="280" viewBox="0 0 180 280"><rect width="180" height="280" fill="#f3e8e9"/><path d="M55 50 70 40l10 30h20l10-30 15 10-5 75 16 100H44l16-100Z" fill="#c96f8c"/><path d="M65 100q25 15 50 0" fill="none" stroke="#b45774" stroke-width="3"/></svg>');
                 mockDB.product_images = ['p1','p2'].map((id,i)=>({id:'photo'+i,user_id:mockUser.id,product_id:id,public_url:portrait,is_primary:true,display_order:0}));
             ''')
-            for suite in ['product-colors-checks','finance-delete-checks','sale-details-checks','profile-checks','product-editor-ui-checks']:
+            for suite in ['product-colors-checks','finance-delete-checks','sale-details-checks','profile-checks','product-editor-ui-checks','color-picker-checks','post-generator-checks','stock-grouped-checks']:
                 results=await evaluate('(async()=>{'+(ROOT/f'tests/{suite}.js').read_text()+'})()')
                 print(suite,len(json.loads(results)),'passed',flush=True)
                 (OUTPUT/f'{suite}.json').write_text(results)
             assert await evaluate("fetch('/service-worker.js').then(r=>r.text()).then(code=>{new Function(code);return true})"), 'Sintaxe service worker'
+            # PNGs saem do Canvas real; fixtures de roupa são SVGs locais.
+            await evaluate('showSection("divulgacao");document.querySelector("[data-post-next]").click();document.querySelector("[data-post-next]").click()')
+            for template in ['editorial','showcase','promotion']:
+                if template=='promotion':
+                    await evaluate("""document.querySelector('[data-post-step="2"]').click();const t=document.querySelector('[data-post-field="type"]');t.value='promotion';t.dispatchEvent(new Event('change',{bubbles:true}));const o=document.querySelector('[data-post-field="original"]');o.value='119.90';o.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-post-next]').click()""")
+                await evaluate(f"document.querySelector('[data-post-template=\"{template}\"]').click()")
+                await evaluate('new Promise(r=>setTimeout(r,180))')
+                await evaluate('PostGenerator.generate()')
+                encoded=await evaluate('fetch(document.querySelector("[data-post-download]").href).then(r=>r.blob()).then(b=>new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(",")[1]);reader.readAsDataURL(b)}))')
+                (OUTPUT/f'post-{template}.png').write_bytes(base64.b64decode(encoded))
+                await evaluate('document.querySelector("[data-post-back]").click();document.querySelector("[data-post-back]").click()')
             layouts=[]
             for width in [320,360,375,390,430,768,1280]:
                 await call('browsingContext.setViewport',{'context':ctx,'viewport':{'width':width,'height':800},'devicePixelRatio':1})
-                for section in ['home','products','stock','sales','finance','settings']:
+                for section in ['home','products','stock','sales','finance','settings','divulgacao']:
                     await evaluate(f'showSection({json.dumps(section)}); new Promise(r=>setTimeout(r,50))')
                     overflow=await evaluate('document.documentElement.scrollWidth > innerWidth + 1')
                     layouts.append({'width':width,'section':section,'overflow':overflow})
+                    if section=='divulgacao' and width in [375,390,430,1280]: await screenshot(f'divulgacao-{width}')
                 await evaluate('loadProductForEdit(productsCache.find(p=>p.id===reviewProductId))')
                 await evaluate('setProductPanel("colors")')
                 overflow=await evaluate('document.querySelector("#productModal .modal-content").scrollWidth>innerWidth+1')
@@ -102,6 +114,24 @@ async def main():
                 layouts.append({'width':width,'modal':'productDetailsModal','overflow':overflow})
                 if width==390: await screenshot('product-gallery-390')
                 await evaluate('closeModal("productDetailsModal")')
+            for width in [375,430]:
+                await call('browsingContext.setViewport',{'context':ctx,'viewport':{'width':width,'height':800},'devicePixelRatio':1})
+                for modal,opening in [('colorModal','openColorModal()'),('stockDetailModal','openStockDetails("stock-fixture")')]:
+                    await evaluate(opening)
+                    overflow=await evaluate(f'document.querySelector("#{modal} .modal-content").scrollWidth>innerWidth+1')
+                    layouts.append({'width':width,'modal':modal,'overflow':overflow})
+                    await screenshot(f'{modal}-{width}')
+                    await evaluate(f'closeModal("{modal}")')
+            # Cada etapa do módulo em larguras típicas de iPhone.
+            for width in [375,430]:
+                await call('browsingContext.setViewport',{'context':ctx,'viewport':{'width':width,'height':800},'devicePixelRatio':1})
+                await evaluate('showSection("divulgacao");PostGenerator.generate()')
+                for post_step in [5,4,3,2,1,0]:
+                    await evaluate(f"document.querySelector('[data-post-step=\"{post_step}\"]').click()")
+                    await evaluate('new Promise(r=>setTimeout(r,140))')
+                    overflow=await evaluate('document.documentElement.scrollWidth>innerWidth+1')
+                    layouts.append({'width':width,'postStep':post_step,'overflow':overflow})
+                    if width==375: await screenshot(f'divulgacao-step-{post_step+1}-375')
             await call('browsingContext.setViewport',{'context':ctx,'viewport':{'width':390,'height':420},'devicePixelRatio':1})
             await evaluate('loadProductForEdit(productsCache.find(p=>p.id===reviewProductId))')
             await evaluate('setProductPanel("colors");const qty=document.querySelector("[data-pc-quantity]");qty.focus();qty.scrollIntoView({block:"center"})')
@@ -120,6 +150,9 @@ async def main():
             await evaluate('loadProductForEdit(productsCache.find(p=>p.id===sessionStorage.getItem("review-product-id")))')
             assert await evaluate('productColorsDraft.length===3 && productVariationsDraft.every(v=>!!v.variantId) && productPhotosDraft.length>=3'), 'IDs/fotos no reload'
             print('RELOAD sessão, grupos, IDs e fotos preservados',flush=True)
+            await evaluate('closeModal("productModal");showSection("divulgacao")')
+            assert await evaluate('!PostGenerator.inspect().draft && !!document.querySelector("[data-post-product]")'), 'Divulgação após reload'
+            print('RELOAD Divulgação disponível; rascunhos não persistem',flush=True)
             print('OUTPUT',OUTPUT,flush=True)
         finally:
             await call('session.end',{})
