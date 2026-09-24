@@ -66,7 +66,7 @@ async def main():
             await evaluate('''const portrait = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="280" viewBox="0 0 180 280"><rect width="180" height="280" fill="#f3e8e9"/><path d="M55 50 70 40l10 30h20l10-30 15 10-5 75 16 100H44l16-100Z" fill="#c96f8c"/><path d="M65 100q25 15 50 0" fill="none" stroke="#b45774" stroke-width="3"/></svg>');
                 mockDB.product_images = ['p1','p2'].map((id,i)=>({id:'photo'+i,user_id:mockUser.id,product_id:id,public_url:portrait,is_primary:true,display_order:0}));
             ''')
-            for suite in ['product-colors-checks','finance-delete-checks','sale-details-checks','profile-checks']:
+            for suite in ['product-colors-checks','finance-delete-checks','sale-details-checks','profile-checks','product-editor-ui-checks']:
                 results=await evaluate('(async()=>{'+(ROOT/f'tests/{suite}.js').read_text()+'})()')
                 print(suite,len(json.loads(results)),'passed',flush=True)
                 (OUTPUT/f'{suite}.json').write_text(results)
@@ -82,12 +82,32 @@ async def main():
                 await evaluate('setProductPanel("colors")')
                 overflow=await evaluate('document.querySelector("#productModal .modal-content").scrollWidth>innerWidth+1')
                 layouts.append({'width':width,'modal':'productModal','overflow':overflow})
+                await evaluate('document.querySelectorAll("#productColorTabs button").forEach(b=>{if(b.scrollWidth>b.clientWidth+1)throw new Error("Chip transbordando")})')
+                for index in [0,1,2]:
+                    await evaluate(f'document.querySelectorAll("#productPhotoPreview details").forEach((d,i)=>d.open=i=={index})')
+                    overflow=await evaluate('[...document.querySelectorAll("#productPhotoPreview details[open] > div")].some(e=>{const r=e.getBoundingClientRect();return r.left<0||r.right>innerWidth})')
+                    layouts.append({'width':width,'photoMenu':index,'overflow':overflow})
+                await evaluate('document.querySelectorAll("#productPhotoPreview details").forEach(d=>d.open=false)')
+                await evaluate('$("productForm").scrollTop=$("productForm").scrollHeight')
+                assert await evaluate('$("productColorStock").getBoundingClientRect().bottom <= document.querySelector("#productForm .modal-actions").getBoundingClientRect().top-8'), 'Total oculto pelo footer'
+                await evaluate('$("productForm").scrollTop=0')
                 if width in [320,390,1280]: await screenshot(f'product-colors-{width}')
+                if width==390:
+                    await evaluate('$("productSizeSection").scrollIntoView({block:"center"})')
+                    await screenshot('product-sizes-390')
+                    await evaluate("document.querySelector('[data-pc-select=\"\"]').click()")
+                    await screenshot('product-cover-390')
                 await evaluate('closeModal("productModal");openProductDetails(reviewProductId)')
                 overflow=await evaluate('document.querySelector("#productDetailsModal .modal-content").scrollWidth>innerWidth+1')
                 layouts.append({'width':width,'modal':'productDetailsModal','overflow':overflow})
                 if width==390: await screenshot('product-gallery-390')
                 await evaluate('closeModal("productDetailsModal")')
+            await call('browsingContext.setViewport',{'context':ctx,'viewport':{'width':390,'height':420},'devicePixelRatio':1})
+            await evaluate('loadProductForEdit(productsCache.find(p=>p.id===reviewProductId))')
+            await evaluate('setProductPanel("colors");const qty=document.querySelector("[data-pc-quantity]");qty.focus();qty.scrollIntoView({block:"center"})')
+            assert await evaluate('(()=>{const f=document.querySelector("#productForm .modal-actions").getBoundingClientRect();const q=document.querySelector("[data-pc-quantity]").getBoundingClientRect();return f.bottom<=innerHeight+1&&q.top>=0&&q.bottom<=f.top;})()'), 'Controles/rodapé na viewport baixa'
+            await screenshot('product-keyboard-height-390')
+            await evaluate('closeModal("productModal")')
             (OUTPUT/'layouts.json').write_text(json.dumps(layouts,indent=2))
             assert not [r for r in layouts if r['overflow']], layouts
             print('LAYOUT',len(layouts),'passed',flush=True)

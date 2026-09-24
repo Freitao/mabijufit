@@ -745,29 +745,36 @@
        </label>
       </div>
       <div class="product-panel" data-product-panel="colors" hidden="">
-       <h3>Cores do produto</h3>
-       <p class="field-hint">Adicione uma cor e organize suas fotos e tamanhos. Uma cor pode ficar sem fotos ou tamanhos.</p>
-       <div class="filter-chips pc-choices" id="productColorChoices" aria-label="Adicionar cor"></div>
-       <div class="filter-chips pc-tabs" id="productColorTabs" aria-label="Cores do produto"></div>
-       <h3 id="productColorTitle">Fotos gerais</h3>
-       <div id="productColorSettings" hidden="">
-        <label class="checkbox-label"><input id="productColorActive" type="checkbox" checked=""/>Cor ativa neste produto</label>
-        <div class="pc-actions"><button type="button" data-pc-order="-1" aria-label="Mover cor para antes">← Antes</button><button type="button" data-pc-order="1" aria-label="Mover cor para depois">Depois →</button></div>
-        <h4>Tamanhos e quantidades</h4>
-        <p class="field-hint">Marque os tamanhos disponíveis. Quantidade zero mantém o tamanho cadastrado. Desmarcar o torna indisponível e preserva o estoque e histórico.</p>
-        <div id="productVariantsList" class="product-variants-list"></div>
-       </div>
-       <p id="productColorStock" aria-live="polite"></p>
-       <h4>Fotos</h4>
-       <div class="pc-actions">
-        <label class="camera-button secondary-button" for="productCameraInput">Fotografar</label>
-        <label class="camera-button secondary-button" for="productPhotoInput">Adicionar fotos</label>
-       </div>
-       <input accept="image/*" class="sr-only" id="productPhotoInput" multiple="" type="file"/>
-       <input accept="image/*" aria-label="Fotografar produto" capture="environment" class="sr-only" id="productCameraInput" type="file"/>
-       <p class="field-hint">A capa representa o produto. Cada cor pode ter sua própria foto principal. Alterar a associação não envia a foto novamente.</p>
-       <div id="productExistingPhotos"></div>
-       <div class="product-photo-preview" id="productPhotoPreview"></div>
+       <div class="pc-palette-heading"><h3>Escolha as cores</h3><span>Toque para adicionar</span></div>
+       <div class="pc-palette" id="productColorChoices" aria-label="Paleta de cores"></div>
+       <div id="productNoColorChoice" class="pc-secondary-choice"></div>
+       <div class="pc-navigation-heading">Cores adicionadas</div>
+       <div class="filter-chips pc-tabs" id="productColorTabs" aria-label="Cores adicionadas"></div>
+       <section class="pc-editor-card" aria-labelledby="productColorTitle">
+        <header class="pc-card-heading"><h3 id="productColorTitle">Capa do produto</h3>
+         <details id="productColorSettings" class="pc-color-options" hidden=""><summary aria-label="Opções da cor">•••</summary>
+          <div><label class="checkbox-label"><input id="productColorActive" type="checkbox" checked=""/>Cor ativa</label>
+           <div class="pc-actions"><button type="button" data-pc-order="-1" aria-label="Mover cor para antes">← Antes</button><button type="button" data-pc-order="1" aria-label="Mover cor para depois">Depois →</button></div>
+          </div>
+         </details>
+        </header>
+        <div id="productCoverPreview" class="pc-cover-preview"></div>
+        <div class="pc-photo-heading"><h4>Fotos</h4><span>Escolha a principal</span></div>
+        <div id="productExistingPhotos"></div>
+        <div class="product-photo-preview" id="productPhotoPreview"></div>
+        <div class="pc-photo-sources">
+         <button type="button" data-pc-source="camera">Fotografar</button>
+         <button type="button" data-pc-source="library">Escolher do aparelho</button>
+        </div>
+        <input accept="image/*" class="sr-only" aria-label="Escolher fotos do aparelho" id="productPhotoInput" multiple="" type="file"/>
+        <input accept="image/*" aria-label="Fotografar produto" capture="environment" class="sr-only" id="productCameraInput" type="file"/>
+        <div id="productSizeSection">
+         <h4>Tamanhos e estoque</h4>
+         <div id="productVariantsList" class="product-variants-list"></div>
+         <p id="productActiveColorStock" class="pc-color-total" aria-live="polite"></p>
+        </div>
+       </section>
+       <p id="productColorStock" class="pc-total" aria-live="polite"></p>
       </div>
       <div aria-live="polite" class="form-message" id="productFormMessage">
       </div>

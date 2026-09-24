@@ -694,14 +694,23 @@ function normalizePhotoPrincipals() {
     }
 }
 function renderProductPhotoPreview() {
-    const photos = productPhotosDraft.filter(p => p.groupKey === selectedProductColor);
-    $("productPhotoPreview").innerHTML = photos.map(p => `<div class="pc-photo">
-        <img src="${escapeHtml(p.public_url || p.preview)}" alt="Foto ${escapeHtml(colorDraftName(p.groupKey))}"/>
-        <button type="button" data-pc-photo="cover" data-key="${p.key}" aria-pressed="${!!p.is_primary}">${p.is_primary ? "★ Capa do produto" : "Usar como capa"}</button>
+    // A capa pode usar uma foto de qualquer cor, sem mudar sua associação.
+    const photos = selectedProductColor === null ? productPhotosDraft : productPhotosDraft.filter(p => p.groupKey === selectedProductColor);
+    const cover = productPhotosDraft.find(p => p.is_primary);
+    $("productCoverPreview").hidden = selectedProductColor !== null;
+    $("productCoverPreview").innerHTML = cover
+        ? `<img src="${escapeHtml(cover.public_url || cover.preview)}" alt="Capa atual do produto"/><div><strong>Capa atual</strong><small>${cover.groupKey ? escapeHtml(colorDraftName(cover.groupKey)) : "Foto independente"}</small><p>Escolha abaixo uma foto de qualquer cor ou adicione uma nova.</p></div>`
+        : '<p>Escolha uma foto das cores ou adicione uma imagem para a capa.</p>';
+    $("productPhotoPreview").innerHTML = photos.map((p, index) => `<article class="pc-photo">
+        <div class="pc-photo-image"><img src="${escapeHtml(p.public_url || p.preview)}" alt="Foto ${index + 1} · ${escapeHtml(colorDraftName(p.groupKey))}"/>
+        ${p.is_primary || p.is_color_primary ? `<span class="pc-photo-badge">${p.is_color_primary ? "★ Principal" : "Capa"}${p.is_primary && p.is_color_primary ? " · Capa" : ""}</span>` : ""}</div>
+        <details class="pc-photo-options"><summary aria-label="Opções da foto ${index + 1}">Editar foto</summary><div>
+        <button type="button" data-pc-photo="cover" data-key="${p.key}" aria-pressed="${!!p.is_primary}">${p.is_primary ? "✓ Capa do produto" : "Usar como capa"}</button>
         ${p.groupKey ? `<button type="button" data-pc-photo="primary" data-key="${p.key}" aria-pressed="${!!p.is_color_primary}">${p.is_color_primary ? "★ Principal da cor" : "Principal da cor"}</button>` : ""}
-        <label>Associar à cor<select data-pc-photo-group="${p.key}"><option value="">Fotos gerais</option>${productColorsDraft.map(c => `<option value="${c.key}" ${p.groupKey === c.key ? "selected" : ""}>${escapeHtml(colorDraftName(c.key))}</option>`).join("")}</select></label>
+        <label>Cor da foto<select data-pc-photo-group="${p.key}"><option value="">Sem associação à cor</option>${productColorsDraft.map(c => `<option value="${c.key}" ${p.groupKey === c.key ? "selected" : ""}>${escapeHtml(colorDraftName(c.key))}</option>`).join("")}</select></label>
         <div class="pc-actions"><button type="button" data-pc-photo="up" data-key="${p.key}" aria-label="Mover foto para antes">↑</button><button type="button" data-pc-photo="down" data-key="${p.key}" aria-label="Mover foto para depois">↓</button><button type="button" data-pc-photo="remove" data-key="${p.key}">Remover</button></div>
-    </div>`).join("") || '<p class="field-hint">Nenhuma foto neste grupo.</p>';
+        </div></details>
+    </article>`).join("") + '<button type="button" class="pc-add-photo" data-pc-source="library" aria-label="Adicionar fotos do aparelho"><span aria-hidden="true">+</span>Adicionar foto</button>';
 }
 function handleProductPhotoSelection(event) {
     for (const file of Array.from(event.target.files || [])) {
@@ -3033,7 +3042,7 @@ function colorSwatch(colorId) {
     return `<span class="pc-swatch" aria-hidden="true" style="background:${/^#[a-f0-9]{6}$/i.test(hex) ? hex : "#cccccc"}"></span>`;
 }
 function colorDraftName(key) {
-    if (!key) return "Fotos gerais";
+    if (!key) return "Capa do produto";
     const group = productColorsDraft.find(c => c.key === key);
     return colorsCache.find(c => c.id === group?.color_id)?.name || "Sem cor";
 }
@@ -3042,22 +3051,39 @@ function renderProductVariationsList() { renderProductColorEditor(); }
 function renderProductColorEditor() {
     if (!$("productColorChoices")) return;
     normalizePhotoPrincipals();
-    $("productColorChoices").innerHTML = [...colorsCache.filter(c => c.is_active !== false), { id: null, name: "Sem cor" }].filter(c => !productColorsDraft.some(g => g.color_id === c.id)).map(c => `<button type="button" data-pc-add="${c.id || "none"}">+ ${colorSwatch(c.id)} ${escapeHtml(c.name)}</button>`).join("");
+    $("productColorChoices").innerHTML = colorsCache.filter(c => c.is_active !== false || productColorsDraft.some(g => g.color_id === c.id)).map(c => {
+        const added = productColorsDraft.some(g => g.color_id === c.id);
+        return `<button type="button" data-pc-add="${c.id}" aria-pressed="${added}" aria-label="${escapeHtml(c.name)}${added ? ', adicionada; abrir cor' : ', adicionar cor'}">${colorSwatch(c.id)}<span>${escapeHtml(c.name)}</span>${added ? '<span class="pc-palette-check" aria-hidden="true">✓</span>' : ''}</button>`;
+    }).join("");
+    $("productNoColorChoice").innerHTML = '<button type="button" class="text-button" data-pc-add="none">' + (productColorsDraft.some(c => c.color_id === null) ? 'Abrir opção sem cor' : 'Produto sem cor definida?') + '</button>';
     $("productColorTabs").innerHTML = productColorsDraft.map(c => {
-        const rows = productVariationsDraft.filter(v => v.groupKey === c.key);
-        const total = rows.reduce((n,v) => n + Number(v.quantity),0);
-        return `<button type="button" data-pc-select="${c.key}" aria-pressed="${selectedProductColor === c.key}">${colorSwatch(c.color_id)}${escapeHtml(colorDraftName(c.key))}${c.is_active ? "" : " · Inativa"}<small>${rows.filter(v => v.is_active).length} tamanhos · ${total} un. · ${productPhotosDraft.filter(p => p.groupKey === c.key).length} fotos</small></button>`;
-    }).join("") + `<button type="button" data-pc-select="" aria-pressed="${selectedProductColor === null}">Fotos gerais</button>`;
-    $("productColorTitle").textContent = colorDraftName(selectedProductColor);
+        const total = productVariationsDraft.filter(v => v.groupKey === c.key).reduce((n,v) => n + Number(v.quantity),0);
+        return `<button type="button" data-pc-select="${c.key}" aria-pressed="${selectedProductColor === c.key}">${c.color_id ? colorSwatch(c.color_id) : ''}<span>${escapeHtml(colorDraftName(c.key))}${c.is_active ? "" : " · Inativa"}</span><small>${total}</small></button>`;
+    }).join("") + `<button type="button" data-pc-select="" aria-pressed="${selectedProductColor === null}">Capa do produto</button>`;
     const group = productColorsDraft.find(c => c.key === selectedProductColor);
+    $("productColorTitle").innerHTML = `${group?.color_id ? colorSwatch(group.color_id) : ''}${escapeHtml(colorDraftName(selectedProductColor))}`;
     $("productColorSettings").hidden = !group;
+    $("productColorSettings").open = false;
     $("productColorActive").checked = group?.is_active !== false;
-    $("productColorStock").textContent = `Estoque total do produto: ${productVariationsDraft.reduce((n,v) => n + Number(v.quantity), 0)} unidades`;
+    $("productSizeSection").hidden = !group;
     $("productVariantsList").innerHTML = group ? sizesCache.filter(z => z.is_active !== false || productVariationsDraft.some(v => v.groupKey === group.key && v.sizeId === z.id)).map(size => {
         const v = productVariationsDraft.find(v => v.groupKey === group.key && v.sizeId === size.id);
-        return `<div class="pc-size"><label><input type="checkbox" data-pc-size="${size.id}" ${v?.is_active ? "checked" : ""}/> ${escapeHtml(size.name)}</label><label>Quantidade<input type="number" inputmode="numeric" min="0" max="2147483647" step="1" data-pc-quantity="${size.id}" value="${v?.quantity || 0}" ${v?.is_active ? "" : "disabled"}/></label>${v && !v.is_active ? '<small>Indisponível · estoque preservado</small>' : ""}</div>`;
+        return `<div class="pc-size"><strong>${escapeHtml(size.name)}</strong>
+            <label class="pc-size-toggle"><input class="sr-only" type="checkbox" data-pc-size="${size.id}" ${v?.is_active ? "checked" : ""}/><span>${v?.is_active ? "Remover" : "Adicionar"}</span><span class="sr-only"> tamanho ${escapeHtml(size.name)}</span></label>
+            ${v?.is_active ? `<div class="pc-stepper"><button type="button" data-pc-step="-1" data-size="${size.id}" aria-label="Diminuir quantidade ${escapeHtml(size.name)}" ${v.quantity <= 0 ? 'disabled' : ''}>−</button><input aria-label="Quantidade ${escapeHtml(size.name)}" type="number" inputmode="numeric" min="0" max="2147483647" step="1" data-pc-quantity="${size.id}" value="${v.quantity}"/><button type="button" data-pc-step="1" data-size="${size.id}" aria-label="Aumentar quantidade ${escapeHtml(size.name)}" ${v.quantity >= 2147483647 ? 'disabled' : ''}>+</button></div>` : ''}
+            ${v && !v.is_active && v.quantity ? `<small>${v.quantity} un. preservadas · tamanho indisponível</small>` : ''}</div>`;
     }).join("") : "";
+    refreshProductDraftStock();
     renderProductPhotoPreview();
+}
+function refreshProductDraftStock() {
+    $("productColorStock").textContent = `Estoque total: ${productVariationsDraft.reduce((n,v) => n + Number(v.quantity),0)} unidades`;
+    const total = productVariationsDraft.filter(v => v.groupKey === selectedProductColor).reduce((n,v) => n + Number(v.quantity),0);
+    $("productActiveColorStock").textContent = `${total} ${total === 1 ? 'unidade' : 'unidades'} nesta cor`;
+    for (const group of productColorsDraft) {
+        const label = document.querySelector(`[data-pc-select="${CSS.escape(group.key)}"] small`);
+        if (label) label.textContent = productVariationsDraft.filter(v => v.groupKey === group.key).reduce((n,v) => n + Number(v.quantity),0);
+    }
 }
 function openProductDetails(productId, colorId = undefined) {
     const product = productsCache.find(p => p.id === productId); if (!product) return;
@@ -3077,10 +3103,24 @@ function openProductDetails(productId, colorId = undefined) {
 function bindProductColorEvents() {
     $("productForm").addEventListener("click", event => {
         const b = event.target.closest("button"); if (!b || productSaving) return;
+        if (b.dataset.pcSource) {
+            $(b.dataset.pcSource === "camera" ? "productCameraInput" : "productPhotoInput").click();
+            return;
+        }
+        if (b.dataset.pcStep) {
+            const v = productVariationsDraft.find(v => v.groupKey === selectedProductColor && v.sizeId === b.dataset.size);
+            if (!v?.is_active) return;
+            v.quantity = Math.max(0, Math.min(2147483647, v.quantity + Number(b.dataset.pcStep)));
+            const input = document.querySelector(`[data-pc-quantity="${CSS.escape(b.dataset.size)}"]`);
+            input.value = v.quantity;
+            input.dispatchEvent(new Event("input", {bubbles:true}));
+            return;
+        }
         if (b.hasAttribute("data-pc-add")) {
             const color_id = b.dataset.pcAdd === "none" ? null : b.dataset.pcAdd;
-            const group = { key: crypto.randomUUID(), color_id, is_active: true };
-            productColorsDraft.push(group); selectedProductColor = group.key;
+            let group = productColorsDraft.find(c => c.color_id === color_id);
+            if (!group) { group = { key: crypto.randomUUID(), color_id, is_active: true }; productColorsDraft.push(group); }
+            selectedProductColor = group.key;
         } else if (b.hasAttribute("data-pc-select")) selectedProductColor = b.dataset.pcSelect || null;
         else if (b.dataset.pcOrder) {
             const i = productColorsDraft.findIndex(c => c.key === selectedProductColor), j = i + Number(b.dataset.pcOrder);
@@ -3100,6 +3140,31 @@ function bindProductColorEvents() {
             }
         } else return;
         renderProductColorEditor();
+        if (b.dataset.pcPhoto) {
+            const action = document.querySelector(`[data-key="${CSS.escape(b.dataset.key)}"]`);
+            (action?.closest("details")?.querySelector("summary") || document.querySelector(".pc-add-photo"))?.focus({preventScroll:true});
+        } else {
+            document.querySelector(`[data-pc-select="${CSS.escape(selectedProductColor || '')}"]`)?.focus({preventScroll:true});
+        }
+    });
+    $("productForm").addEventListener("toggle", event => {
+        if (!event.target.matches(".pc-photo-options[open]")) return;
+        $("productPhotoPreview").querySelectorAll("details[open]").forEach(details => {
+            if (details !== event.target) details.open = false;
+        });
+    }, true);
+    $("productForm").addEventListener("input", event => {
+        const el = event.target;
+        if (!el.dataset.pcQuantity) return;
+        const n = Number(el.value);
+        if (el.value === "" || !Number.isInteger(n) || n < 0 || n > 2147483647) return;
+        const v = productVariationsDraft.find(v => v.groupKey === selectedProductColor && v.sizeId === el.dataset.pcQuantity);
+        if (!v?.is_active) return;
+        v.quantity = n;
+        const stepper = el.closest(".pc-stepper");
+        stepper.querySelector('[data-pc-step="-1"]').disabled = n === 0;
+        stepper.querySelector('[data-pc-step="1"]').disabled = n === 2147483647;
+        refreshProductDraftStock();
     });
     $("productForm").addEventListener("change", event => {
         const el = event.target;
@@ -3112,10 +3177,7 @@ function bindProductColorEvents() {
             const n = Number(el.value);
             if (!Number.isInteger(n) || n < 0 || n > 2147483647) { el.reportValidity(); return; }
             productVariationsDraft.find(v => v.groupKey === selectedProductColor && v.sizeId === el.dataset.pcQuantity).quantity = n;
-            $("productColorStock").textContent = `Estoque total do produto: ${productVariationsDraft.reduce((sum,v) => sum + Number(v.quantity),0)} unidades`;
-            const rows = productVariationsDraft.filter(v => v.groupKey === selectedProductColor);
-            const label = document.querySelector(`[data-pc-select="${CSS.escape(selectedProductColor)}"] small`);
-            if (label) label.textContent = `${rows.filter(v => v.is_active).length} tamanhos · ${rows.reduce((sum,v) => sum + Number(v.quantity),0)} un. · ${productPhotosDraft.filter(p => p.groupKey === selectedProductColor).length} fotos`;
+            refreshProductDraftStock();
             return;
         } else if (el.dataset.pcPhotoGroup) {
             const p = productPhotosDraft.find(p => p.key === el.dataset.pcPhotoGroup);

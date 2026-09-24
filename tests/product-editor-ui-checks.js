@@ -1,0 +1,46 @@
+const results=[];
+const check=(name,ok)=>{results.push({name,passed:!!ok});if(!ok)throw new Error('Editor UI: '+name);};
+const click=selector=>{const el=document.querySelector(selector);for(let p=el?.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;el.click();};
+for(const [id,name,hex] of [['white','Branco','#ffffff'],['blue','Azul','#245ea8'],['wine','Vinho','#752840'],['green','Verde','#638567'],['pink2','Pink','#e55498']]) {
+ mockDB.colors.push({id,name,hex_code:hex,user_id:mockUser.id,is_active:true});
+}
+await loadColors();
+await loadProductForEdit(productsCache.find(p=>p.id===reviewProductId));setProductPanel('colors');
+check('paleta usa hex real',getComputedStyle(document.querySelector('[data-pc-add="white"] .pc-swatch')).backgroundColor==='rgb(255, 255, 255)');
+check('branco tem borda visível',parseFloat(getComputedStyle(document.querySelector('[data-pc-add="white"] .pc-swatch')).borderTopWidth)>=1);
+check('sem cor fora da paleta',!$('productColorChoices').querySelector('[data-pc-add="none"]')&&!!$('productNoColorChoice').querySelector('[data-pc-add="none"]'));
+const group=productColorsDraft.find(c=>c.color_id==='pink');
+click('[data-pc-add="pink"]');const count=productColorsDraft.length;click('[data-pc-add="pink"]');
+check('cor adicionada abre sem duplicar',productColorsDraft.length===count&&selectedProductColor===group.key&&document.querySelector('[data-pc-add="pink"]').getAttribute('aria-pressed')==='true');
+check('apenas uma cor renderizada',$('productColorTitle').textContent==='Rosa'&&document.querySelectorAll('#productSizeSection').length===1);
+const row=productVariationsDraft.find(v=>v.groupKey===group.key&&v.sizeId==='size-p');
+const originalId=row.variantId, original=row.quantity;
+click('[data-pc-step="1"][data-size="size-p"]');
+check('incremento por toque',row.quantity===original+1);
+let field=document.querySelector('[data-pc-quantity="size-p"]');field.focus();field.value='0';field.dispatchEvent(new Event('input',{bubbles:true}));
+check('feedback imediato e foco preservado',row.quantity===0&&document.activeElement===field&&$('productActiveColorStock').textContent.startsWith(String(productVariationsDraft.filter(v=>v.groupKey===group.key).reduce((n,v)=>n+v.quantity,0))));
+check('menos desabilitado em zero',document.querySelector('[data-pc-step="-1"][data-size="size-p"]').disabled);
+field.value='-1';field.dispatchEvent(new Event('input',{bubbles:true}));check('não grava quantidade negativa no draft',row.quantity===0);field.value='0';
+click('[data-pc-size="size-p"]');check('remover oculta controle sem excluir identidade',!row.is_active&&row.variantId===originalId&&!document.querySelector('[data-pc-quantity="size-p"]'));
+click('[data-pc-size="size-p"]');check('reativação reutiliza ID e mantém zero',row.is_active&&row.variantId===originalId&&row.quantity===0);
+const total=productVariationsDraft.reduce((n,v)=>n+v.quantity,0);
+check('estoque total atualizado',$('productColorStock').textContent===`Estoque total: ${total} unidades`);
+check('fotos vêm antes dos tamanhos',!!($('productPhotoPreview').compareDocumentPosition($('productSizeSection'))&Node.DOCUMENT_POSITION_FOLLOWING));
+const photo=productPhotosDraft.find(p=>p.groupKey===group.key);
+const uploads=mockCalls.filter(c=>c.action==='upload').length;
+click(`[data-pc-photo="primary"][data-key="${photo.key}"]`);
+click('[data-pc-select=""]');
+check('capa mostra fotos de todas as cores',document.querySelectorAll('#productPhotoPreview .pc-photo').length===productPhotosDraft.length&&$('productSizeSection').hidden);
+click(`[data-pc-photo="cover"][data-key="${photo.key}"]`);
+check('foto é capa e principal sem duplicar',photo.is_primary&&photo.is_color_primary&&photo.groupKey===group.key&&mockCalls.filter(c=>c.action==='upload').length===uploads);
+check('preview da capa identificado',!!$('productCoverPreview').querySelector('img')&&$('productCoverPreview').textContent.includes('Capa atual'));
+const camera=$('productCameraInput'),library=$('productPhotoInput');let source='';
+const cameraClick=camera.click,libraryClick=library.click;
+camera.click=()=>source='camera';library.click=()=>source='library';
+click('[data-pc-source="camera"]');check('fotografar aciona câmera',source==='camera'&&camera.getAttribute('capture')==='environment');
+click('.pc-add-photo');check('mais abre galeria múltipla',source==='library'&&library.multiple);
+camera.click=cameraClick;library.click=libraryClick;
+// Descarta só o rascunho de teste; nada foi enviado ao backend simulado.
+await loadProductForEdit(productsCache.find(p=>p.id===reviewProductId));closeModal('productModal');
+check('nenhum erro JS',reviewErrors.length===0);
+return JSON.stringify(results,null,2);
