@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#d47799"
+    >
+
+    <meta
+        name="description"
+        content="MabijuFit - Gestão inteligente da sua loja"
+    >
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="assets/icons/icon-192.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <title>MabijuFit</title>
+
+</head>
+
+
+<body>
+
+<div id="app">
+
+
+    <!-- =====================================================
+         LOGIN
+         ===================================================== -->
+
+    <main
+        id="loginScreen"
+        class="login-page"
+    >
+
+        <div class="login-card">
+
+            <div class="login-logo">
+
+                <img
+                    src="assets/icons/icon-192.png"
+                    alt="MabijuFit"
+                >
+
+            </div>
+
+
+            <h1>
+                MabijuFit
+            </h1>
+
+
+            <p class="login-subtitle">
+                Gestão da sua loja
+            </p>
+
+
+            <form id="loginForm">
+
+                <div class="form-group">
+
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <input
+                        id="email"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="seu@email.com"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Senha
+                    </label>
+
+                    <input
+                        id="password"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="••••••••"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    id="loginButton"
+                    type="submit"
+                    class="primary-button"
+                >
+                    Entrar
+                </button>
+
+
+                <div
+                    id="loginMessage"
+                    class="form-message"
+                ></div>
+
+            </form>
+
+
+            <div class="login-footer">
+                MabijuFit&nbsp; Gestão inteligente
+            </div>
+
+        </div>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         APLICAÇÃO
+         ===================================================== -->
+
+    <main
+        id="appScreen"
+        class="app-screen"
+        hidden
+    >
+
+
+        <!-- =================================================
+             CABEÇALHO
+             ================================================= -->
+
+        <header class="app-header">
+
+            <div>
+
+                <span class="app-greeting">
+                    Olá,
+                </span>
+
+                <strong id="userName">
+                    MabijuFit
+                </strong>
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                type="button"
+                class="logout-button"
+            >
+                Sair
+            </button>
+
+        </header>
+
+
+
+        <!-- =================================================
+             CONTEÚDO
+             ================================================= -->
+
+        <div class="app-content">
+
+
+            <!-- =============================================
+                 INÍCIO
+                 ============================================= -->
+
+            <section
+                id="homeScreen"
+                class="app-section"
+            >
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            VISÃO GERAL
+                        </span>
+
+                        <h2>
+                            Resumo da loja
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="metrics-grid">
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Vendas
+                        </span>
+
+                        <strong id="metricSales">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Pedidos
+                        </span>
+
+                        <strong id="metricOrders">
+                            0
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Estoque baixo
+                        </span>
+
+                        <strong id="metricLowStock">
+                            0
+                        </strong>
+
+                        <small>
+                            Produtos
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Despesas
+                        </span>
+
+                        <strong id="metricExpenses">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+                </div>
+
+
+
+                <div class="section-block">
+
+                    <h3>
+                        Acessos rápidos
+                    </h3>
+
+
+                    <div class="quick-actions">
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="products"
+                        >
+
+                            <span>
+                                P
+                            </span>
+
+                            <strong>
+                                Produtos
+                            </strong>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="stock"
+                        >
+
+                            <span>
+                                E
+                            </span>
+
+                            <strong>
+                                Estoque
+                            </strong>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="sales"
+                        >
+
+                            <span>
+                                V
+                            </span>
+
+                            <strong>
+                                Vendas
+                            </strong>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="quick-action"
+                            data-section="finance"
+                        >
+
+                            <span>
+                                F
+                            </span>
+
+                            <strong>
+                                Financeiro
+                            </strong>
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="section-block">
+
+                    <h3>
+                        Atividade recente
+                    </h3>
+
+
+                    <div
+                        id="recentActivity"
+                        class="empty-state"
+                    >
+
+                        <div class="empty-state-icon">
+                            M
+                        </div>
+
+                        <strong>
+                            Nenhuma atividade ainda
+                        </strong>
+
+                        <p>
+                            As vendas e movimentações aparecerão aqui.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 PRODUTOS
+                 ============================================= -->
+
+            <section
+                id="productsScreen"
+                class="app-section"
+                hidden
+            >
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            CATÁLOGO
+                        </span>
+
+                        <h2>
+                            Produtos
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        id="newProductButton"
+                        type="button"
+                        class="primary-button small"
+                    >
+                        + Novo
+                    </button>
+
+                </div>
+
+
+                <input
+                    id="productSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar produto..."
+                >
+
+
+
+                <div
+                    id="productsList"
+                    class="cards-list"
+                ></div>
+
+
+
+                <!-- =========================================
+                     CATEGORIAS
+                     ========================================= -->
+
+                <div class="section-block">
+
+                    <div class="subsection-heading">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                ORGANIZAÇÃO
+                            </span>
+
+                            <h3>
+                                Categorias
+                            </h3>
+
+                        </div>
+
+
+                        <button
+                            id="newCategoryButton"
+                            type="button"
+                            class="secondary-button"
+                        >
+                            + Categoria
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="categoriesList"
+                        class="cards-list"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     CORES
+                     ========================================= -->
+
+                <div class="section-block">
+
+                    <div class="subsection-heading">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h3>
+                                Cores
+                            </h3>
+
+                        </div>
+
+
+                        <button
+                            id="newColorButton"
+                            type="button"
+                            class="secondary-button"
+                        >
+                            + Cor
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="colorsList"
+                        class="cards-list"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     TAMANHOS
+                     ========================================= -->
+
+                <div class="section-block">
+
+                    <div class="subsection-heading">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                VARIAÇÕES
+                            </span>
+
+                            <h3>
+                                Tamanhos
+                            </h3>
+
+                        </div>
+
+
+                        <button
+                            id="newSizeButton"
+                            type="button"
+                            class="secondary-button"
+                        >
+                            + Tamanho
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="sizesList"
+                        class="cards-list"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 ESTOQUE
+                 ============================================= -->
+
+            <section
+                id="stockScreen"
+                class="app-section"
+                hidden
+            >
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            CONTROLE
+                        </span>
+
+                        <h2>
+                            Estoque
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="metrics-grid">
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong id="stockTotal">
+                            0
+                        </strong>
+
+                        <small>
+                            Unidades
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Baixo
+                        </span>
+
+                        <strong id="stockLow">
+                            0
+                        </strong>
+
+                        <small>
+                            Variações
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Zerado
+                        </span>
+
+                        <strong id="stockZero">
+                            0
+                        </strong>
+
+                        <small>
+                            Variações
+                        </small>
+
+                    </article>
+
+                </div>
+
+
+                <input
+                    id="stockSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar no estoque..."
+                >
+
+
+                <div
+                    id="stockList"
+                    class="cards-list"
+                ></div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 VENDAS
+                 ============================================= -->
+
+            <section
+                id="salesScreen"
+                class="app-section"
+                hidden
+            >
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            COMERCIAL
+                        </span>
+
+                        <h2>
+                            Vendas
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        id="newSaleButton"
+                        type="button"
+                        class="primary-button small"
+                    >
+                        + Venda
+                    </button>
+
+                </div>
+
+
+                <div class="metrics-grid">
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Hoje
+                        </span>
+
+                        <strong id="salesToday">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Vendas
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Pedidos
+                        </span>
+
+                        <strong id="salesOrdersToday">
+                            0
+                        </strong>
+
+                        <small>
+                            Hoje
+                        </small>
+
+                    </article>
+
+                </div>
+
+
+                <input
+                    id="salesSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar venda..."
+                >
+
+
+                <div
+                    id="salesList"
+                    class="cards-list"
+                ></div>
+
+            </section>
+
+
+
+            <!-- =============================================
+                 FINANCEIRO
+                 ============================================= -->
+
+            <section
+                id="financeScreen"
+                class="app-section"
+                hidden
+            >
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            FINANCEIRO
+                        </span>
+
+                        <h2>
+                            Financeiro
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        id="newTransactionButton"
+                        type="button"
+                        class="primary-button small"
+                    >
+                        + Lançamento
+                    </button>
+
+                </div>
+
+
+                <div class="metrics-grid">
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Receitas
+                        </span>
+
+                        <strong id="financeIncome">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Período
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Despesas
+                        </span>
+
+                        <strong id="financeExpenses">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Período
+                        </small>
+
+                    </article>
+
+
+                    <article class="metric-card">
+
+                        <span>
+                            Resultado
+                        </span>
+
+                        <strong id="financeBalance">
+                            R$ 0,00
+                        </strong>
+
+                        <small>
+                            Período
+                        </small>
+
+                    </article>
+
+                </div>
+
+
+                <input
+                    id="financeSearch"
+                    type="search"
+                    class="search-input"
+                    placeholder="Buscar lançamento..."
+                >
+
+
+                <div
+                    id="financeList"
+                    class="cards-list"
+                ></div>
+
+            </section>
+
+
+        </div>
+
+
+
+        <!-- =================================================
+             NAVEGAÇÃO INFERIOR
+             ================================================= -->
+
+        <nav class="bottom-navigation">
+
+
+            <button
+                type="button"
+                class="nav-item active"
+                data-section="home"
+            >
+
+                <span>
+                    I
+                </span>
+
+                <small>
+                    Início
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="products"
+            >
+
+                <span>
+                    P
+                </span>
+
+                <small>
+                    Produtos
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="stock"
+            >
+
+                <span>
+                    E
+                </span>
+
+                <small>
+                    Estoque
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="sales"
+            >
+
+                <span>
+                    V
+                </span>
+
+                <small>
+                    Vendas
+                </small>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-section="finance"
+            >
+
+                <span>
+                    F
+                </span>
+
+                <small>
+                    Financeiro
+                </small>
+
+            </button>
+
+
+        </nav>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         MODAL — PRODUTO
+         ===================================================== -->
+
+    <div
+        id="productModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        CATÁLOGO
+                    </span>
+
+                    <h2>
+                        Novo produto
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="productModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="productForm">
+
+
+                <input
+                    id="productId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="productName">
+                        Nome do produto
+                    </label>
+
+                    <input
+                        id="productName"
+                        type="text"
+                        placeholder="Ex.: Legging Power"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productSku">
+                        SKU
+                    </label>
+
+                    <input
+                        id="productSku"
+                        type="text"
+                        placeholder="Ex.: LEG-001"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productCategory">
+                        Categoria
+                    </label>
+
+                    <select id="productCategory">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productDescription">
+                        Descrição
+                    </label>
+
+                    <textarea
+                        id="productDescription"
+                        rows="4"
+                        placeholder="Descrição do produto"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="productCostPrice">
+                            Preço de custo
+                        </label>
+
+                        <input
+                            id="productCostPrice"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0,00"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="productSalePrice">
+                            Preço de venda
+                        </label>
+
+                        <input
+                            id="productSalePrice"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0,00"
+                            required
+                        >
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="productMinimumStock">
+                        Estoque mínimo
+                    </label>
+
+                    <input
+                        id="productMinimumStock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        inputmode="numeric"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <label
+                    class="checkbox-label"
+                >
+
+                    <input
+                        id="productActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Produto ativo
+                    </span>
+
+                </label>
+
+
+
+                <!-- =========================================
+                     CORES
+                     ========================================= -->
+
+                <div class="variation-section">
+
+                    <div class="variation-heading">
+
+                        <div>
+
+                            <h3>
+                                Cores disponíveis
+                            </h3>
+
+                            <p>
+                                Selecione as cores que esse produto possui.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="productColors"
+                        class="variation-options"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     TAMANHOS
+                     ========================================= -->
+
+                <div class="variation-section">
+
+                    <div class="variation-heading">
+
+                        <div>
+
+                            <h3>
+                                Tamanhos disponíveis
+                            </h3>
+
+                            <p>
+                                Selecione os tamanhos que esse produto possui.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="productSizes"
+                        class="variation-options"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     VARIAÇÕES GERADAS
+                     ========================================= -->
+
+                <div class="variation-section">
+
+                    <div class="variation-heading">
+
+                        <div>
+
+                            <h3>
+                                Variações geradas
+                            </h3>
+
+                            <p>
+                                As combinações de cor e tamanho serão criadas automaticamente.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="productVariantsPreview"
+                        class="variation-preview"
+                    ></div>
+
+                </div>
+
+
+
+                <div
+                    id="productFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="productModal"
+                    >
+                        Cancelar
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar produto
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — CATEGORIA
+         ===================================================== -->
+
+    <div
+        id="categoryModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        ORGANIZAÇÃO
+                    </span>
+
+                    <h2>
+                        Categoria
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="categoryModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="categoryForm">
+
+                <input
+                    id="categoryId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="categoryName">
+                        Nome
+                    </label>
+
+                    <input
+                        id="categoryName"
+                        type="text"
+                        placeholder="Ex.: Leggings"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="categoryDescription">
+                        Descrição
+                    </label>
+
+                    <textarea
+                        id="categoryDescription"
+                        rows="4"
+                        placeholder="Descrição da categoria"
+                    ></textarea>
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="categoryActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Categoria ativa
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="categoryFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="categoryModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — COR
+         ===================================================== -->
+
+    <div
+        id="colorModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        VARIAÇÕES
+                    </span>
+
+                    <h2>
+                        Cor
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="colorModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="colorForm">
+
+                <input
+                    id="colorId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="colorName">
+                        Nome da cor
+                    </label>
+
+                    <input
+                        id="colorName"
+                        type="text"
+                        placeholder="Ex.: Rosa"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Cor
+                    </label>
+
+
+                    <div class="color-input-row">
+
+                        <input
+                            id="colorHex"
+                            type="color"
+                            value="#E8A0B8"
+                        >
+
+
+                        <input
+                            id="colorHexText"
+                            type="text"
+                            value="#E8A0B8"
+                            maxlength="7"
+                            placeholder="#E8A0B8"
+                        >
+
+                    </div>
+
+
+                    <div class="color-preview-wrapper">
+
+                        <span>
+                            Pré-visualização
+                        </span>
+
+                        <span
+                            id="colorPreview"
+                            class="color-preview"
+                            style="background:#E8A0B8;"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="colorActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Cor ativa
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="colorFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="colorModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — TAMANHO
+         ===================================================== -->
+
+    <div
+        id="sizeModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        VARIAÇÕES
+                    </span>
+
+                    <h2>
+                        Tamanho
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="sizeModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="sizeForm">
+
+                <input
+                    id="sizeId"
+                    type="hidden"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="sizeName">
+                        Tamanho
+                    </label>
+
+                    <input
+                        id="sizeName"
+                        type="text"
+                        placeholder="Ex.: M"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="sizeDisplayOrder">
+                        Ordem de exibição
+                    </label>
+
+                    <input
+                        id="sizeDisplayOrder"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        id="sizeActive"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Tamanho ativo
+                    </span>
+
+                </label>
+
+
+                <div
+                    id="sizeFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="sizeModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — VENDA
+         ===================================================== -->
+
+    <div
+        id="saleModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        COMERCIAL
+                    </span>
+
+                    <h2>
+                        Nova venda
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="saleModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="saleForm">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Produtos
+                    </label>
+
+                    <div
+                        id="saleItems"
+                        class="sale-items"
+                    ></div>
+
+                </div>
+
+
+                <button
+                    id="addSaleItemButton"
+                    type="button"
+                    class="secondary-button"
+                >
+                    + Adicionar produto
+                </button>
+
+
+                <div class="form-group">
+
+                    <label for="saleDiscount">
+                        Desconto
+                    </label>
+
+                    <input
+                        id="saleDiscount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="salePaymentMethod">
+                        Forma de pagamento
+                    </label>
+
+                    <select id="salePaymentMethod">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="Dinheiro">
+                            Dinheiro
+                        </option>
+
+                        <option value="Pix">
+                            Pix
+                        </option>
+
+                        <option value="Cartão de débito">
+                            Cartão de débito
+                        </option>
+
+                        <option value="Cartão de crédito">
+                            Cartão de crédito
+                        </option>
+
+                        <option value="Transferência">
+                            Transferência
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="saleNotes">
+                        Observações
+                    </label>
+
+                    <textarea
+                        id="saleNotes"
+                        rows="3"
+                        placeholder="Observações da venda"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="sale-total-box">
+
+                    <span>
+                        Total
+                    </span>
+
+                    <strong id="saleTotal">
+                        R$ 0,00
+                    </strong>
+
+                </div>
+
+
+                <div
+                    id="saleFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="saleModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Registrar venda
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MODAL — FINANCEIRO
+         ===================================================== -->
+
+    <div
+        id="transactionModal"
+        class="modal"
+        hidden
+    >
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        FINANCEIRO
+                    </span>
+
+                    <h2>
+                        Lançamento
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    data-close-modal="transactionModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="transactionForm">
+
+
+                <div class="form-group">
+
+                    <label for="transactionType">
+                        Tipo
+                    </label>
+
+                    <select id="transactionType" required>
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="income">
+                            Receita
+                        </option>
+
+                        <option value="expense">
+                            Despesa
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionCategory">
+                        Categoria
+                    </label>
+
+                    <input
+                        id="transactionCategory"
+                        type="text"
+                        placeholder="Ex.: Fornecedores"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionDescription">
+                        Descrição
+                    </label>
+
+                    <input
+                        id="transactionDescription"
+                        type="text"
+                        placeholder="Ex.: Compra de mercadorias"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionAmount">
+                        Valor
+                    </label>
+
+                    <input
+                        id="transactionAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0,00"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionDate">
+                        Data
+                    </label>
+
+                    <input
+                        id="transactionDate"
+                        type="date"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionPaymentMethod">
+                        Forma de pagamento
+                    </label>
+
+                    <select id="transactionPaymentMethod">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="Dinheiro">
+                            Dinheiro
+                        </option>
+
+                        <option value="Pix">
+                            Pix
+                        </option>
+
+                        <option value="Cartão de débito">
+                            Cartão de débito
+                        </option>
+
+                        <option value="Cartão de crédito">
+                            Cartão de crédito
+                        </option>
+
+                        <option value="Transferência">
+                            Transferência
+                        </option>
+
+                        <option value="Boleto">
+                            Boleto
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="transactionNotes">
+                        Observações
+                    </label>
+
+                    <textarea
+                        id="transactionNotes"
+                        rows="3"
+                        placeholder="Observações"
+                    ></textarea>
+
+                </div>
+
+
+                <div
+                    id="transactionFormMessage"
+                    class="form-message"
+                ></div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="transactionModal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Salvar lançamento
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     SUPABASE
+     ===================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/app.js"></script>
+
+
+<!-- =====================================================
+     SERVICE WORKER
+     ===================================================== -->
+
+<script>
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            navigator.serviceWorker.register(
+                "service-worker.js"
+            ).catch(
+                error =>
+                    console.error(
+                        "Erro no Service Worker:",
+                        error
+                    )
+            );
+
+        }
+    );
+
+}
+
+</script>
+
+
+</body>
+
+</html>
