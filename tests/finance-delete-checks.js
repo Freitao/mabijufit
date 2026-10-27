@@ -13,8 +13,8 @@ for(const type of ['expense','income']) {
  check('criação manual '+type,row?.reference_id===null);
  const card=document.querySelector(`[data-delete-finance="${row.id}"]`).closest('article');
  card.querySelector('details').open=true;
- card.querySelector('button').click();await tick();
- check('confirmação mobile contém dados '+type,!$('deleteFinanceModal').hidden&&$('deleteFinanceSummary').textContent.includes('600')&&$('deleteFinanceSummary').textContent.includes(type==='income'?'Receita':'Despesa'));
+ card.querySelector('[data-delete-finance]').click();await tick();
+ check('confirmação mobile contém dados '+type,!$('deleteFinanceModal').hidden&&$('deleteFinanceSummary').textContent.includes('600')&&$('deleteFinanceSummary').textContent.includes(type==='income'?'Entrada':'Saída'));
  $('deleteFinanceModal').querySelector('[data-close-modal]').click();
  check('voltar não exclui e limpa alvo '+type,mockDB.financial_transactions.some(x=>x.id===row.id)&&financeDeleteTarget===null);
  openDeleteFinanceModal(row.id);
