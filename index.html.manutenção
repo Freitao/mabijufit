@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#c96f8c"/>
+<meta name="robots" content="noindex"/>
+<title>MabijuFit · Em manutenção</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));background:#fcf5f8;color:#42323a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{width:100%;max-width:440px;padding:36px 28px;border:1px solid #efdee5;border-radius:24px;background:#fff;text-align:center;box-shadow:0 12px 40px #71425b0b}.logo{display:grid;place-items:center;width:72px;height:72px;margin:0 auto 20px;border-radius:22px;background:#f9e8ef;color:#a85071}svg{width:38px;height:38px}.brand{margin:0 0 24px;color:#a85071;font-size:22px;font-weight:700}.badge{display:inline-block;margin:0 0 16px;padding:6px 12px;border-radius:20px;background:#fcf0e2;color:#825c26;font-size:12px;font-weight:600}h1{margin:0 0 12px;font-size:clamp(24px,6vw,30px);line-height:1.2;letter-spacing:-.5px}p{margin:0;font-size:16px;line-height:1.65;color:#78666f}.note{margin-top:24px;padding-top:20px;border-top:1px solid #f1e6eb;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-4 4 2 10 8 15 6-5 12-11 8-15Z"/></svg></div>
+<p class="brand">MabijuFit</p>
+<span class="badge">Em manutenção</span>
+<h1>Uma pausa para melhorar</h1>
+<p>Estamos ajustando o aplicativo para deixar o dia a dia da loja mais simples.</p>
+<p class="note">Volte daqui a pouco. Obrigado pela compreensão!</p>
+</main>
+</body>
+</html>
