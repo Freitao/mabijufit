@@ -3232,10 +3232,25 @@ function bindProductColorEvents() {
             return;
         }
         if (b.hasAttribute("data-pc-add")) {
-            const color_id = b.dataset.pcAdd === "none" ? null : b.dataset.pcAdd;
-            let group = productColorsDraft.find(c => c.color_id === color_id);
-            if (!group) { group = { key: crypto.randomUUID(), color_id, is_active: true }; productColorsDraft.push(group); }
-            selectedProductColor = group.key;
+    const color_id = b.dataset.pcAdd === "none" ? null : b.dataset.pcAdd;
+    const index = productColorsDraft.findIndex(c => c.color_id === color_id);
+
+    if (index >= 0) {
+        const removed = productColorsDraft[index];
+        productColorsDraft.splice(index, 1);
+
+        if (selectedProductColor === removed.key) {
+            selectedProductColor = productColorsDraft[0]?.key || null;
+        }
+    } else {
+        const group = {
+            key: crypto.randomUUID(),
+            color_id,
+            is_active: true
+        };
+        productColorsDraft.push(group);
+        selectedProductColor = group.key;
+    }     
         } else if (b.hasAttribute("data-pc-select")) selectedProductColor = b.dataset.pcSelect || null;
         else if (b.dataset.pcOrder) {
             const i = productColorsDraft.findIndex(c => c.key === selectedProductColor), j = i + Number(b.dataset.pcOrder);
