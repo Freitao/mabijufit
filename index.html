@@ -9,6 +9,7 @@
   <link href="assets/icons/icon-192.png" rel="icon" type="image/png"/>
   <link href="css/style.css" rel="stylesheet"/>
   <link href="css/commerce.css" rel="stylesheet"/>
+  <link href="css/order-notes.css" rel="stylesheet"/>
   <title>
    MabijuFit
   </title>
@@ -202,6 +203,14 @@
          <strong>
           Novo produto
          </strong>
+        </button>
+        <button class="quick-action" data-section="orderNotes" type="button">
+         <span aria-hidden="true" class="quick-action-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+           <path d="M7 3.5h8l4 4V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z" stroke-linejoin="round"/><path d="M14 3.5V8h5M8.5 12h7M8.5 16h7" stroke-linecap="round"/>
+          </svg>
+         </span>
+         <strong>Pedidos das clientes</strong>
         </button>
         <button class="quick-action" data-action="new-expense" type="button">
          <span aria-hidden="true" class="quick-action-icon">
@@ -495,6 +504,21 @@
       <div class="cards-list sales-list" id="salesList">
       </div>
      </section>
+     <section class="app-section order-notes-screen" hidden id="orderNotesScreen" aria-labelledby="orderNotesTitle">
+      <div class="section-heading order-notes-heading">
+       <div><span class="section-eyebrow">ANOTAÇÕES DA LOJA</span><h2 id="orderNotesTitle">Pedidos das clientes</h2><p>Anote para não esquecer quando fizer o pedido.</p></div>
+       <button class="primary-button small" id="newOrderNoteButton" type="button">+ Novo pedido</button>
+      </div>
+      <div class="order-notes-toolbar">
+       <input aria-label="Buscar pedido ou cliente" class="search-input" id="orderNotesSearch" placeholder="Buscar pedido ou cliente" type="search"/>
+       <div class="filter-chips order-notes-filters" id="orderNotesFilters" role="group" aria-label="Filtrar anotações">
+        <button type="button" data-order-note-filter="all" aria-pressed="true">Todos <span id="orderNotesAllCount">0</span></button>
+        <button type="button" data-order-note-filter="pending" aria-pressed="false">Pendentes <span id="orderNotesPendingCount">0</span></button>
+        <button type="button" data-order-note-filter="ordered" aria-pressed="false">Encomendados <span id="orderNotesOrderedCount">0</span></button>
+       </div>
+      </div>
+      <div class="cards-list order-notes-list" id="orderNotesList" aria-live="polite"></div>
+     </section>
      <!-- =============================================
              FINANCEIRO
              ============================================= -->
@@ -683,7 +707,20 @@
    <!-- =====================================================
      MODAL — PRODUTO
      ===================================================== -->
-   <div aria-labelledby="productModalTitle" aria-modal="true" class="modal" hidden="" id="productModal" role="dialog">
+    <div aria-labelledby="orderNoteModalTitle" aria-modal="true" class="modal" hidden="" id="orderNoteModal" role="dialog">
+     <div class="modal-content">
+      <div class="modal-header"><div><span class="section-eyebrow">PEDIDOS DAS CLIENTES</span><h2 id="orderNoteModalTitle">Novo pedido</h2><p>Guarde os detalhes para consultar depois.</p></div><button aria-label="Fechar" class="modal-close" data-close-modal="orderNoteModal" type="button">×</button></div>
+      <form id="orderNoteForm" novalidate>
+       <div class="form-group"><label for="orderNoteCustomer">Nome da cliente</label><input id="orderNoteCustomer" maxlength="120" required autocomplete="off" placeholder="Ex.: Ana Paula"/></div>
+       <div class="form-group"><label for="orderNoteItem">O que ela pediu?</label><input id="orderNoteItem" maxlength="160" required autocomplete="off" placeholder="Ex.: Conjunto fitness rosa"/></div>
+       <div class="form-group"><label for="orderNoteDetails">Cor, tamanho e quantidade</label><input id="orderNoteDetails" maxlength="160" autocomplete="off" placeholder="Ex.: Rosa • M • 1 peça"/></div>
+       <div class="form-group"><label for="orderNoteText">Anotação</label><textarea id="orderNoteText" maxlength="1000" rows="3" placeholder="Preferências, dúvidas ou detalhes para conferir"></textarea></div>
+       <div class="form-message" id="orderNoteFormMessage" aria-live="polite"></div>
+       <div class="modal-actions"><button class="secondary-button" data-close-modal="orderNoteModal" type="button">Cancelar</button><button class="primary-button" id="saveOrderNoteButton" type="submit">Salvar anotação</button></div>
+      </form>
+     </div>
+    </div>
+    <div aria-labelledby="productModalTitle" aria-modal="true" class="modal" hidden="" id="productModal" role="dialog">
     <div class="modal-content">
      <div class="modal-header">
       <div>
@@ -1377,6 +1414,7 @@
   <script src="js/app.js">
   </script>
   <script src="js/commerce.js"></script>
+  <script src="js/order-notes.js"></script>
   <!-- =====================================================
      SERVICE WORKER
      ===================================================== -->
